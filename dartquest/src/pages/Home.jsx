@@ -1,19 +1,29 @@
+import logo from '../assets/dartquest-logo.jpeg'
 import Dashboard from '../components/Dashboard'
+import logo from '../assets/dartquest-logo.jpeg'
 
 function Home({ onStartCampaign }) {
   return (
     <>
       <header className="topbar">
-        <div>
-          <p className="eyebrow">DART TRAINING</p>
-          <h1>DartQuest</h1>
-        </div>
+  <div className="brand-block">
+    <img
+      src={logo}
+      alt="DartQuest Logo"
+      className="brand-logo"
+    />
 
-        <div className="player-level">
-          <span>Level 1</span>
-          <strong>0 XP</strong>
-        </div>
-      </header>
+    <div>
+      <p className="eyebrow">DART TRAINING</p>
+      <h1>DartQuest</h1>
+    </div>
+  </div>
+
+  <div className="player-level">
+    <span>Level 1</span>
+    <strong>0 XP</strong>
+  </div>
+</header>
 
       <Dashboard onStartCampaign={onStartCampaign} />
     </>

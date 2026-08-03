@@ -584,3 +584,44 @@
     max-width: 135px;
   }
 }
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+
+  border-radius: 18px;
+  border: 1px solid rgba(66, 230, 149, 0.35);
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.32),
+    0 0 22px rgba(66, 230, 149, 0.18);
+}
+
+@media (max-width: 430px) {
+  .brand-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 15px;
+  }
+
+  .topbar h1 {
+    font-size: 25px;
+  }
+}
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 16px;
+}
