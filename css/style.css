@@ -1,0 +1,140 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-family: Arial, sans-serif;
+
+  background:
+    radial-gradient(circle at top, #173a32, #07100e 55%);
+  color: white;
+}
+
+.app {
+  width: 100%;
+  max-width: 430px;
+}
+
+header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 5px 0 10px;
+  font-size: 36px;
+}
+
+header p {
+  color: #b8c4c0;
+}
+
+.untertitel {
+  margin: 0;
+  color: #30df8b;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+.karte,
+.eingabe {
+  margin-bottom: 18px;
+  padding: 22px;
+
+  border: 1px solid #24483e;
+  border-radius: 22px;
+
+  background: rgba(16, 35, 31, 0.95);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+
+  color: #30df8b;
+  font-weight: bold;
+}
+
+.karte h2 {
+  margin: 28px 0 12px;
+  font-size: 27px;
+  line-height: 1.2;
+}
+
+.karte p {
+  margin-bottom: 0;
+  color: #aebbb7;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+
+  font-weight: bold;
+}
+
+input {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 15px;
+
+  border: 1px solid #31594d;
+  border-radius: 12px;
+  outline: none;
+
+  background: #091512;
+  color: white;
+
+  font-size: 18px;
+  text-align: center;
+}
+
+input:focus {
+  border-color: #30df8b;
+}
+
+button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 15px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #30df8b;
+  color: #06100d;
+
+  font-size: 17px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+button.rot {
+  background: #d94d59;
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+#ergebnis {
+  min-height: 50px;
+  padding-top: 20px;
+
+  font-size: 23px;
+  font-weight: bold;
+  text-align: center;
+}

@@ -1,0 +1,40 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #071411;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+
+  font-family:
+    Inter, Arial, Helvetica, sans-serif;
+
+  color: #f4faf7;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #174b3e 0%,
+      #0b241e 35%,
+      #071411 72%
+    );
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100vh;
+}

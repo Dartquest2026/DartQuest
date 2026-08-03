@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Dart Kampagne</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="app">
+
+    <header>
+      <p class="untertitel">DART TRAINING</p>
+      <h1>Dart Kampagne</h1>
+      <p>Schaffe die Aufgabe mit maximal 9 Pfeilen.</p>
+    </header>
+
+    <section class="karte">
+      <div class="status">
+        <span id="levelAnzeige">Level 1</span>
+        <span id="gesamtPunkte">0 Punkte</span>
+      </div>
+
+      <h2 id="aufgabeAnzeige">
+        Treffe 3-mal die Single 20
+      </h2>
+
+      <p>Du hast maximal 9 Pfeile.</p>
+    </section>
+
+    <section class="eingabe">
+      <label for="pfeile">Wie viele Pfeile hast du benötigt?</label>
+
+      <input
+        id="pfeile"
+        type="number"
+        min="1"
+        max="9"
+        placeholder="1 bis 9"
+      >
+
+      <button id="auswertenButton">
+        Auswerten
+      </button>
+
+      <button id="nichtGeschafftButton" class="rot">
+        Nicht geschafft
+      </button>
+
+      <div id="ergebnis"></div>
+
+      <button id="naechstesLevelButton" disabled>
+        Nächstes Level
+      </button>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
