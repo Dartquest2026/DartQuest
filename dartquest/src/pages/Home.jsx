@@ -1,7 +1,5 @@
 import logo from '../assets/dartquest-logo.jpeg'
 import Dashboard from '../components/Dashboard'
-import logo from '../assets/dartquest-logo.jpeg'
-
 function Home({ onStartCampaign }) {
   return (
     <>
