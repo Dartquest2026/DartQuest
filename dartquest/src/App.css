@@ -808,3 +808,486 @@ background: linear-gradient(
     transform: translateY(0) scale(1);
   }
 }
+.campaign-screen {
+  padding-bottom: 30px;
+}
+
+.campaign-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.campaign-header h1 {
+  margin: 5px 0 4px;
+  font-size: 30px;
+}
+
+.campaign-subtitle {
+  margin: 0;
+  color: #91a69f;
+  font-size: 14px;
+}
+
+.campaign-select-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+
+  padding: 12px 15px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+
+  background: rgba(16, 42, 35, 0.92);
+  color: white;
+
+  font: inherit;
+  cursor: pointer;
+}
+
+.campaign-summary-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+
+  margin-bottom: 20px;
+  padding: 20px;
+
+  border: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 21px;
+
+  background: rgba(10, 29, 24, 0.92);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+.campaign-summary-progress {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.campaign-emblem {
+  display: grid;
+  width: 62px;
+  height: 72px;
+  place-items: center;
+
+  border: 1px solid rgba(66, 230, 149, 0.35);
+  border-radius: 18px;
+
+  background: rgba(66, 230, 149, 0.1);
+  font-size: 31px;
+}
+
+.campaign-progress-label {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 12px;
+  color: #91a69f;
+  font-size: 12px;
+}
+
+.campaign-progress-label span:last-child {
+  color: #42e695;
+}
+
+.campaign-progress-bar,
+.boss-star-progress {
+  height: 8px;
+  overflow: hidden;
+
+  margin: 7px 0;
+  border-radius: 999px;
+
+  background: #071510;
+}
+
+.campaign-progress-fill,
+.boss-star-progress div {
+  height: 100%;
+  border-radius: inherit;
+
+  background: linear-gradient(
+    90deg,
+    #42e695,
+    #21c7a8
+  );
+}
+
+.campaign-summary-card small {
+  color: #42e695;
+}
+
+.boss-rewards {
+  padding-left: 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.boss-rewards p {
+  margin: 0 0 15px;
+  color: #b7c9c3;
+  font-size: 13px;
+}
+
+.boss-reward-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+.boss-reward-items span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+
+  text-align: center;
+  color: #d8e5e0;
+  font-size: 12px;
+}
+
+.campaign-tabs {
+  display: flex;
+  gap: 28px;
+  margin-bottom: 0;
+}
+
+.campaign-tabs button {
+  padding: 12px 15px;
+
+  border: 0;
+  border-bottom: 2px solid transparent;
+
+  background: transparent;
+  color: #71847e;
+
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.campaign-tabs button.active {
+  border-bottom-color: #42e695;
+  color: #42e695;
+}
+
+.campaign-world-map {
+  position: relative;
+
+  width: 100%;
+  height: 720px;
+  overflow: hidden;
+
+  border: 1px solid rgba(66, 230, 149, 0.22);
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 35% 45%,
+      rgba(0, 127, 96, 0.18),
+      transparent 30%
+    ),
+    linear-gradient(
+      rgba(5, 20, 16, 0.76),
+      rgba(3, 13, 11, 0.96)
+    );
+}
+
+.campaign-path-lines {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+}
+
+.campaign-path-lines path {
+  fill: none;
+
+  stroke: #21c7a8;
+  stroke-width: 0.8;
+  stroke-dasharray: 2 1.5;
+
+  filter: drop-shadow(
+    0 0 5px rgba(33, 199, 168, 0.8)
+  );
+}
+
+.map-level-node {
+  position: absolute;
+  z-index: 2;
+
+  display: flex;
+  width: 62px;
+  height: 62px;
+  align-items: center;
+  justify-content: center;
+
+  border: 3px solid #31584d;
+  border-radius: 50%;
+
+  background: #0b1e19;
+  color: white;
+
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.map-level-node.unlocked {
+  border-color: #21c7a8;
+
+  box-shadow:
+    0 0 18px rgba(33, 199, 168, 0.33),
+    inset 0 0 16px rgba(33, 199, 168, 0.1);
+}
+
+.map-level-node.selected {
+  border-color: #42e695;
+
+  box-shadow:
+    0 0 0 5px rgba(66, 230, 149, 0.12),
+    0 0 30px rgba(66, 230, 149, 0.75);
+}
+
+.map-level-node.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.map-level-node.boss {
+  width: 78px;
+  height: 78px;
+
+  border-color: #f2c94c;
+
+  box-shadow:
+    0 0 25px rgba(242, 201, 76, 0.4),
+    inset 0 0 20px rgba(242, 201, 76, 0.12);
+}
+
+.map-level-number {
+  font-size: 21px;
+}
+
+.map-level-stars {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+
+  width: 90px;
+
+  color: #f4c542;
+  font-size: 14px;
+  text-align: center;
+
+  transform: translateX(-50%);
+}
+
+.boss-crown {
+  position: absolute;
+  bottom: calc(100% - 4px);
+
+  color: #f4c542;
+  font-size: 29px;
+}
+
+.map-level-1 {
+  top: 7%;
+  left: 8%;
+}
+
+.map-level-2 {
+  top: 7%;
+  left: 33%;
+}
+
+.map-level-3 {
+  top: 13%;
+  left: 62%;
+}
+
+.map-level-4 {
+  top: 29%;
+  left: 59%;
+}
+
+.map-level-5 {
+  top: 43%;
+  left: 35%;
+}
+
+.map-level-6 {
+  top: 56%;
+  left: 8%;
+}
+
+.map-level-7 {
+  top: 75%;
+  left: 18%;
+}
+
+.map-level-8 {
+  top: 79%;
+  left: 43%;
+}
+
+.map-level-9 {
+  top: 79%;
+  left: 67%;
+}
+
+.map-level-10 {
+  top: 78%;
+  right: 3%;
+}
+
+.selected-level-card {
+  position: absolute;
+  z-index: 4;
+  top: 31%;
+  right: 4%;
+
+  display: flex;
+  width: 180px;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 17px;
+
+  border: 1px solid rgba(66, 230, 149, 0.24);
+  border-radius: 17px;
+
+  background: rgba(6, 23, 18, 0.96);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.selected-level-card p {
+  margin: 0;
+  color: #91a69f;
+}
+
+.selected-level-card strong {
+  line-height: 1.35;
+}
+
+.selected-level-card span {
+  color: #91a69f;
+  font-size: 12px;
+}
+
+.selected-level-stars {
+  color: #f4c542;
+  font-size: 20px;
+}
+
+.selected-level-card button {
+  padding: 12px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: linear-gradient(
+    135deg,
+    #42e695,
+    #21c7a8
+  );
+  color: #04100d;
+
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.boss-unlock-card {
+  display: grid;
+  grid-template-columns: 75px 1fr auto;
+  align-items: center;
+  gap: 18px;
+
+  margin-top: 18px;
+  padding: 20px;
+
+  border: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 21px;
+
+  background: rgba(10, 29, 24, 0.92);
+}
+
+.boss-chest {
+  font-size: 48px;
+  text-align: center;
+}
+
+.boss-unlock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.boss-unlock-info span {
+  color: #f4c542;
+}
+
+.boss-unlock-card > button {
+  padding: 13px 16px;
+
+  border: 1px solid rgba(66, 230, 149, 0.35);
+  border-radius: 13px;
+
+  background: rgba(66, 230, 149, 0.08);
+  color: #42e695;
+
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .campaign-summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .boss-rewards {
+    padding-top: 16px;
+    padding-left: 0;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 0;
+  }
+
+  .campaign-world-map {
+    height: 680px;
+  }
+
+  .selected-level-card {
+    top: 30%;
+    right: 3%;
+    width: 155px;
+  }
+
+  .map-level-node {
+    width: 55px;
+    height: 55px;
+  }
+
+  .map-level-node.boss {
+    width: 67px;
+    height: 67px;
+  }
+
+  .boss-unlock-card {
+    grid-template-columns: 55px 1fr;
+  }
+
+  .boss-unlock-card > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}

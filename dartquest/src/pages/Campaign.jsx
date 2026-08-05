@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { levels } from '../data/levels'
 import LevelModal from '../components/LevelModal'
 
@@ -6,35 +6,75 @@ const CAMPAIGN_STORAGE_KEY = 'dartquest-campaign-progress'
 
 function Campaign() {
   const [selectedLevel, setSelectedLevel] = useState(null)
+  const [previewLevelId, setPreviewLevelId] = useState(1)
+
   const [progress, setProgress] = useState({
     unlockedLevel: 1,
     results: {},
   })
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem(CAMPAIGN_STORAGE_KEY)
+    const savedProgress = localStorage.getItem(
+      CAMPAIGN_STORAGE_KEY,
+    )
 
     if (!savedProgress) {
       return
     }
 
     try {
-      setProgress(JSON.parse(savedProgress))
+      const parsedProgress = JSON.parse(savedProgress)
+
+      setProgress(parsedProgress)
+      setPreviewLevelId(
+        Math.min(parsedProgress.unlockedLevel, levels.length),
+      )
     } catch {
       localStorage.removeItem(CAMPAIGN_STORAGE_KEY)
     }
   }, [])
 
-  function openLevel(level) {
-    const isUnlocked =
+  const selectedPreviewLevel = useMemo(() => {
+    return (
+      levels.find((level) => level.id === previewLevelId) ??
+      levels[0]
+    )
+  }, [previewLevelId])
+
+  const totalStars = levels
+  .filter((level) => !level.boss)
+  .reduce((sum, level) => {
+    return sum + (progress.results[level.id]?.stars ?? 0)
+  }, 0)
+
+
+  const completedLevels = Object.keys(progress.results).length
+
+  const campaignPercent = Math.round(
+    (completedLevels / levels.length) * 100,
+  )
+
+  function isLevelUnlocked(level) {
+    return (
       level.id <= progress.unlockedLevel ||
       Boolean(progress.results[level.id])
+    )
+  }
 
-    if (!isUnlocked) {
+  function selectMapLevel(level) {
+    if (!isLevelUnlocked(level)) {
       return
     }
 
-    setSelectedLevel(level)
+    setPreviewLevelId(level.id)
+  }
+
+  function startSelectedLevel() {
+    if (!isLevelUnlocked(selectedPreviewLevel)) {
+      return
+    }
+
+    setSelectedLevel(selectedPreviewLevel)
   }
 
   function closeLevel() {
@@ -43,7 +83,8 @@ function Campaign() {
 
   function completeLevel(level, result) {
     setProgress((currentProgress) => {
-      const previousResult = currentProgress.results[level.id]
+      const previousResult =
+        currentProgress.results[level.id]
 
       const bestStars = Math.max(
         previousResult?.stars ?? 0,
@@ -73,73 +114,194 @@ function Campaign() {
         JSON.stringify(updatedProgress),
       )
 
+      setPreviewLevelId(nextUnlockedLevel)
+
       return updatedProgress
     })
   }
 
   return (
-    <section className="campaign-page">
-      <div className="section-heading">
-        <p className="eyebrow">WELT 1</p>
-        <h2>Die Grundlagen</h2>
-        <p>Schließe alle Level ab und besiege den Boss.</p>
+    <section className="campaign-screen">
+      <header className="campaign-header">
+        <div>
+          <p className="eyebrow">KAMPAGNE</p>
+          <h1>Die Grundlagen</h1>
+          <p className="campaign-subtitle">
+            Steige Level für Level auf und besiege den Boss.
+          </p>
+        </div>
+
+        <button
+          className="campaign-select-button"
+          type="button"
+        >
+          Anfänger I
+          <span>⌄</span>
+        </button>
+      </header>
+
+      <section className="campaign-summary-card">
+        <div className="campaign-summary-progress">
+          <div className="campaign-emblem">🎯</div>
+
+          <div>
+            <strong>Kampagne: Anfänger I</strong>
+
+            <div className="campaign-progress-label">
+              <span>Fortschritt</span>
+              <span>{campaignPercent}%</span>
+            </div>
+
+            <div className="campaign-progress-bar">
+              <div
+                className="campaign-progress-fill"
+                style={{ width: `${campaignPercent}%` }}
+              />
+            </div>
+
+            <small>
+              Level {Math.min(progress.unlockedLevel, 10)} von 10
+            </small>
+          </div>
+        </div>
+
+        <div className="boss-rewards">
+          <p>Belohnung für Boss-Level 10</p>
+
+          <div className="boss-reward-items">
+            <span>🪙 +500 Coins</span>
+            <span>⭐ +1.000 XP</span>
+            <span>🃏 Kartenpaket</span>
+          </div>
+        </div>
+      </section>
+
+      <div className="campaign-tabs">
+        <button className="active" type="button">
+          KARTE
+        </button>
+
+        <button type="button">
+          LISTE
+        </button>
       </div>
 
-      <div className="campaign-map">
-        {levels.map((level, index) => {
-          const result = progress.results[level.id]
+      <section className="campaign-world-map">
+        <svg
+          className="campaign-path-lines"
+          viewBox="0 0 100 140"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="
+              M12 12
+              C28 10, 34 11, 45 19
+              C62 31, 64 42, 61 52
+              C56 68, 43 69, 33 79
+              C21 91, 17 105, 25 116
+              C38 132, 60 122, 88 127
+            "
+          />
+        </svg>
 
-          const isUnlocked =
-            level.id <= progress.unlockedLevel ||
-            Boolean(result)
+        {levels.map((level) => {
+          const result = progress.results[level.id]
+          const unlocked = isLevelUnlocked(level)
+          const selected =
+            selectedPreviewLevel.id === level.id
 
           return (
-            <div
+            <button
               key={level.id}
-              className={`campaign-step ${
-                index % 2 === 0
-                  ? 'step-left'
-                  : 'step-right'
-              }`}
+              type="button"
+              className={[
+                'map-level-node',
+                `map-level-${level.id}`,
+                unlocked ? 'unlocked' : 'locked',
+                selected ? 'selected' : '',
+                level.boss ? 'boss' : '',
+              ].join(' ')}
+              onClick={() => selectMapLevel(level)}
+              disabled={!unlocked}
             >
-              <button
-                type="button"
-                className={`campaign-node ${
-                  isUnlocked ? 'unlocked' : 'locked'
-                } ${level.boss ? 'boss-node' : ''}`}
-                onClick={() => openLevel(level)}
-                disabled={!isUnlocked}
-              >
-                {level.boss
-                  ? '👑'
-                  : isUnlocked
-                    ? level.id
-                    : '🔒'}
-              </button>
-
-              <div className="node-description">
-                <strong>{level.title}</strong>
-
-                <span>
-                  {isUnlocked
-                    ? level.task
-                    : 'Noch gesperrt'}
-                </span>
-
-                {result && (
-                  <span>
-                    {'⭐'.repeat(result.stars)}
-                  </span>
-                )}
-              </div>
-
-              {index !== levels.length - 1 && (
-                <div className="campaign-connector"></div>
+              {level.boss && (
+                <span className="boss-crown">♛</span>
               )}
-            </div>
+
+              <span className="map-level-number">
+                {unlocked ? level.id : '🔒'}
+              </span>
+
+              <span className="map-level-stars">
+                {result
+                  ? `${'⭐'.repeat(result.stars)}${'☆'.repeat(
+                      3 - result.stars,
+                    )}`
+                  : '☆☆☆'}
+              </span>
+            </button>
           )
         })}
-      </div>
+
+        {isLevelUnlocked(selectedPreviewLevel) && (
+          <article className="selected-level-card">
+            <p>{selectedPreviewLevel.title}</p>
+
+            <strong>{selectedPreviewLevel.task}</strong>
+
+            <span>Beste Bewertung</span>
+
+            <div className="selected-level-stars">
+              {progress.results[selectedPreviewLevel.id]
+                ? `${'⭐'.repeat(
+                    progress.results[selectedPreviewLevel.id]
+                      .stars,
+                  )}${'☆'.repeat(
+                    3 -
+                      progress.results[selectedPreviewLevel.id]
+                        .stars,
+                  )}`
+                : '☆☆☆'}
+            </div>
+
+            <button
+              type="button"
+              onClick={startSelectedLevel}
+            >
+              Spielen
+            </button>
+          </article>
+        )}
+      </section>
+
+      <section className="boss-unlock-card">
+        <div className="boss-chest">🎁</div>
+
+        <div className="boss-unlock-info">
+          <strong>
+            Sammle Sterne, um Boss-Level 10
+            freizuschalten!
+          </strong>
+
+          <span>⭐ {totalStars} / 27</span>
+
+          <div className="boss-star-progress">
+            <div
+              style={{
+                width: `${Math.min(
+                  (totalStars / 27) * 100,
+                  100,
+                )}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <button type="button">
+          Belohnungen
+        </button>
+      </section>
 
       <LevelModal
         level={selectedLevel}
