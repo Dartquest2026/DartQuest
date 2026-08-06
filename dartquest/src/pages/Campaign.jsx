@@ -127,7 +127,7 @@ function Campaign() {
         progress.results,
       )
 
-      return starsInLevelWorld >= 27
+      return starsInLevelWorld >= 25
     }
 
     return level.id <= progress.unlockedLevel
@@ -443,12 +443,12 @@ function Campaign() {
 
       <section className="boss-unlock-card">
         <div className="boss-chest">
-          {worldStars >= 27 ? '👑' : '🎁'}
+          {worldStars >= 25 ? '👑' : '🎁'}
         </div>
 
         <div className="boss-unlock-info">
           <strong>
-            {worldStars >= 27
+            {worldStars >= 25
               ? `Boss-Level ${
                   worldBoss?.id ?? worldEndLevel
                 } ist freigeschaltet!`
@@ -457,13 +457,13 @@ function Campaign() {
                 } freizuschalten!`}
           </strong>
 
-          <span>⭐ {worldStars} / 27</span>
+          <span>⭐ {worldStars} / 25</span>
 
           <div className="boss-star-progress">
             <div
               style={{
                 width: `${Math.min(
-                  (worldStars / 27) * 100,
+                  (worldStars / 25) * 100,
                   100,
                 )}%`,
               }}
@@ -486,7 +486,7 @@ function Campaign() {
             !isLevelUnlocked(worldBoss)
           }
         >
-          {worldStars >= 27
+          {worldStars >= 25
             ? 'Boss auswählen'
             : 'Noch gesperrt'}
         </button>
