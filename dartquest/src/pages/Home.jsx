@@ -1,30 +1,60 @@
 import logo from '../assets/dartquest-logo.jpeg'
 import Dashboard from '../components/Dashboard'
+
+import '../styles/Home.css'
+
 function Home({ onStartCampaign }) {
   return (
-    <>
-      <header className="topbar">
-  <div className="brand-block">
-    <img
-      src={logo}
-      alt="DartQuest Logo"
-      className="brand-logo"
-    />
+    <section className="home-screen">
+      <header className="home-header">
 
-    <div>
-      <p className="eyebrow">DART TRAINING</p>
-      <h1>DartQuest</h1>
-    </div>
-  </div>
+        <button
+          className="home-menu-button"
+          type="button"
+          aria-label="Menü öffnen"
+        >
+          ☰
+        </button>
 
-  <div className="player-level">
-    <span>Level 1</span>
-    <strong>0 XP</strong>
-  </div>
-</header>
+        <div className="home-logo-wrap">
+          <img
+            src={logo}
+            alt="DartQuest"
+            className="home-logo"
+          />
+        </div>
 
-      <Dashboard onStartCampaign={onStartCampaign} />
-    </>
+        <div className="home-player-info">
+          <div className="home-level-badge">
+            <span>LVL</span>
+            <strong>1</strong>
+          </div>
+
+          <div className="home-xp-area">
+            <div className="home-xp-row">
+              <span>XP</span>
+              <strong>0 / 500</strong>
+            </div>
+
+            <div className="home-xp-bar">
+              <div
+                className="home-xp-fill"
+                style={{ width: '0%' }}
+              />
+            </div>
+
+            <div className="home-coins">
+              🪙 0
+            </div>
+          </div>
+        </div>
+
+      </header>
+
+      <Dashboard
+        onStartCampaign={onStartCampaign}
+      />
+    </section>
   )
 }
 

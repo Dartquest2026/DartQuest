@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { levels } from '../data/levels'
 import LevelModal from '../components/LevelModal'
+import { getWorldPosition } from '../data/worldMaps'
+import '../styles/Campaign.css'
 
 const CAMPAIGN_STORAGE_KEY = 'dartquest-campaign-progress'
 const BOSS_STAR_REQUIREMENT = 22
@@ -313,37 +315,53 @@ function Campaign() {
         </div>
       </section>
 
-      <div className="campaign-tabs">
-        <button className="active" type="button">
-          KARTE
-        </button>
-
-        <button type="button">LISTE</button>
-      </div>
-
       <section className="campaign-world-map">
-        <svg
-          className="campaign-path-lines"
-          viewBox="0 0 100 140"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path
-            d="
-              M12 12
-              C28 10, 34 11, 45 19
-              C62 31, 64 42, 61 52
-              C56 68, 43 69, 33 79
-              C21 91, 17 105, 25 116
-              C38 132, 60 122, 88 127
-            "
-          />
-        </svg>
 
-        {visibleLevels.map((level, index) => {
-          const unlocked = isLevelUnlocked(level)
-          const selected =
-            selectedPreviewLevel?.id === level.id
+  <svg
+    className="campaign-path"
+    viewBox="0 0 100 100"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+  >
+    <path
+      className="campaign-path-shadow"
+      d="
+        M 15 12
+        C 28 8, 40 12, 47 18
+        C 58 26, 74 25, 77 36
+        C 80 48, 61 48, 51 55
+        C 41 62, 24 60, 22 70
+        C 20 79, 36 84, 48 84
+        C 62 84, 71 79, 80 84
+        C 86 87, 88 91, 90 94
+      "
+    />
+
+    <path
+      className="campaign-path-main"
+      d="
+        M 15 12
+        C 28 8, 40 12, 47 18
+        C 58 26, 74 25, 77 36
+        C 80 48, 61 48, 51 55
+        C 41 62, 24 60, 22 70
+        C 20 79, 36 84, 48 84
+        C 62 84, 71 79, 80 84
+        C 86 87, 88 91, 90 94
+      "
+    />
+  </svg>
+
+  {visibleLevels.map((level, index) => {
+  const unlocked = isLevelUnlocked(level)
+
+  const selected =
+    selectedPreviewLevel?.id === level.id
+
+  const position = getWorldPosition(
+    selectedWorld,
+    level.id,
+  )
 
           return (
             <button
@@ -351,11 +369,14 @@ function Campaign() {
               type="button"
               className={[
                 'map-level-node',
-                `map-level-${index + 1}`,
                 unlocked ? 'unlocked' : 'locked',
                 selected ? 'selected' : '',
                 level.boss ? 'boss' : '',
               ].join(' ')}
+              style={{
+  left: `${position?.x ?? 50}%`,
+  top: `${position?.y ?? 50}%`,
+}}
               onClick={() => selectMapLevel(level)}
               disabled={!unlocked}
               aria-label={

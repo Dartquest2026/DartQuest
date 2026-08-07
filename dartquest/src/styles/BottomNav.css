@@ -1,0 +1,62 @@
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+
+  transform: translateX(-50%);
+
+  width: 100%;
+  max-width: 520px;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  padding: 10px 8px calc(14px + env(safe-area-inset-bottom));
+
+  border-top: 1px solid rgba(66,230,149,.12);
+
+  background: rgba(5,18,14,.98);
+  backdrop-filter: blur(18px);
+
+  z-index: 999;
+}
+
+.bottom-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+
+  width: 72px;
+
+  border: 0;
+  background: transparent;
+
+  color: #8ea39d;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+.bottom-nav button svg {
+  width: 26px;
+  height: 26px;
+}
+
+.bottom-nav button.active {
+  color: #42e695;
+}
+
+.bottom-nav button.active svg {
+  filter: drop-shadow(0 0 8px rgba(66,230,149,.55));
+}
+
+.bottom-nav button:active {
+  transform: scale(.94);
+}
