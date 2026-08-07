@@ -832,11 +832,8 @@ background: linear-gradient(
 }
 
 .campaign-select-button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   flex-shrink: 0;
-
+  max-width: 210px;
   padding: 12px 15px;
 
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -847,6 +844,11 @@ background: linear-gradient(
 
   font: inherit;
   cursor: pointer;
+}
+
+.campaign-select-button option {
+  background: #102a23;
+  color: white;
 }
 
 .campaign-summary-card {
@@ -947,15 +949,14 @@ background: linear-gradient(
   align-items: center;
   gap: 7px;
 
-  text-align: center;
   color: #d8e5e0;
   font-size: 12px;
+  text-align: center;
 }
 
 .campaign-tabs {
   display: flex;
   gap: 28px;
-  margin-bottom: 0;
 }
 
 .campaign-tabs button {
@@ -977,11 +978,13 @@ background: linear-gradient(
   color: #42e695;
 }
 
+/* Kampagnenkarte */
+
 .campaign-world-map {
   position: relative;
 
   width: 100%;
-  height: 720px;
+  height: 540px;
   overflow: hidden;
 
   border: 1px solid rgba(66, 230, 149, 0.22);
@@ -1019,13 +1022,15 @@ background: linear-gradient(
   );
 }
 
+/* Levelpunkte */
+
 .map-level-node {
   position: absolute;
   z-index: 2;
 
   display: flex;
-  width: 62px;
-  height: 62px;
+  width: 58px;
+  height: 58px;
   align-items: center;
   justify-content: center;
 
@@ -1062,8 +1067,8 @@ background: linear-gradient(
 }
 
 .map-level-node.boss {
-  width: 78px;
-  height: 78px;
+  width: 70px;
+  height: 70px;
 
   border-color: #f2c94c;
 
@@ -1073,7 +1078,7 @@ background: linear-gradient(
 }
 
 .map-level-number {
-  font-size: 21px;
+  font-size: 19px;
 }
 
 .map-level-stars {
@@ -1081,10 +1086,10 @@ background: linear-gradient(
   top: calc(100% + 7px);
   left: 50%;
 
-  width: 90px;
+  width: 80px;
 
   color: #f4c542;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 
   transform: translateX(-50%);
@@ -1095,89 +1100,195 @@ background: linear-gradient(
   bottom: calc(100% - 4px);
 
   color: #f4c542;
-  font-size: 29px;
+  font-size: 27px;
 }
 
+/* Positionen auf der Karte */
+
 .map-level-1 {
-  top: 7%;
-  left: 8%;
+  top: 6%;
+  left: 7%;
 }
 
 .map-level-2 {
-  top: 7%;
+  top: 6%;
   left: 33%;
 }
 
 .map-level-3 {
   top: 13%;
-  left: 62%;
+  left: 65%;
 }
 
 .map-level-4 {
   top: 29%;
-  left: 59%;
+  left: 61%;
 }
 
 .map-level-5 {
   top: 43%;
-  left: 35%;
+  left: 36%;
 }
 
 .map-level-6 {
   top: 56%;
-  left: 8%;
+  left: 7%;
 }
 
 .map-level-7 {
-  top: 75%;
-  left: 18%;
+  top: 73%;
+  left: 17%;
 }
 
 .map-level-8 {
-  top: 79%;
-  left: 43%;
+  top: 78%;
+  left: 42%;
 }
 
 .map-level-9 {
-  top: 79%;
-  left: 67%;
+  top: 78%;
+  left: 66%;
 }
 
 .map-level-10 {
-  top: 78%;
-  right: 3%;
+  top: 76%;
+  right: 2%;
 }
+
+/* Levelinformation unter der Karte */
 
 .selected-level-card {
-  position: absolute;
-  z-index: 4;
-  top: 31%;
-  right: 4%;
+  position: static;
 
-  display: flex;
-  width: 180px;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 18px;
 
-  padding: 17px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 18px;
 
   border: 1px solid rgba(66, 230, 149, 0.24);
-  border-radius: 17px;
+  border-radius: 18px;
 
   background: rgba(6, 23, 18, 0.96);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32);
 }
 
-.selected-level-card p {
+.selected-level-main {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.selected-level-main p {
+  margin: 0;
+  color: #42e695;
+  font-size: 15px;
+}
+
+.selected-level-main strong {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.selected-level-main span {
+  margin-top: 6px;
+  color: #91a69f;
+  font-size: 12px;
+}
+
+.selected-level-stars {
+  color: #f4c542;
+  font-size: 22px;
+}
+
+.selected-level-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reward-box {
+  padding: 10px 12px;
+
+  border: 1px solid rgba(66, 230, 149, 0.14);
+  border-radius: 12px;
+
+  background: rgba(10, 35, 29, 0.9);
+  color: #f4faf7;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.selected-level-side button {
+  margin-top: auto;
+  padding: 13px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: linear-gradient(
+    135deg,
+    #42e695,
+    #21c7a8
+  );
+
+  color: #04100d;
+
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .selected-level-card {
+    grid-template-columns: 1fr 0.9fr;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .selected-level-main strong {
+    font-size: 17px;
+  }
+
+  .selected-level-stars {
+    font-size: 19px;
+  }
+
+  .reward-box {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .selected-level-side button {
+    padding: 11px;
+  }
+}
+
+.selected-level-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-level-main p {
   margin: 0;
   color: #91a69f;
 }
 
-.selected-level-card strong {
+.selected-level-main strong {
   line-height: 1.35;
 }
 
-.selected-level-card span {
+.selected-level-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-level-rating span {
   color: #91a69f;
   font-size: 12px;
 }
@@ -1187,11 +1298,22 @@ background: linear-gradient(
   font-size: 20px;
 }
 
-.selected-level-card button {
-  padding: 12px;
+.selected-level-reward {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  color: #42e695;
+}
+
+.selected-level-card > button {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  padding: 14px;
 
   border: 0;
-  border-radius: 11px;
+  border-radius: 12px;
 
   background: linear-gradient(
     135deg,
@@ -1204,6 +1326,8 @@ background: linear-gradient(
   font-weight: 900;
   cursor: pointer;
 }
+
+/* Boss-Freischaltung */
 
 .boss-unlock-card {
   display: grid;
@@ -1249,7 +1373,24 @@ background: linear-gradient(
   cursor: pointer;
 }
 
+.boss-unlock-card > button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Handydarstellung */
+
 @media (max-width: 560px) {
+  .campaign-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .campaign-select-button {
+    width: 100%;
+    max-width: none;
+  }
+
   .campaign-summary-card {
     grid-template-columns: 1fr;
   }
@@ -1263,23 +1404,33 @@ background: linear-gradient(
   }
 
   .campaign-world-map {
-    height: 680px;
-  }
-
-  .selected-level-card {
-    top: 30%;
-    right: 3%;
-    width: 155px;
+    height: 500px;
   }
 
   .map-level-node {
-    width: 55px;
-    height: 55px;
+    width: 50px;
+    height: 50px;
   }
 
   .map-level-node.boss {
-    width: 67px;
-    height: 67px;
+    width: 62px;
+    height: 62px;
+  }
+
+  .map-level-number {
+    font-size: 17px;
+  }
+
+  .map-level-stars {
+    font-size: 12px;
+  }
+
+  .selected-level-card {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-level-card > button {
+    grid-column: 1;
   }
 
   .boss-unlock-card {

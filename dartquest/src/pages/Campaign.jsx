@@ -3,6 +3,7 @@ import { levels } from '../data/levels'
 import LevelModal from '../components/LevelModal'
 
 const CAMPAIGN_STORAGE_KEY = 'dartquest-campaign-progress'
+const BOSS_STAR_REQUIREMENT = 25
 
 const worldNames = [
   'Anfänger I',
@@ -41,9 +42,7 @@ function Campaign() {
       (level) => level.id === previewLevelId,
     ) ?? visibleLevels[0]
 
-  const worldBoss = visibleLevels.find(
-    (level) => level.boss,
-  )
+  const worldBoss = visibleLevels.find((level) => level.boss)
 
   const worldNormalLevels = visibleLevels.filter(
     (level) => !level.boss,
@@ -55,13 +54,16 @@ function Campaign() {
     0,
   )
 
-  const completedWorldLevels = visibleLevels.filter(
-    (level) => Boolean(progress.results[level.id]),
+  const completedWorldLevels = visibleLevels.filter((level) =>
+    Boolean(progress.results[level.id]),
   ).length
 
-  const campaignPercent = Math.round(
-    (completedWorldLevels / visibleLevels.length) * 100,
-  )
+  const campaignPercent =
+    visibleLevels.length > 0
+      ? Math.round(
+          (completedWorldLevels / visibleLevels.length) * 100,
+        )
+      : 0
 
   useEffect(() => {
     const savedProgress = localStorage.getItem(
@@ -82,7 +84,7 @@ function Campaign() {
 
       const currentWorld = Math.min(
         Math.ceil(unlockedLevel / 10),
-        10,
+        worldNames.length,
       )
 
       setProgress({
@@ -127,7 +129,11 @@ function Campaign() {
         progress.results,
       )
 
+<<<<<<< HEAD
       return starsInLevelWorld >= 25
+=======
+      return starsInLevelWorld >= BOSS_STAR_REQUIREMENT
+>>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
     }
 
     return level.id <= progress.unlockedLevel
@@ -183,10 +189,7 @@ function Campaign() {
       const bestDarts =
         previousResult?.darts == null
           ? result.darts
-          : Math.min(
-              previousResult.darts,
-              result.darts,
-            )
+          : Math.min(previousResult.darts, result.darts)
 
       const updatedResults = {
         ...currentProgress.results,
@@ -197,20 +200,10 @@ function Campaign() {
         },
       }
 
-      let nextUnlockedLevel =
-        currentProgress.unlockedLevel
-
-      if (level.boss) {
-        nextUnlockedLevel = Math.max(
-          currentProgress.unlockedLevel,
-          Math.min(level.id + 1, levels.length),
-        )
-      } else {
-        nextUnlockedLevel = Math.max(
-          currentProgress.unlockedLevel,
-          Math.min(level.id + 1, levels.length),
-        )
-      }
+      const nextUnlockedLevel = Math.max(
+        currentProgress.unlockedLevel,
+        Math.min(level.id + 1, levels.length),
+      )
 
       const updatedProgress = {
         unlockedLevel: nextUnlockedLevel,
@@ -224,7 +217,7 @@ function Campaign() {
 
       const nextWorld = Math.min(
         Math.ceil(nextUnlockedLevel / 10),
-        10,
+        worldNames.length,
       )
 
       setSelectedWorld(nextWorld)
@@ -257,8 +250,7 @@ function Campaign() {
           <h1>{worldNames[selectedWorld - 1]}</h1>
 
           <p className="campaign-subtitle">
-            Steige Level für Level auf und besiege den
-            Boss.
+            Steige Level für Level auf und besiege den Boss.
           </p>
         </div>
 
@@ -269,10 +261,7 @@ function Campaign() {
           aria-label="Kampagne auswählen"
         >
           {worldNames.map((worldName, index) => (
-            <option
-              key={worldName}
-              value={index + 1}
-            >
+            <option key={worldName} value={index + 1}>
               Welt {index + 1} – {worldName}
             </option>
           ))}
@@ -281,9 +270,7 @@ function Campaign() {
 
       <section className="campaign-summary-card">
         <div className="campaign-summary-progress">
-          <div className="campaign-emblem">
-            🎯
-          </div>
+          <div className="campaign-emblem">🎯</div>
 
           <div>
             <strong>
@@ -305,8 +292,7 @@ function Campaign() {
             </div>
 
             <small>
-              {completedWorldLevels} von 10 Leveln
-              abgeschlossen
+              {completedWorldLevels} von 10 Leveln abgeschlossen
             </small>
           </div>
         </div>
@@ -332,16 +318,11 @@ function Campaign() {
       </section>
 
       <div className="campaign-tabs">
-        <button
-          className="active"
-          type="button"
-        >
+        <button className="active" type="button">
           KARTE
         </button>
 
-        <button type="button">
-          LISTE
-        </button>
+        <button type="button">LISTE</button>
       </div>
 
       <section className="campaign-world-map">
@@ -365,7 +346,6 @@ function Campaign() {
 
         {visibleLevels.map((level, index) => {
           const unlocked = isLevelUnlocked(level)
-
           const selected =
             selectedPreviewLevel?.id === level.id
 
@@ -389,9 +369,7 @@ function Campaign() {
               }
             >
               {level.boss && (
-                <span className="boss-crown">
-                  ♛
-                </span>
+                <span className="boss-crown">♛</span>
               )}
 
               <span className="map-level-number">
@@ -404,51 +382,62 @@ function Campaign() {
             </button>
           )
         })}
+      </section>
 
-        {selectedPreviewLevel &&
-          isLevelUnlocked(selectedPreviewLevel) && (
-            <article className="selected-level-card">
+      {selectedPreviewLevel &&
+        isLevelUnlocked(selectedPreviewLevel) && (
+          <article className="selected-level-card">
+            <div className="selected-level-main">
               <p>{selectedPreviewLevel.title}</p>
 
-              <strong>
-                {selectedPreviewLevel.task}
-              </strong>
+              <strong>{selectedPreviewLevel.task}</strong>
+            </div>
 
+            <div className="selected-level-rating">
               <span>Beste Bewertung</span>
 
               <div className="selected-level-stars">
                 {getLevelStars(selectedPreviewLevel)}
               </div>
+            </div>
 
-              <div className="selected-level-reward">
-                <small>
-                  +{selectedPreviewLevel.rewardXP} XP
-                </small>
+            <div className="selected-level-reward">
+              <small>
+                +{selectedPreviewLevel.rewardXP} XP
+              </small>
 
-                <small>
-                  +{selectedPreviewLevel.rewardCoins}{' '}
-                  Coins
-                </small>
-              </div>
+              <small>
+                +{selectedPreviewLevel.rewardCoins} Coins
+              </small>
+            </div>
 
-              <button
-                type="button"
-                onClick={startSelectedLevel}
-              >
-                Spielen
-              </button>
-            </article>
-          )}
-      </section>
+            <button
+              type="button"
+              onClick={startSelectedLevel}
+            >
+              Spielen
+            </button>
+          </article>
+        )}
 
       <section className="boss-unlock-card">
         <div className="boss-chest">
+<<<<<<< HEAD
           {worldStars >= 25 ? '👑' : '🎁'}
+=======
+          {worldStars >= BOSS_STAR_REQUIREMENT
+            ? '👑'
+            : '🎁'}
+>>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
         </div>
 
         <div className="boss-unlock-info">
           <strong>
+<<<<<<< HEAD
             {worldStars >= 25
+=======
+            {worldStars >= BOSS_STAR_REQUIREMENT
+>>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
               ? `Boss-Level ${
                   worldBoss?.id ?? worldEndLevel
                 } ist freigeschaltet!`
@@ -457,13 +446,25 @@ function Campaign() {
                 } freizuschalten!`}
           </strong>
 
+<<<<<<< HEAD
           <span>⭐ {worldStars} / 25</span>
+=======
+          <span>
+            ⭐ {worldStars} / {BOSS_STAR_REQUIREMENT}
+          </span>
+>>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
 
           <div className="boss-star-progress">
             <div
               style={{
                 width: `${Math.min(
+<<<<<<< HEAD
                   (worldStars / 25) * 100,
+=======
+                  (worldStars /
+                    BOSS_STAR_REQUIREMENT) *
+                    100,
+>>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
                   100,
                 )}%`,
               }}
@@ -486,7 +487,11 @@ function Campaign() {
             !isLevelUnlocked(worldBoss)
           }
         >
+<<<<<<< HEAD
           {worldStars >= 25
+=======
+          {worldStars >= BOSS_STAR_REQUIREMENT
+>>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
             ? 'Boss auswählen'
             : 'Noch gesperrt'}
         </button>
