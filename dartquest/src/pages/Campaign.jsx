@@ -3,7 +3,7 @@ import { levels } from '../data/levels'
 import LevelModal from '../components/LevelModal'
 
 const CAMPAIGN_STORAGE_KEY = 'dartquest-campaign-progress'
-const BOSS_STAR_REQUIREMENT = 25
+const BOSS_STAR_REQUIREMENT = 22
 
 const worldNames = [
   'Anfänger I',
@@ -129,11 +129,7 @@ function Campaign() {
         progress.results,
       )
 
-<<<<<<< HEAD
-      return starsInLevelWorld >= 25
-=======
       return starsInLevelWorld >= BOSS_STAR_REQUIREMENT
->>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
     }
 
     return level.id <= progress.unlockedLevel
@@ -385,59 +381,55 @@ function Campaign() {
       </section>
 
       {selectedPreviewLevel &&
-        isLevelUnlocked(selectedPreviewLevel) && (
-          <article className="selected-level-card">
-            <div className="selected-level-main">
-              <p>{selectedPreviewLevel.title}</p>
+  isLevelUnlocked(selectedPreviewLevel) && (
+    <article className="selected-level-card">
 
-              <strong>{selectedPreviewLevel.task}</strong>
-            </div>
+      <div className="selected-level-main">
+        <p>{selectedPreviewLevel.title}</p>
 
-            <div className="selected-level-rating">
-              <span>Beste Bewertung</span>
+        <strong>
+          {selectedPreviewLevel.task}
+        </strong>
 
-              <div className="selected-level-stars">
-                {getLevelStars(selectedPreviewLevel)}
-              </div>
-            </div>
+        <span>Beste Bewertung</span>
 
-            <div className="selected-level-reward">
-              <small>
-                +{selectedPreviewLevel.rewardXP} XP
-              </small>
+        <div className="selected-level-stars">
+          {getLevelStars(selectedPreviewLevel)}
+        </div>
+      </div>
 
-              <small>
-                +{selectedPreviewLevel.rewardCoins} Coins
-              </small>
-            </div>
+      <div className="selected-level-side">
 
-            <button
-              type="button"
-              onClick={startSelectedLevel}
-            >
-              Spielen
-            </button>
-          </article>
-        )}
+        <div className="reward-box">
+          ⭐ +{selectedPreviewLevel.rewardXP} XP
+        </div>
+
+        <div className="reward-box">
+          🪙 +{selectedPreviewLevel.rewardCoins} Coins
+        </div>
+
+        <button
+          type="button"
+          onClick={startSelectedLevel}
+        >
+          Spielen
+        </button>
+
+      </div>
+
+    </article>
+)}
 
       <section className="boss-unlock-card">
         <div className="boss-chest">
-<<<<<<< HEAD
-          {worldStars >= 25 ? '👑' : '🎁'}
-=======
           {worldStars >= BOSS_STAR_REQUIREMENT
             ? '👑'
             : '🎁'}
->>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
         </div>
 
         <div className="boss-unlock-info">
           <strong>
-<<<<<<< HEAD
-            {worldStars >= 25
-=======
             {worldStars >= BOSS_STAR_REQUIREMENT
->>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
               ? `Boss-Level ${
                   worldBoss?.id ?? worldEndLevel
                 } ist freigeschaltet!`
@@ -446,25 +438,17 @@ function Campaign() {
                 } freizuschalten!`}
           </strong>
 
-<<<<<<< HEAD
-          <span>⭐ {worldStars} / 25</span>
-=======
           <span>
             ⭐ {worldStars} / {BOSS_STAR_REQUIREMENT}
           </span>
->>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
 
           <div className="boss-star-progress">
             <div
               style={{
                 width: `${Math.min(
-<<<<<<< HEAD
-                  (worldStars / 25) * 100,
-=======
                   (worldStars /
                     BOSS_STAR_REQUIREMENT) *
                     100,
->>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
                   100,
                 )}%`,
               }}
@@ -487,11 +471,7 @@ function Campaign() {
             !isLevelUnlocked(worldBoss)
           }
         >
-<<<<<<< HEAD
-          {worldStars >= 25
-=======
           {worldStars >= BOSS_STAR_REQUIREMENT
->>>>>>> 6569575 (Levelauswertung auf Sterne Buttons umgestellt)
             ? 'Boss auswählen'
             : 'Noch gesperrt'}
         </button>
