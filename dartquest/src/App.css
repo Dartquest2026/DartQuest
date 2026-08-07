@@ -1707,3 +1707,18 @@ background: linear-gradient(
   color: #42e695;
   font-size: 18px;
 }
+.give-up-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+
+  border: 1px solid rgba(255, 100, 112, 0.35);
+  border-radius: 14px;
+
+  background: rgba(217, 77, 89, 0.1);
+  color: #ff8d97;
+
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}

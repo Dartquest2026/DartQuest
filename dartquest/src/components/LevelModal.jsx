@@ -95,6 +95,10 @@ function LevelModal({ level, onClose, onComplete }) {
     onClose()
   }
 
+  function giveUpLevel() {
+    onClose()
+  }
+
   return (
     <div
       className="level-modal-backdrop"
@@ -156,6 +160,14 @@ function LevelModal({ level, onClose, onComplete }) {
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              className="give-up-button"
+              onClick={giveUpLevel}
+            >
+              Aufgeben
+            </button>
           </>
         )}
 
