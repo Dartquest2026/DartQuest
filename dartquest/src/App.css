@@ -1426,8 +1426,20 @@ background: linear-gradient(
   }
 
   .selected-level-card {
-    grid-template-columns: 1fr;
-  }
+  position: static;
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr;
+  gap: 16px;
+
+  width: 100%;
+  margin-top: 16px;
+  padding: 18px;
+
+  border: 1px solid rgba(66,230,149,.24);
+  border-radius: 18px;
+
+  background: rgba(6,23,18,.96);
+}
 
   .selected-level-card > button {
     grid-column: 1;
@@ -1441,4 +1453,257 @@ background: linear-gradient(
     grid-column: 1 / -1;
     width: 100%;
   }
+}
+.level-result-heading {
+  margin: 24px 0 14px;
+
+  color: #dce9e4;
+
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.star-result-options {
+  display: grid;
+  gap: 12px;
+}
+
+.star-result-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  padding: 16px 18px;
+
+  border-radius: 16px;
+
+  background: rgba(8, 25, 20, 0.95);
+  color: white;
+
+  font: inherit;
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.star-result-button:active {
+  transform: scale(0.98);
+}
+
+.star-result-button strong {
+  font-size: 23px;
+}
+
+.star-result-button span {
+  color: #c4d3ce;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* 3 Sterne */
+
+.star-result-button.stars-3 {
+  border: 1px solid rgba(66, 230, 149, 0.65);
+
+  background: linear-gradient(
+    135deg,
+    rgba(66, 230, 149, 0.18),
+    rgba(13, 55, 43, 0.92)
+  );
+}
+
+/* 2 Sterne */
+
+.star-result-button.stars-2 {
+  border: 1px solid rgba(244, 197, 66, 0.55);
+
+  background: linear-gradient(
+    135deg,
+    rgba(244, 197, 66, 0.14),
+    rgba(55, 47, 18, 0.78)
+  );
+}
+
+/* 1 Stern */
+
+.star-result-button.stars-1 {
+  border: 1px solid rgba(232, 145, 68, 0.5);
+
+  background: linear-gradient(
+    135deg,
+    rgba(232, 145, 68, 0.13),
+    rgba(55, 32, 17, 0.75)
+  );
+}
+.level-result-heading {
+  margin: 24px 0 14px;
+
+  color: #d8e5e0;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.star-result-options {
+  display: grid;
+  gap: 11px;
+}
+
+.star-result-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  min-height: 66px;
+  padding: 14px 17px;
+
+  border-radius: 16px;
+
+  color: white;
+  font: inherit;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.star-result-button:active {
+  transform: scale(0.97);
+}
+
+.star-result-button strong {
+  font-size: 22px;
+}
+
+.star-result-button span {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* 3 Sterne */
+
+.star-result-button.stars-3 {
+  border: 1px solid rgba(66, 230, 149, 0.7);
+
+  background: linear-gradient(
+    135deg,
+    rgba(66, 230, 149, 0.22),
+    rgba(10, 55, 42, 0.95)
+  );
+
+  box-shadow:
+    inset 0 0 18px rgba(66, 230, 149, 0.06),
+    0 0 18px rgba(66, 230, 149, 0.08);
+}
+
+.star-result-button.stars-3 span {
+  color: #7af0b3;
+}
+
+/* 2 Sterne */
+
+.star-result-button.stars-2 {
+  border: 1px solid rgba(244, 197, 66, 0.65);
+
+  background: linear-gradient(
+    135deg,
+    rgba(244, 197, 66, 0.18),
+    rgba(60, 48, 15, 0.9)
+  );
+}
+
+.star-result-button.stars-2 span {
+  color: #f4d976;
+}
+
+/* 1 Stern */
+
+.star-result-button.stars-1 {
+  border: 1px solid rgba(231, 139, 61, 0.6);
+
+  background: linear-gradient(
+    135deg,
+    rgba(231, 139, 61, 0.17),
+    rgba(59, 33, 15, 0.9)
+  );
+}
+
+.star-result-button.stars-1 span {
+  color: #f1a96e;
+}
+
+/* Nicht geschafft */
+
+.star-result-button.stars-failed {
+  border: 1px solid rgba(255, 92, 105, 0.45);
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 92, 105, 0.12),
+    rgba(54, 19, 23, 0.88)
+  );
+}
+
+.star-result-button.stars-failed span {
+  color: #ff919b;
+}
+
+/* Ergebnis */
+
+.level-result-screen {
+  text-align: center;
+}
+
+.level-result-stars {
+  margin: 20px 0 12px;
+  font-size: 46px;
+}
+
+.level-result-screen h2 {
+  margin: 0 0 8px;
+}
+
+.level-result-range {
+  margin: 0 0 20px;
+  color: #91a69f;
+}
+
+.level-result-rewards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+.level-result-rewards > div {
+  padding: 14px;
+
+  border: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 14px;
+
+  background: rgba(5, 20, 16, 0.72);
+}
+
+.level-result-rewards span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #91a69f;
+  font-size: 12px;
+}
+
+.level-result-rewards strong {
+  color: #42e695;
+  font-size: 18px;
 }

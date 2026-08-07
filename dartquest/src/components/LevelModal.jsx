@@ -1,89 +1,96 @@
 import { useEffect, useState } from 'react'
 
-function getStars(level, darts) {
-  if (darts < level.minArrows || darts > level.maxArrows) {
-    return 0
+function getStarOptions(level) {
+  const min = level.minArrows
+  const max = level.maxArrows
+  const remaining = max - min
+
+  const options = [
+    {
+      stars: 3,
+      label: '⭐⭐⭐',
+      minDarts: min,
+      maxDarts: min,
+    },
+  ]
+
+  if (remaining <= 0) {
+    return options
   }
 
-  if (level.id === 4) {
-    if (darts === 5) return 3
-    if (darts <= 7) return 2
-    return 1
+  const twoStarMin = min + 1
+
+  let twoStarMax
+
+  if (remaining % 2 === 1 && min <= 3) {
+    twoStarMax = min + Math.floor(remaining / 2)
+  } else {
+    twoStarMax = min + Math.ceil(remaining / 2)
   }
 
-  if (level.id === 6) {
-    if (darts === 6) return 3
-    if (darts <= 8) return 2
-    return 1
+  const oneStarMin = twoStarMax + 1
+
+  if (twoStarMin <= max) {
+    options.push({
+      stars: 2,
+      label: '⭐⭐',
+      minDarts: twoStarMin,
+      maxDarts: Math.min(twoStarMax, max),
+    })
   }
 
-  if (level.id === 7) {
-    if (darts === 1) return 3
-    if (darts <= 5) return 2
-    return 1
+  if (oneStarMin <= max) {
+    options.push({
+      stars: 1,
+      label: '⭐',
+      minDarts: oneStarMin,
+      maxDarts: max,
+    })
   }
 
-  if (level.id === 9) {
-    if (darts <= 3) return 3
-    if (darts <= 6) return 2
-    return 1
+  return options
+}
+
+function formatDarts(min, max) {
+  if (min === max) {
+    return `${min} ${min === 1 ? 'Pfeil' : 'Pfeile'}`
   }
 
-  if (darts === level.minArrows) {
-    return 3
-  }
-
-  if (darts <= 6) {
-    return 2
-  }
-
-  return 1
+  return `${min}–${max} Pfeile`
 }
 
 function LevelModal({ level, onClose, onComplete }) {
-  const [darts, setDarts] = useState('')
   const [result, setResult] = useState(null)
-  const [error, setError] = useState('')
 
   useEffect(() => {
-    setDarts('')
     setResult(null)
-    setError('')
   }, [level?.id])
 
   if (!level) {
     return null
   }
 
-  function evaluateLevel() {
-    const dartsNumber = Number(darts)
+  const starOptions = getStarOptions(level)
 
-    if (
-      !Number.isInteger(dartsNumber) ||
-      dartsNumber < level.minArrows ||
-      dartsNumber > level.maxArrows
-    ) {
-      setError(
-        `Bitte gib eine Zahl von ${level.minArrows} bis ${level.maxArrows} ein.`,
-      )
-
-      return
-    }
-
-    const stars = getStars(level, dartsNumber)
-
-    const levelResult = {
-      darts: dartsNumber,
-      stars,
+  function selectResult(option) {
+    setResult({
+      success: true,
+      stars: option.stars,
+      darts: null,
+      dartRange: formatDarts(
+        option.minDarts,
+        option.maxDarts,
+      ),
       xp: level.rewardXP,
       coins: level.rewardCoins,
-    }
-
-    setError('')
-    setResult(levelResult)
+    })
   }
 
   function finishLevel() {
+    if (!result) {
+      return
+    }
+
     onComplete(level, result)
     onClose()
   }
@@ -108,82 +115,72 @@ function LevelModal({ level, onClose, onComplete }) {
 
         <p className="eyebrow">
           {level.boss
-            ? 'BOSS-LEVEL'
+            ? `BOSS-LEVEL ${level.id}`
             : `LEVEL ${level.id}`}
         </p>
 
-        <h2>{level.task}</h2>
-
         {!result && (
           <>
+            <h2>{level.task}</h2>
+
             <div className="task-box">
               <span>Deine Aufgabe</span>
 
               <strong>{level.task}</strong>
 
               <p>
-                Schaffe die Aufgabe mit maximal{' '}
-                {level.maxArrows} Pfeilen.
+                Du hast maximal {level.maxArrows} Pfeile.
               </p>
             </div>
 
-            <label
-              className="daily-input-label"
-              htmlFor="level-darts"
-            >
-              Wie viele Pfeile hast du benötigt?
-            </label>
+            <p className="level-result-heading">
+              Wie hast du die Aufgabe geschafft?
+            </p>
 
-            <input
-              id="level-darts"
-              className="daily-input"
-              type="number"
-              min={level.minArrows}
-              max={level.maxArrows}
-              inputMode="numeric"
-              placeholder={`${level.minArrows} bis ${level.maxArrows}`}
-              value={darts}
-              onChange={(event) =>
-                setDarts(event.target.value)
-              }
-            />
+            <div className="star-result-options">
+              {starOptions.map((option) => (
+                <button
+                  key={option.stars}
+                  type="button"
+                  className={`star-result-button stars-${option.stars}`}
+                  onClick={() => selectResult(option)}
+                >
+                  <strong>{option.label}</strong>
 
-            {error && (
-              <p className="daily-error">
-                {error}
-              </p>
-            )}
-
-            <button
-              className="primary-button"
-              type="button"
-              onClick={evaluateLevel}
-            >
-              Auswerten
-            </button>
+                  <span>
+                    {formatDarts(
+                      option.minDarts,
+                      option.maxDarts,
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
           </>
         )}
 
         {result && (
-          <div className="daily-result">
-            <div className="daily-result-stars">
+          <div className="level-result-screen">
+            <div className="level-result-stars">
               {'⭐'.repeat(result.stars)}
             </div>
 
-            <h3>Level geschafft!</h3>
+            <h2>Level geschafft!</h2>
 
-            <p>
-              {result.darts} Pfeile benötigt
+            <p className="level-result-range">
+              {result.dartRange}
             </p>
 
-            <div className="daily-rewards">
-              <span>
-                +{result.xp} XP
-              </span>
+            <div className="level-result-rewards">
+              <div>
+                <span>XP</span>
+                <strong>+{result.xp}</strong>
+              </div>
 
-              <span>
-                +{result.coins} Quest Coins
-              </span>
+              <div>
+                <span>Quest Coins</span>
+                <strong>+{result.coins}</strong>
+              </div>
             </div>
 
             <button
