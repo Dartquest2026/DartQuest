@@ -1296,3 +1296,6 @@
     font-size: 9px;
   }
 }
+.campaign-topbar {
+  background: red !important;
+}
