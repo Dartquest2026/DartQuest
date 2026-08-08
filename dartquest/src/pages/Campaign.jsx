@@ -404,11 +404,28 @@ function Campaign() {
           </p>
         </div>
 
-        <div className="dq-world-switcher">
+        <div
+  className="dq-world-switcher"
+  style={{
+    display: 'grid',
+    gridTemplateColumns: '56px 122px 56px',
+    alignItems: 'center',
+    justifyContent: 'end',
+    gap: '8px',
+  }}
+>
 
   <button
     type="button"
     className="dq-world-arrow"
+    style={{
+      width: '56px',
+      height: '42px',
+      padding: 0,
+      borderRadius: '11px',
+      fontSize: '30px',
+      fontWeight: 900,
+    }}
     onClick={() => {
       const previousWorld =
         selectedWorld === 1
@@ -416,29 +433,25 @@ function Campaign() {
           : selectedWorld - 1
 
       setSelectedWorld(previousWorld)
+
       setPreviewLevelId(
         (previousWorld - 1) * 10 + 1,
       )
+
       setSelectedLevel(null)
     }}
   >
     ‹
   </button>
 
-  <button
-    type="button"
-    className="dq-world-current"
-    onClick={() => {
-      const nextWorld =
-        selectedWorld === worldNames.length
-          ? 1
-          : selectedWorld + 1
 
-      setSelectedWorld(nextWorld)
-      setPreviewLevelId(
-        (nextWorld - 1) * 10 + 1,
-      )
-      setSelectedLevel(null)
+  <div
+    className="dq-world-current"
+    style={{
+      width: '122px',
+      height: '42px',
+      padding: '3px 5px',
+      borderRadius: '11px',
     }}
   >
     <small>
@@ -448,11 +461,20 @@ function Campaign() {
     <strong>
       {worldNames[selectedWorld - 1]}
     </strong>
-  </button>
+  </div>
+
 
   <button
     type="button"
     className="dq-world-arrow"
+    style={{
+      width: '56px',
+      height: '42px',
+      padding: 0,
+      borderRadius: '11px',
+      fontSize: '30px',
+      fontWeight: 900,
+    }}
     onClick={() => {
       const nextWorld =
         selectedWorld === worldNames.length
@@ -460,9 +482,11 @@ function Campaign() {
           : selectedWorld + 1
 
       setSelectedWorld(nextWorld)
+
       setPreviewLevelId(
         (nextWorld - 1) * 10 + 1,
       )
+
       setSelectedLevel(null)
     }}
   >
