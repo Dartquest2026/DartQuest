@@ -404,22 +404,72 @@ function Campaign() {
           </p>
         </div>
 
-        <select
-          value={selectedWorld}
-          onChange={changeWorld}
-          className="dq-world-select"
-        >
-          {worldNames.map(
-            (world, index) => (
-              <option
-                key={world}
-                value={index + 1}
-              >
-                {world}
-              </option>
-            ),
-          )}
-        </select>
+        <div className="dq-world-switcher">
+
+  <button
+    type="button"
+    className="dq-world-arrow"
+    onClick={() => {
+      const previousWorld =
+        selectedWorld === 1
+          ? worldNames.length
+          : selectedWorld - 1
+
+      setSelectedWorld(previousWorld)
+      setPreviewLevelId(
+        (previousWorld - 1) * 10 + 1,
+      )
+      setSelectedLevel(null)
+    }}
+  >
+    ‹
+  </button>
+
+  <button
+    type="button"
+    className="dq-world-current"
+    onClick={() => {
+      const nextWorld =
+        selectedWorld === worldNames.length
+          ? 1
+          : selectedWorld + 1
+
+      setSelectedWorld(nextWorld)
+      setPreviewLevelId(
+        (nextWorld - 1) * 10 + 1,
+      )
+      setSelectedLevel(null)
+    }}
+  >
+    <small>
+      WELT {selectedWorld} / {worldNames.length}
+    </small>
+
+    <strong>
+      {worldNames[selectedWorld - 1]}
+    </strong>
+  </button>
+
+  <button
+    type="button"
+    className="dq-world-arrow"
+    onClick={() => {
+      const nextWorld =
+        selectedWorld === worldNames.length
+          ? 1
+          : selectedWorld + 1
+
+      setSelectedWorld(nextWorld)
+      setPreviewLevelId(
+        (nextWorld - 1) * 10 + 1,
+      )
+      setSelectedLevel(null)
+    }}
+  >
+    ›
+  </button>
+
+</div>
 
       </section>
 
@@ -669,69 +719,67 @@ function Campaign() {
 
           <section className="dq-level-card">
 
-            <div className="dq-level-description">
+  <div className="dq-level-description">
 
-              <small>
-                {
-                  selectedPreviewLevel.title
-                }
-              </small>
+    <small className="dq-level-name">
+      {selectedPreviewLevel.title}
+    </small>
 
-              <strong>
-                {
-                  selectedPreviewLevel.task
-                }
-              </strong>
+    <strong className="dq-level-task">
+      {selectedPreviewLevel.task}
+    </strong>
 
-              <span>
-                Beste Bewertung
-              </span>
+    <span className="dq-level-best">
+      Beste Bewertung
+    </span>
 
-              <div>
-                {getLevelStars(
-                  selectedPreviewLevel,
-                )}
-              </div>
+    <div className="dq-level-stars">
+      {getLevelStars(
+        selectedPreviewLevel,
+      )}
+    </div>
 
-            </div>
+  </div>
 
 
-            <div className="dq-level-actions">
+  <div className="dq-level-action-area">
 
-              <div className="dq-level-rewards">
+    <div className="dq-level-rewards">
 
-                <span>
-                  ⭐ +
-                  {
-                    selectedPreviewLevel
-                      .rewardXP
-                  }{' '}
-                  XP
-                </span>
+      <div className="dq-reward-item">
+        <span className="dq-reward-icon">
+          ⭐
+        </span>
 
-                <span>
-                  🪙 +
-                  {
-                    selectedPreviewLevel
-                      .rewardCoins
-                  }{' '}
-                  Coins
-                </span>
+        <strong>
+          +{selectedPreviewLevel.rewardXP} XP
+        </strong>
+      </div>
 
-              </div>
+      <div className="dq-reward-item">
+        <span className="dq-reward-icon">
+          🪙
+        </span>
 
-              <button
-                type="button"
-                onClick={
-                  startSelectedLevel
-                }
-              >
-                SPIELEN
-              </button>
+        <strong>
+          +{selectedPreviewLevel.rewardCoins} Coins
+        </strong>
+      </div>
 
-            </div>
+    </div>
 
-          </section>
+
+    <button
+      className="dq-play-button"
+      type="button"
+      onClick={startSelectedLevel}
+    >
+      SPIELEN
+    </button>
+
+  </div>
+
+</section>
         )}
 
 
