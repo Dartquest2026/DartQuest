@@ -931,3 +931,349 @@
     font-size: 8px;
   }
 }
+/* =========================================================
+   iPHONE – ALLES AUF EINEN BILDSCHIRM
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  .dq-campaign {
+    height: calc(
+      100dvh - 76px - env(safe-area-inset-bottom)
+    );
+
+    padding: 8px 12px 6px;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+
+  .dq-header {
+    grid-template-columns: 42px 1fr 42px;
+
+    flex-shrink: 0;
+
+    gap: 7px;
+    margin-bottom: 6px;
+  }
+
+  .dq-header-button {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 11px;
+
+    font-size: 19px;
+  }
+
+  .dq-logo {
+    font-size: 18px;
+  }
+
+  .dq-logo span {
+    font-size: 21px;
+  }
+
+  /* LEVEL / XP / COINS */
+
+  .dq-status {
+    grid-template-columns: 46px 1fr 82px;
+
+    flex-shrink: 0;
+
+    gap: 6px;
+    margin-bottom: 7px;
+  }
+
+  .dq-level {
+    width: 44px;
+    height: 46px;
+
+    border-radius: 11px;
+  }
+
+  .dq-level small {
+    font-size: 8px;
+  }
+
+  .dq-level strong {
+    font-size: 18px;
+  }
+
+  .dq-xp > div:first-child {
+    margin-bottom: 3px;
+
+    font-size: 10px;
+  }
+
+  .dq-xp-track {
+    height: 5px;
+  }
+
+  .dq-coins {
+    padding: 5px 6px;
+
+    font-size: 10px;
+  }
+
+  .dq-coins strong {
+    font-size: 12px;
+  }
+
+  .dq-coins span {
+    font-size: 8px;
+  }
+
+  /* KAMPAGNE + DROPDOWN */
+
+  .dq-title {
+    flex-shrink: 0;
+
+    margin-bottom: 6px;
+  }
+
+  .dq-title h1 {
+    font-size: 19px;
+  }
+
+  .dq-title p {
+    display: none;
+  }
+
+  .dq-world-select {
+    min-width: 125px;
+
+    padding: 7px 8px;
+
+    border-radius: 10px;
+
+    font-size: 9px;
+  }
+
+  /* FORTSCHRITT */
+
+  .dq-overview {
+    flex-shrink: 0;
+
+    grid-template-columns: 1.05fr 1fr;
+
+    gap: 6px;
+
+    margin-bottom: 5px;
+    padding: 7px;
+
+    border-radius: 13px;
+  }
+
+  .dq-overview-left {
+    grid-template-columns: 38px 1fr;
+
+    gap: 6px;
+  }
+
+  .dq-world-icon {
+    width: 37px;
+    height: 43px;
+
+    border-radius: 10px;
+
+    font-size: 18px;
+  }
+
+  .dq-progress-info {
+    gap: 2px;
+  }
+
+  .dq-progress-info strong {
+    font-size: 8px;
+  }
+
+  .dq-progress-info span,
+  .dq-progress-row b,
+  .dq-progress-info small {
+    font-size: 7px;
+  }
+
+  .dq-progress-track {
+    height: 4px;
+  }
+
+  .dq-boss-rewards {
+    padding-left: 6px;
+  }
+
+  .dq-boss-rewards > span {
+    margin-bottom: 4px;
+
+    font-size: 7px;
+  }
+
+  .dq-boss-rewards b {
+    font-size: 15px;
+  }
+
+  .dq-boss-rewards small {
+    font-size: 6px;
+  }
+
+  /* TABS */
+
+  .dq-tabs {
+    flex-shrink: 0;
+
+    height: 26px;
+
+    gap: 25px;
+
+    margin-bottom: 3px;
+  }
+
+  .dq-tabs button {
+    padding: 4px 8px;
+
+    font-size: 10px;
+  }
+
+  /* KARTE
+     Das ist der entscheidende Teil */
+
+  .dq-map {
+    flex: 1 1 auto;
+
+    min-height: 250px;
+    height: auto;
+
+    border-radius: 15px;
+  }
+
+  .dq-node {
+    width: 39px;
+    height: 39px;
+  }
+
+  .dq-node strong {
+    font-size: 14px;
+  }
+
+  .dq-node-stars {
+    top: calc(100% + 3px);
+
+    width: 58px;
+
+    font-size: 8px;
+  }
+
+  .dq-node.boss {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dq-crown {
+    font-size: 18px;
+  }
+
+  /* LEVELKARTE */
+
+  .dq-level-card {
+    flex-shrink: 0;
+
+    grid-template-columns: 1fr 145px;
+
+    gap: 6px;
+
+    margin-top: 5px;
+    padding: 7px 8px;
+
+    border-radius: 12px;
+  }
+
+  .dq-level-description {
+    gap: 2px;
+  }
+
+  .dq-level-description small {
+    font-size: 9px;
+  }
+
+  .dq-level-description strong {
+    font-size: 13px;
+  }
+
+  .dq-level-description span {
+    margin-top: 1px;
+
+    font-size: 7px;
+  }
+
+  .dq-level-description div {
+    font-size: 14px;
+  }
+
+  .dq-level-actions {
+    gap: 4px;
+  }
+
+  .dq-level-rewards {
+    gap: 4px;
+  }
+
+  .dq-level-rewards span {
+    min-height: 25px;
+
+    padding: 3px;
+
+    font-size: 7px;
+  }
+
+  .dq-level-actions button {
+    padding: 6px;
+
+    border-radius: 8px;
+
+    font-size: 12px;
+  }
+
+  /* BOSS */
+
+  .dq-boss-card {
+    flex-shrink: 0;
+
+    grid-template-columns: 32px 1fr 58px;
+
+    gap: 5px;
+
+    margin-top: 5px;
+    padding: 6px;
+
+    border-radius: 11px;
+  }
+
+  .dq-boss-icon {
+    font-size: 22px;
+  }
+
+  .dq-boss-info {
+    gap: 2px;
+  }
+
+  .dq-boss-info strong,
+  .dq-boss-info span {
+    font-size: 8px;
+  }
+
+  .dq-boss-track {
+    height: 4px;
+  }
+
+  .dq-boss-card > button {
+    padding: 6px 3px;
+
+    border-radius: 7px;
+
+    font-size: 7px;
+  }
+}
