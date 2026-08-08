@@ -362,3 +362,35 @@
     width: 100%;
   }
 }
+/* =========================================================
+   DEV RESET BUTTON
+   ========================================================= */
+
+.dev-reset-button {
+  width: 100%;
+
+  margin-top: 14px;
+  padding: 13px 16px;
+
+  border: 1px solid rgba(255, 92, 92, 0.35);
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(127, 31, 31, 0.9),
+      rgba(83, 19, 19, 0.95)
+    );
+
+  color: #ffffff;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.dev-reset-button:active {
+  transform: scale(0.98);
+}

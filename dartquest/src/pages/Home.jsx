@@ -51,9 +51,32 @@ function Home({ onStartCampaign }) {
 
       </header>
 
-      <Dashboard
+            <Dashboard
         onStartCampaign={onStartCampaign}
       />
+
+      <button
+        className="dev-reset-button"
+        type="button"
+        onClick={() => {
+          const confirmed = window.confirm(
+            'Fortschritt wirklich komplett zurücksetzen?'
+          )
+
+          if (!confirmed) {
+            return
+          }
+
+          localStorage.removeItem(
+            'dartquest-campaign-progress'
+          )
+
+          window.location.reload()
+        }}
+      >
+        🗑 Fortschritt zurücksetzen
+      </button>
+
     </section>
   )
 }
