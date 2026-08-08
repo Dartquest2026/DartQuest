@@ -239,82 +239,69 @@ function Campaign() {
 
   return (
     <section className="campaign-screen">
-      <header className="campaign-header">
-        <div>
-          <p className="eyebrow">
-            KAMPAGNE · WELT {selectedWorld}
-          </p>
+      <header className="campaign-game-header">
+  <button
+    className="campaign-menu-button"
+    type="button"
+    aria-label="Menü öffnen"
+  >
+    ☰
+  </button>
 
-          <h1>{worldNames[selectedWorld - 1]}</h1>
+  <div className="campaign-brand">
+    <span className="campaign-brand-dart">🎯</span>
+    <strong>DART QUEST</strong>
+  </div>
 
-          <p className="campaign-subtitle">
-            Steige Level für Level auf und besiege den Boss.
-          </p>
-        </div>
+  <div className="campaign-player-stats">
+    <div className="campaign-level-badge">
+      <span>LVL</span>
+      <strong>{Math.ceil(progress.unlockedLevel / 10)}</strong>
+    </div>
 
-        <select
-          className="campaign-select-button"
-          value={selectedWorld}
-          onChange={changeWorld}
-          aria-label="Kampagne auswählen"
-        >
-          {worldNames.map((worldName, index) => (
-            <option key={worldName} value={index + 1}>
-              Welt {index + 1} – {worldName}
-            </option>
-          ))}
-        </select>
-      </header>
+    <div className="campaign-xp-box">
+      <div className="campaign-xp-row">
+        <span>XP</span>
+        <strong>0 / 500</strong>
+      </div>
 
-      <section className="campaign-summary-card">
-        <div className="campaign-summary-progress">
-          <div className="campaign-emblem">🎯</div>
+      <div className="campaign-xp-track">
+        <div
+          className="campaign-xp-fill"
+          style={{ width: '0%' }}
+        />
+      </div>
 
-          <div>
-            <strong>
-              Kampagne: {worldNames[selectedWorld - 1]}
-            </strong>
+      <div className="campaign-coins-row">
+        🪙 0 Coins
+      </div>
+    </div>
+  </div>
+</header>
+<div className="campaign-world-row">
+  <div>
+    <p className="eyebrow">
+      KAMPAGNE · WELT {selectedWorld}
+    </p>
 
-            <div className="campaign-progress-label">
-              <span>Fortschritt</span>
-              <span>{campaignPercent}%</span>
-            </div>
+    <h1>{worldNames[selectedWorld - 1]}</h1>
+  </div>
 
-            <div className="campaign-progress-bar">
-              <div
-                className="campaign-progress-fill"
-                style={{
-                  width: `${campaignPercent}%`,
-                }}
-              />
-            </div>
-
-            <small>
-              {completedWorldLevels} von 10 Leveln abgeschlossen
-            </small>
-          </div>
-        </div>
-
-        <div className="boss-rewards">
-          <p>
-            Belohnung für Boss-Level{' '}
-            {worldBoss?.id ?? worldEndLevel}
-          </p>
-
-          <div className="boss-reward-items">
-            <span>
-              🪙 +{worldBoss?.rewardCoins ?? 0} Coins
-            </span>
-
-            <span>
-              ⭐ +{worldBoss?.rewardXP ?? 0} XP
-            </span>
-
-            <span>🃏 Kartenpaket</span>
-          </div>
-        </div>
-      </section>
-
+  <select
+    className="campaign-select-button"
+    value={selectedWorld}
+    onChange={changeWorld}
+  >
+    {worldNames.map((worldName, index) => (
+      <option
+        key={worldName}
+        value={index + 1}
+      >
+        Welt {index + 1} – {worldName}
+      </option>
+    ))}
+  </select>
+</div>
       <section className="campaign-world-map">
 
   <svg
