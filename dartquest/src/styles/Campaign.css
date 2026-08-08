@@ -1419,3 +1419,493 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+/* =========================================================
+   iPHONE / MOBILE – ONE SCREEN LAYOUT
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  .campaign-screen {
+    width: 100%;
+    height: calc(100dvh - 82px);
+
+    padding: 0 0 4px;
+
+    overflow: hidden;
+  }
+
+  /* Alten großen Header stark verkleinern */
+
+  .campaign-header {
+    display: grid;
+
+    grid-template-columns: 1fr auto;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 0 0 5px;
+  }
+
+  .campaign-header .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+
+  .campaign-header h1 {
+    margin: 1px 0;
+
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .campaign-subtitle {
+    display: none;
+  }
+
+  /* Welt-Auswahl rechts */
+
+  .campaign-select-button {
+    width: 145px;
+    max-width: 145px;
+
+    padding: 7px 8px;
+
+    border-radius: 9px;
+
+    font-size: 10px;
+  }
+
+  /* GROSSE SUMMARY AUF HANDY AUSBLENDEN */
+
+  .campaign-summary-card {
+    display: none;
+  }
+
+  /* KARTE / LISTE */
+
+  .campaign-tabs {
+    height: 31px;
+
+    gap: 22px;
+
+    margin: 0;
+  }
+
+  .campaign-tabs button {
+    padding: 5px 9px;
+
+    font-size: 11px;
+  }
+
+  /* KARTE */
+
+  .campaign-world-map {
+    height: 355px;
+
+    margin: 0;
+
+    border-radius: 17px;
+  }
+
+  /* Levelpunkte etwas kleiner */
+
+  .map-level-node {
+    width: 40px;
+    height: 40px;
+
+    border-width: 2px;
+  }
+
+  .map-level-node.boss {
+    width: 50px;
+    height: 50px;
+  }
+
+  .map-level-number {
+    font-size: 14px;
+  }
+
+  .map-level-stars {
+    top: calc(100% + 3px);
+
+    width: 60px;
+
+    font-size: 9px;
+  }
+
+  .boss-crown {
+    font-size: 20px;
+  }
+
+  /* LEVELKARTE */
+
+  .selected-level-card {
+    display: grid;
+
+    grid-template-columns: 1fr 145px;
+
+    gap: 7px;
+
+    margin-top: 6px;
+    padding: 8px 10px;
+
+    border-radius: 14px;
+  }
+
+  .selected-level-main {
+    gap: 2px;
+  }
+
+  .selected-level-main p {
+    font-size: 10px;
+  }
+
+  .selected-level-main strong {
+    font-size: 13px;
+    line-height: 1.1;
+  }
+
+  .selected-level-main span {
+    margin-top: 1px;
+
+    font-size: 8px;
+  }
+
+  .selected-level-stars {
+    font-size: 14px;
+  }
+
+  .selected-level-side {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 4px;
+  }
+
+  .reward-box {
+    min-height: 25px;
+
+    padding: 3px;
+
+    font-size: 8px;
+  }
+
+  .selected-level-side button {
+    grid-column: 1 / -1;
+
+    padding: 7px;
+
+    font-size: 12px;
+
+    border-radius: 8px;
+  }
+
+  /* BOSS KARTE */
+
+  .boss-unlock-card {
+    display: grid;
+
+    grid-template-columns: 34px 1fr 85px;
+
+    gap: 6px;
+
+    margin-top: 5px;
+    padding: 7px 8px;
+
+    border-radius: 13px;
+  }
+
+  .boss-chest {
+    font-size: 24px;
+  }
+
+  .boss-unlock-info {
+    gap: 2px;
+  }
+
+  .boss-unlock-info strong {
+    font-size: 8px;
+    line-height: 1.1;
+  }
+
+  .boss-unlock-info span {
+    font-size: 9px;
+  }
+
+  .boss-star-progress {
+    height: 4px;
+  }
+
+  .boss-unlock-card > button {
+    grid-column: auto;
+
+    width: auto;
+
+    padding: 6px 4px;
+
+    font-size: 7px;
+
+    border-radius: 8px;
+  }
+}
+/* ==========================================
+   NEUES CAMPAIGN LAYOUT
+   ========================================== */
+
+.campaign-topbar {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+.campaign-topbar-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: #0d211b;
+  color: #cbd8d3;
+
+  font-size: 19px;
+}
+
+.campaign-topbar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  color: white;
+
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.campaign-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 12px;
+}
+
+.campaign-title-row h1 {
+  margin: 0;
+
+  font-size: 21px;
+}
+
+.campaign-title-row p {
+  margin: 4px 0 0;
+
+  color: #82968f;
+
+  font-size: 10px;
+}
+
+.campaign-world-select {
+  width: 125px;
+
+  padding: 9px 10px;
+
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+
+  background: #0b201a;
+  color: white;
+
+  font-size: 10px;
+}
+
+/* Übersicht */
+
+.campaign-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+
+  margin-bottom: 10px;
+  padding: 12px;
+
+  border: 1px solid rgba(57,227,160,.17);
+  border-radius: 15px;
+
+  background: #061914;
+}
+
+.campaign-overview-progress {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+
+  align-items: center;
+
+  gap: 9px;
+}
+
+.campaign-overview-icon {
+  display: grid;
+
+  width: 43px;
+  height: 50px;
+
+  place-items: center;
+
+  border: 1px solid rgba(57,227,160,.35);
+  border-radius: 12px;
+
+  font-size: 22px;
+}
+
+.campaign-overview-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.campaign-overview-info strong {
+  font-size: 10px;
+}
+
+.campaign-overview-info span,
+.campaign-overview-info small {
+  color: #82968f;
+
+  font-size: 8px;
+}
+
+.campaign-overview-progress-row {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+.campaign-overview-progressbar {
+  flex: 1;
+
+  height: 5px;
+
+  overflow: hidden;
+
+  border-radius: 99px;
+
+  background: #03100d;
+}
+
+.campaign-overview-progressbar > div {
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #42e695,
+      #21c7a8
+    );
+}
+
+.campaign-overview-progress-row b {
+  color: #42e695;
+
+  font-size: 8px;
+}
+
+/* Rewards */
+
+.campaign-overview-rewards {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  padding-left: 10px;
+
+  border-left:
+    1px solid rgba(255,255,255,.06);
+}
+
+.campaign-overview-rewards > span {
+  margin-bottom: 8px;
+
+  color: #abbdb6;
+
+  font-size: 8px;
+}
+
+.campaign-overview-reward-items {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 4px;
+}
+
+.campaign-overview-reward-items strong {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 3px;
+
+  font-size: 15px;
+}
+
+.campaign-overview-reward-items small {
+  color: #dce7e3;
+
+  font-size: 7px;
+}
+
+/* MOBILE */
+
+@media (max-width: 560px) {
+
+  .campaign-topbar {
+    margin-bottom: 8px;
+  }
+
+  .campaign-title-row {
+    margin-bottom: 7px;
+  }
+
+  .campaign-title-row p {
+    display: none;
+  }
+
+  .campaign-overview {
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+
+  .campaign-tabs {
+    height: 29px;
+    margin: 0 0 3px;
+  }
+
+  .campaign-world-map {
+    height: 300px;
+  }
+
+  .selected-level-card {
+    margin-top: 5px;
+  }
+
+  .boss-unlock-card {
+    margin-top: 5px;
+  }
+}
