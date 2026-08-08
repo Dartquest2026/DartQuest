@@ -1068,3 +1068,231 @@
     font-size: 15px;
   }
 }
+/* =========================================================
+   FIX: HEADER + iPHONE FIT
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  /* TOPBAR sauber in einer Zeile */
+
+  .campaign-topbar {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 8px;
+  }
+
+  .campaign-icon-button {
+    width: 42px;
+    height: 42px;
+
+    font-size: 20px;
+  }
+
+  .campaign-logo {
+    justify-content: center;
+
+    gap: 6px;
+
+    font-size: 18px;
+    white-space: nowrap;
+  }
+
+  .campaign-logo-mark {
+    font-size: 22px;
+  }
+
+  /* PLAYER BAR ebenfalls sauber nebeneinander */
+
+  .campaign-playerbar {
+    display: grid;
+    grid-template-columns: 50px 1fr 95px;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 10px;
+  }
+
+  .player-level-badge {
+    width: 48px;
+    height: 52px;
+  }
+
+  .player-level-badge span {
+    font-size: 9px;
+  }
+
+  .player-level-badge strong {
+    font-size: 20px;
+  }
+
+  .player-xp-label {
+    gap: 8px;
+    margin-bottom: 4px;
+
+    font-size: 11px;
+  }
+
+  .player-xp-track {
+    height: 6px;
+  }
+
+  .player-coins {
+    padding: 8px 9px;
+
+    font-size: 10px;
+    text-align: center;
+  }
+
+  /* KAMPAGNENKOPF KOMPAKTER */
+
+  .campaign-heading {
+    margin-bottom: 8px;
+  }
+
+  .campaign-heading h1 {
+    font-size: 21px;
+  }
+
+  .campaign-heading p {
+    display: none;
+  }
+
+  .campaign-world-select {
+    min-width: 135px;
+    padding: 8px 9px;
+
+    font-size: 10px;
+  }
+
+  /* SUMMARY ETWAS FLACHER */
+
+  .campaign-summary {
+    gap: 8px;
+
+    margin-bottom: 8px;
+    padding: 9px;
+  }
+
+  .campaign-summary-left {
+    grid-template-columns: 45px 1fr;
+    gap: 8px;
+  }
+
+  .campaign-shield {
+    width: 43px;
+    height: 50px;
+
+    font-size: 22px;
+  }
+
+  .campaign-summary-progress {
+    gap: 4px;
+  }
+
+  .campaign-summary-progress strong {
+    font-size: 10px;
+  }
+
+  .campaign-summary-progress > span,
+  .campaign-summary-progress small {
+    font-size: 8px;
+  }
+
+  .campaign-summary-rewards {
+    padding-left: 8px;
+  }
+
+  .campaign-summary-rewards > span {
+    margin-bottom: 7px;
+
+    font-size: 8px;
+  }
+
+  .summary-rewards-grid b {
+    font-size: 17px;
+  }
+
+  .summary-rewards-grid small {
+    font-size: 7px;
+  }
+
+  /* TABS */
+
+  .campaign-tabs {
+    margin-bottom: 3px;
+  }
+
+  .campaign-tabs button {
+    padding: 7px 10px;
+
+    font-size: 11px;
+  }
+
+  /* KARTE ETWAS KÜRZER */
+
+  .campaign-world-map {
+    height: 360px;
+  }
+
+  /* LEVEL-KARTE ETWAS FLACHER */
+
+  .selected-level-card {
+    grid-template-columns: 1fr 170px;
+
+    gap: 8px;
+
+    margin-top: 6px;
+    padding: 10px;
+  }
+
+  .selected-level-main strong {
+    font-size: 15px;
+  }
+
+  .selected-level-stars {
+    font-size: 18px;
+  }
+
+  .reward-box {
+    padding: 7px;
+
+    font-size: 10px;
+  }
+
+  .selected-level-side button {
+    font-size: 14px;
+  }
+
+  /* BOSS-KARTE ETWAS FLACHER */
+
+  .boss-unlock-card {
+    grid-template-columns: 42px 1fr 88px;
+
+    gap: 7px;
+
+    margin-top: 6px;
+    padding: 8px;
+  }
+
+  .boss-chest {
+    font-size: 28px;
+  }
+
+  .boss-unlock-info strong {
+    font-size: 10px;
+  }
+
+  .boss-unlock-info span {
+    font-size: 10px;
+  }
+
+  .boss-unlock-card > button {
+    padding: 8px 6px;
+
+    font-size: 9px;
+  }
+}
