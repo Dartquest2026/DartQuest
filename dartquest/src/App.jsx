@@ -1,10 +1,12 @@
 import { useState } from 'react'
+
 import Home from './pages/Home'
 import Campaign from './pages/Campaign'
 import BottomNav from './components/BottomNav'
 
 import './styles/App.css'
 import './styles/BottomNav.css'
+import './styles/LevelModal.css'
 
 function App() {
   const [activePage, setActivePage] = useState('home')

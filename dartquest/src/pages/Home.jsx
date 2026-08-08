@@ -1,4 +1,4 @@
-import logo from '../assets/dartquest-logo.jpeg'
+import logo from '../assets/dartquest-logo.png'
 import Dashboard from '../components/Dashboard'
 
 import '../styles/Home.css'

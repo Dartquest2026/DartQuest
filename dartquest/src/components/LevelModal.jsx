@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import '../styles/LevelModal.css'
 
 function getStarOptions(level) {
   const min = level.minArrows
@@ -19,7 +20,6 @@ function getStarOptions(level) {
   }
 
   const twoStarMin = min + 1
-
   let twoStarMax
 
   if (remaining % 2 === 1 && min <= 3) {
@@ -59,12 +59,31 @@ function formatDarts(min, max) {
   return `${min}–${max} Pfeile`
 }
 
-function LevelModal({ level, onClose, onComplete }) {
+function LevelModal({
+  level,
+  onClose,
+  onComplete,
+}) {
   const [result, setResult] = useState(null)
 
   useEffect(() => {
     setResult(null)
   }, [level?.id])
+
+  useEffect(() => {
+    if (!result || !level) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      onComplete(level, result)
+      onClose()
+    }, 2500)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [result, level, onComplete, onClose])
 
   if (!level) {
     return null
@@ -77,10 +96,12 @@ function LevelModal({ level, onClose, onComplete }) {
       success: true,
       stars: option.stars,
       darts: null,
+
       dartRange: formatDarts(
         option.minDarts,
         option.maxDarts,
       ),
+
       xp: level.rewardXP,
       coins: level.rewardCoins,
     })
@@ -109,7 +130,7 @@ function LevelModal({ level, onClose, onComplete }) {
         onClick={(event) => event.stopPropagation()}
       >
         <button
-          className="modal-close"
+          className="level-modal-close"
           type="button"
           onClick={onClose}
           aria-label="Level schließen"
@@ -117,62 +138,86 @@ function LevelModal({ level, onClose, onComplete }) {
           ×
         </button>
 
-        <p className="eyebrow">
-          {level.boss
-            ? `BOSS-LEVEL ${level.id}`
-            : `LEVEL ${level.id}`}
-        </p>
-
         {!result && (
           <>
-            <h2>{level.task}</h2>
+            <p className="level-modal-eyebrow">
+              {level.boss
+                ? `BOSS-LEVEL ${level.id}`
+                : `LEVEL ${level.id}`}
+            </p>
 
-            <div className="task-box">
-              <span>Deine Aufgabe</span>
+            <h2 className="level-modal-title">
+              {level.task}
+            </h2>
 
-              <strong>{level.task}</strong>
+            <div className="level-modal-task">
+              <p>
+                Deine Aufgabe:{' '}
+                <strong>{level.task}</strong>
+              </p>
 
               <p>
-                Du hast maximal {level.maxArrows} Pfeile.
+                Du hast maximal{' '}
+                <strong>{level.maxArrows} Pfeile</strong>.
               </p>
             </div>
 
-            <p className="level-result-heading">
+            <p className="level-modal-question">
               Wie hast du die Aufgabe geschafft?
             </p>
 
-            <div className="star-result-options">
+            <div className="level-modal-options">
               {starOptions.map((option) => (
                 <button
                   key={option.stars}
                   type="button"
-                  className={`star-result-button stars-${option.stars}`}
+                  className="level-choice"
                   onClick={() => selectResult(option)}
                 >
-                  <strong>{option.label}</strong>
+                  <span className="level-choice-stars">
+                    {option.label}
+                  </span>
 
-                  <span>
+                  <span className="level-choice-text">
                     {formatDarts(
                       option.minDarts,
                       option.maxDarts,
                     )}
                   </span>
+
+                  <span className="level-choice-arrow">
+                    ›
+                  </span>
                 </button>
               ))}
-            </div>
 
-            <button
-              type="button"
-              className="give-up-button"
-              onClick={giveUpLevel}
-            >
-              Aufgeben
-            </button>
+              <button
+                type="button"
+                className="level-choice level-choice-giveup"
+                onClick={giveUpLevel}
+              >
+                <span className="level-choice-stars">
+                  ❌
+                </span>
+
+                <span className="level-choice-text">
+                  Aufgeben
+                </span>
+
+                <span className="level-choice-arrow">
+                  ›
+                </span>
+              </button>
+            </div>
           </>
         )}
 
         {result && (
           <div className="level-result-screen">
+            <p className="level-modal-eyebrow">
+              LEVEL {level.id}
+            </p>
+
             <div className="level-result-stars">
               {'⭐'.repeat(result.stars)}
             </div>
@@ -190,13 +235,13 @@ function LevelModal({ level, onClose, onComplete }) {
               </div>
 
               <div>
-                <span>Quest Coins</span>
+                <span>Coins</span>
                 <strong>+{result.coins}</strong>
               </div>
             </div>
 
             <button
-              className="primary-button"
+              className="level-result-continue"
               type="button"
               onClick={finishLevel}
             >

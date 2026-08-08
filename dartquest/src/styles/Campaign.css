@@ -6,6 +6,133 @@
   width: 100%;
   padding-bottom: 30px;
 }
+/* =========================================================
+   GAME HEADER
+   ========================================================= */
+
+.campaign-game-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  margin-bottom:18px;
+}
+
+.campaign-menu-button{
+  width:48px;
+  height:48px;
+
+  border:0;
+  border-radius:14px;
+
+  background:#10241d;
+  color:#fff;
+
+  font-size:24px;
+  cursor:pointer;
+}
+
+.campaign-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  font-size:22px;
+  font-weight:900;
+}
+
+.campaign-brand-dart{
+  font-size:30px;
+}
+
+.campaign-player-stats{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.campaign-level-badge{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+
+  width:58px;
+  height:58px;
+
+  border-radius:16px;
+
+  background:#143328;
+}
+
+.campaign-level-badge span{
+  font-size:11px;
+  color:#9ec4b6;
+}
+
+.campaign-level-badge strong{
+  font-size:22px;
+}
+
+.campaign-xp-box{
+  width:150px;
+
+  padding:10px 12px;
+
+  border-radius:16px;
+
+  background:#10241d;
+}
+
+.campaign-xp-row{
+  display:flex;
+  justify-content:space-between;
+
+  margin-bottom:6px;
+
+  font-size:12px;
+}
+
+.campaign-xp-track{
+  overflow:hidden;
+
+  height:8px;
+
+  border-radius:999px;
+
+  background:#071511;
+}
+
+.campaign-xp-fill{
+  width:0%;
+  height:100%;
+
+  background:linear-gradient(
+    90deg,
+    #42e695,
+    #24d4b3
+  );
+}
+
+.campaign-coins-row{
+  margin-top:8px;
+
+  color:#f6d36b;
+
+  font-size:12px;
+  font-weight:700;
+}
+
+/* Zeile unter dem Header */
+
+.campaign-world-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:18px;
+}
+
 
 /* =========================================================
    HEADER
@@ -984,5 +1111,311 @@
 
   .selected-level-side button {
     grid-column: 1 / -1;
+  }
+}
+/* =========================================================
+   FINAL MOBILE FIT – ALLES AUF EINEN BILDSCHIRM
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  .campaign-screen {
+    width: 100%;
+    padding-bottom: 0;
+  }
+
+  /* HEADER KOMPAKTER */
+
+  .campaign-game-header {
+    min-height: 46px;
+    margin-bottom: 5px;
+    gap: 6px;
+  }
+
+  .campaign-menu-button {
+    width: 34px;
+    height: 34px;
+
+    border-radius: 10px;
+
+    font-size: 19px;
+  }
+
+  .campaign-brand {
+    gap: 5px;
+
+    font-size: 14px;
+  }
+
+  .campaign-brand-dart {
+    font-size: 19px;
+  }
+
+  .campaign-player-stats {
+    gap: 5px;
+  }
+
+  .campaign-level-badge {
+    width: 38px;
+    height: 40px;
+
+    border-radius: 11px;
+  }
+
+  .campaign-level-badge span {
+    font-size: 7px;
+  }
+
+  .campaign-level-badge strong {
+    font-size: 15px;
+  }
+
+  .campaign-xp-box {
+    width: 84px;
+
+    padding: 5px 7px;
+
+    border-radius: 11px;
+  }
+
+  .campaign-xp-row {
+    margin-bottom: 3px;
+
+    font-size: 8px;
+  }
+
+  .campaign-xp-track {
+    height: 5px;
+  }
+
+  .campaign-coins-row {
+    margin-top: 4px;
+
+    font-size: 8px;
+  }
+
+  /* WELTAUSWAHL */
+
+  .campaign-world-row {
+    min-height: 38px;
+    margin-bottom: 2px;
+  }
+
+  .campaign-world-row h1 {
+    margin: 1px 0 0;
+
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .campaign-world-row .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+
+  .campaign-select-button {
+    width: 130px;
+    max-width: 130px;
+
+    padding: 7px 7px;
+
+    border-radius: 10px;
+
+    font-size: 9px;
+  }
+
+  /* TABS */
+
+  .campaign-tabs {
+    gap: 20px;
+
+    height: 34px;
+    margin: 0;
+  }
+
+  .campaign-tabs button {
+    padding: 6px 9px;
+
+    font-size: 11px;
+  }
+
+  /* KARTE */
+
+  .campaign-world-map {
+    height: 300px;
+
+    border-radius: 18px;
+  }
+
+  /* LEVELKREISE */
+
+  .map-level-node {
+    width: 40px;
+    height: 40px;
+
+    border-width: 2px;
+  }
+
+  .map-level-node.boss {
+    width: 49px;
+    height: 49px;
+  }
+
+  .map-level-number {
+    font-size: 14px;
+  }
+
+  .map-level-stars {
+    top: calc(100% + 3px);
+
+    width: 60px;
+
+    font-size: 9px;
+  }
+
+  .boss-crown {
+    font-size: 20px;
+  }
+
+  /* AUSGEWÄHLTES LEVEL */
+
+  .selected-level-card {
+    display: grid;
+
+    grid-template-columns: 1fr 155px;
+
+    gap: 8px;
+
+    margin-top: 6px;
+    padding: 9px 10px;
+
+    border-radius: 14px;
+  }
+
+  .selected-level-main {
+    gap: 2px;
+  }
+
+  .selected-level-main p {
+    font-size: 10px;
+  }
+
+  .selected-level-main strong {
+    font-size: 13px;
+    line-height: 1.15;
+  }
+
+  .selected-level-main span {
+    margin-top: 2px;
+
+    font-size: 8px;
+  }
+
+  .selected-level-stars {
+    font-size: 14px;
+  }
+
+  .selected-level-side {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 4px;
+  }
+
+  .reward-box {
+    min-height: 27px;
+
+    padding: 4px 5px;
+
+    border-radius: 8px;
+
+    font-size: 8px;
+  }
+
+  .selected-level-side button {
+    grid-column: 1 / -1;
+
+    padding: 7px;
+
+    border-radius: 9px;
+
+    font-size: 12px;
+  }
+
+  /* BOSS KARTE */
+
+  .boss-unlock-card {
+    display: grid;
+
+    grid-template-columns: 38px 1fr 92px;
+
+    gap: 7px;
+
+    margin-top: 6px;
+    padding: 8px 9px;
+
+    border-radius: 14px;
+  }
+
+  .boss-chest {
+    font-size: 26px;
+  }
+
+  .boss-unlock-info {
+    gap: 3px;
+  }
+
+  .boss-unlock-info strong {
+    font-size: 9px;
+    line-height: 1.15;
+  }
+
+  .boss-unlock-info span {
+    font-size: 10px;
+  }
+
+  .boss-star-progress {
+    height: 4px;
+  }
+
+  .boss-unlock-card > button {
+    grid-column: auto;
+
+    width: auto;
+
+    padding: 7px 6px;
+
+    border-radius: 9px;
+
+    font-size: 8px;
+  }
+}
+
+
+/* SEHR KLEINE HANDYS */
+
+@media (max-width: 390px) {
+
+  .campaign-world-map {
+    height: 280px;
+  }
+
+  .map-level-node {
+    width: 37px;
+    height: 37px;
+  }
+
+  .map-level-node.boss {
+    width: 46px;
+    height: 46px;
+  }
+
+  .selected-level-card {
+    grid-template-columns: 1fr 135px;
+  }
+
+  .selected-level-side {
+    grid-template-columns: 1fr 1fr;
   }
 }
