@@ -1307,3 +1307,97 @@
     overflow: hidden;
   }
 }
+/* =========================================================
+   ANORDNUNG FEINSCHLIFF
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  /* HEADER etwas kompakter */
+
+  .dq-header {
+    margin-bottom: 4px;
+  }
+
+  .dq-header-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dq-logo {
+    font-size: 17px;
+  }
+
+  .dq-logo span {
+    font-size: 20px;
+  }
+
+  /* STATUS näher an Header */
+
+  .dq-status {
+    margin-bottom: 5px;
+  }
+
+  /* KAMPAGNE + WELTAUSWAHL sauberer */
+
+  .dq-title {
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .dq-title h1 {
+    font-size: 18px;
+  }
+
+  .dq-world-select {
+    min-width: 135px;
+    max-width: 145px;
+  }
+
+  /* ÜBERSICHT etwas ruhiger */
+
+  .dq-overview {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 7px;
+  }
+
+  .dq-overview-left {
+    grid-template-columns: 40px 1fr;
+  }
+
+  .dq-world-icon {
+    width: 39px;
+    height: 46px;
+  }
+
+  .dq-boss-rewards > div {
+    gap: 2px;
+  }
+
+  /* TABS näher an Karte */
+
+  .dq-tabs {
+    margin-top: 0;
+    margin-bottom: 1px;
+  }
+
+  /* LEVELKARTE etwas kompakter und sauberer */
+
+  .dq-level-card {
+    grid-template-columns: 1fr 150px;
+  }
+
+  .dq-level-description {
+    justify-content: center;
+  }
+
+  .dq-level-actions {
+    align-content: center;
+  }
+
+  /* BOSS KARTE */
+
+  .dq-boss-card {
+    grid-template-columns: 34px 1fr 60px;
+  }
+}
