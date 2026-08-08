@@ -4,305 +4,197 @@
 
 .campaign-screen {
   width: 100%;
-  padding-bottom: 30px;
+  margin: 0;
+  padding: 0;
 }
-/* =========================================================
-   GAME HEADER
-   ========================================================= */
-
-.campaign-game-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  margin-bottom:18px;
-}
-
-.campaign-menu-button{
-  width:48px;
-  height:48px;
-
-  border:0;
-  border-radius:14px;
-
-  background:#10241d;
-  color:#fff;
-
-  font-size:24px;
-  cursor:pointer;
-}
-
-.campaign-brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-
-  font-size:22px;
-  font-weight:900;
-}
-
-.campaign-brand-dart{
-  font-size:30px;
-}
-
-.campaign-player-stats{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.campaign-level-badge{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-
-  width:58px;
-  height:58px;
-
-  border-radius:16px;
-
-  background:#143328;
-}
-
-.campaign-level-badge span{
-  font-size:11px;
-  color:#9ec4b6;
-}
-
-.campaign-level-badge strong{
-  font-size:22px;
-}
-
-.campaign-xp-box{
-  width:150px;
-
-  padding:10px 12px;
-
-  border-radius:16px;
-
-  background:#10241d;
-}
-
-.campaign-xp-row{
-  display:flex;
-  justify-content:space-between;
-
-  margin-bottom:6px;
-
-  font-size:12px;
-}
-
-.campaign-xp-track{
-  overflow:hidden;
-
-  height:8px;
-
-  border-radius:999px;
-
-  background:#071511;
-}
-
-.campaign-xp-fill{
-  width:0%;
-  height:100%;
-
-  background:linear-gradient(
-    90deg,
-    #42e695,
-    #24d4b3
-  );
-}
-
-.campaign-coins-row{
-  margin-top:8px;
-
-  color:#f6d36b;
-
-  font-size:12px;
-  font-weight:700;
-}
-
-/* Zeile unter dem Header */
-
-.campaign-world-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-
-  margin-bottom:18px;
-}
-
 
 /* =========================================================
-   HEADER
+   TOPBAR
    ========================================================= */
 
-.campaign-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+.campaign-topbar {
+  display: grid;
+  grid-template-columns: 42px 1fr 42px;
+  align-items: center;
+  gap: 10px;
 
-  margin-bottom: 22px;
+  margin-bottom: 10px;
 }
 
-.campaign-header h1 {
-  margin: 4px 0 4px;
+.campaign-topbar-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
 
-  color: #f4faf7;
+  padding: 0;
 
-  font-size: 30px;
-  line-height: 1.05;
-}
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
 
-.campaign-subtitle {
-  margin: 0;
+  background: #0b211a;
+  color: #dce8e3;
 
-  color: #8fa39d;
-
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.campaign-header .eyebrow {
-  margin: 0;
-
-  color: #39e3a0;
-
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 1.8px;
-}
-
-/* Welt Auswahl */
-
-.campaign-select-button {
-  width: auto;
-  max-width: 220px;
-
-  padding: 12px 15px;
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-
-  outline: none;
-
-  background: rgba(9, 27, 22, 0.96);
-  color: #ffffff;
-
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 19px;
 
   cursor: pointer;
 }
 
-.campaign-select-button:focus {
-  border-color: rgba(57, 227, 160, 0.55);
+.campaign-topbar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 
-  box-shadow:
-    0 0 0 3px rgba(57, 227, 160, 0.08);
-}
-
-.campaign-select-button option {
-  background: #071713;
   color: #ffffff;
+
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
 }
 
 /* =========================================================
-   CAMPAIGN SUMMARY
+   TITLE + WORLD
    ========================================================= */
 
-.campaign-summary-card {
+.campaign-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 9px;
+}
+
+.campaign-title-row h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 20px;
+  line-height: 1;
+}
+
+.campaign-title-row p {
+  margin: 4px 0 0;
+
+  color: #82968f;
+
+  font-size: 9px;
+}
+
+.campaign-world-select {
+  width: 125px;
+
+  padding: 8px 9px;
+
+  border: 1px solid rgba(57, 227, 160, 0.16);
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #0a2019;
+  color: #ffffff;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.campaign-world-select option {
+  background: #071713;
+  color: white;
+}
+
+/* =========================================================
+   OVERVIEW
+   ========================================================= */
+
+.campaign-overview {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 
-  margin-bottom: 18px;
-  padding: 18px;
+  margin-bottom: 7px;
+  padding: 9px;
 
-  border: 1px solid rgba(57, 227, 160, 0.18);
-  border-radius: 20px;
+  border: 1px solid rgba(57, 227, 160, 0.15);
+  border-radius: 15px;
 
   background:
     linear-gradient(
       135deg,
-      rgba(8, 28, 23, 0.98),
-      rgba(4, 18, 15, 0.98)
+      rgba(8, 27, 21, 0.98),
+      rgba(3, 17, 13, 0.98)
     );
-
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
-.campaign-summary-progress {
+.campaign-overview-progress {
   display: grid;
-  grid-template-columns: 60px 1fr;
+  grid-template-columns: 40px 1fr;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
 }
 
-.campaign-emblem {
+.campaign-overview-icon {
   display: grid;
 
-  width: 60px;
-  height: 70px;
+  width: 40px;
+  height: 47px;
 
   place-items: center;
 
-  border: 1px solid rgba(57, 227, 160, 0.4);
-  border-radius: 18px;
+  border: 1px solid rgba(57, 227, 160, 0.3);
+  border-radius: 11px;
 
-  background:
-    radial-gradient(
-      circle,
-      rgba(57, 227, 160, 0.16),
-      rgba(57, 227, 160, 0.04)
-    );
+  background: rgba(57, 227, 160, 0.06);
 
-  font-size: 30px;
-
-  box-shadow:
-    0 0 20px rgba(57, 227, 160, 0.08);
+  font-size: 20px;
 }
 
-.campaign-summary-progress strong {
-  color: #f3faf7;
-
-  font-size: 14px;
-}
-
-.campaign-progress-label {
+.campaign-overview-info {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 3px;
 
-  margin-top: 11px;
-
-  color: #82968f;
-
-  font-size: 11px;
+  min-width: 0;
 }
 
-.campaign-progress-label span:last-child {
-  color: #39e3a0;
+.campaign-overview-info strong {
+  overflow: hidden;
+
+  color: #ffffff;
+
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.campaign-progress-bar {
-  width: 100%;
-  height: 7px;
+.campaign-overview-info > span {
+  color: #81958e;
+  font-size: 7px;
+}
+
+.campaign-overview-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.campaign-overview-progressbar {
+  flex: 1;
+
+  height: 5px;
 
   overflow: hidden;
 
-  margin: 7px 0;
-
   border-radius: 999px;
 
-  background: #06110e;
+  background: #03100c;
 }
 
-.campaign-progress-fill {
+.campaign-overview-progressbar > div {
   height: 100%;
 
   border-radius: inherit;
@@ -310,54 +202,69 @@
   background:
     linear-gradient(
       90deg,
-      #2edb9b,
-      #1fc9ad
+      #42e695,
+      #21c7a8
     );
-
-  box-shadow:
-    0 0 12px rgba(46, 219, 155, 0.35);
 }
 
-.campaign-summary-card small {
-  color: #39e3a0;
+.campaign-overview-progress-row b {
+  color: #42e695;
 
-  font-size: 11px;
+  font-size: 7px;
 }
 
-/* Boss Belohnung oben */
+.campaign-overview-info small {
+  color: #42e695;
 
-.boss-rewards {
-  padding-left: 18px;
-
-  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 7px;
 }
 
-.boss-rewards p {
-  margin: 0 0 14px;
+/* Boss rewards */
 
-  color: #b5c5bf;
-
-  font-size: 12px;
-}
-
-.boss-reward-items {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.boss-reward-items span {
+.campaign-overview-rewards {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
 
   min-width: 0;
 
-  color: #e7efec;
+  padding-left: 9px;
 
-  font-size: 11px;
-  line-height: 1.25;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.campaign-overview-rewards > span {
+  margin-bottom: 6px;
+
+  color: #aebfb8;
+
+  font-size: 7px;
+}
+
+.campaign-overview-reward-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.campaign-overview-reward-items strong {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 2px;
+
+  color: white;
+
+  font-size: 14px;
+}
+
+.campaign-overview-reward-items small {
+  color: #dce8e3;
+
+  font-size: 6px;
+  font-weight: 700;
+
   text-align: center;
 }
 
@@ -367,47 +274,52 @@
 
 .campaign-tabs {
   display: flex;
-  gap: 32px;
+  align-items: center;
+  gap: 22px;
 
-  margin: 3px 0 0;
+  height: 29px;
+
+  margin: 0 0 4px;
 }
 
 .campaign-tabs button {
   position: relative;
 
-  padding: 13px 15px 12px;
+  height: 29px;
+
+  padding: 4px 9px;
 
   border: 0;
 
   background: transparent;
-  color: #73857f;
+  color: #73877f;
 
   font: inherit;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 900;
 
   cursor: pointer;
 }
 
 .campaign-tabs button.active {
-  color: #39e3a0;
+  color: #42e695;
 }
 
 .campaign-tabs button.active::after {
   position: absolute;
 
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
 
   height: 2px;
 
   border-radius: 999px;
 
-  background: #39e3a0;
+  background: #42e695;
 
   box-shadow:
-    0 0 10px rgba(57, 227, 160, 0.45);
+    0 0 8px rgba(66, 230, 149, 0.45);
 
   content: "";
 }
@@ -416,30 +328,69 @@
    WORLD MAP
    ========================================================= */
 
-.campaign-road {
+.campaign-world-map {
+  position: relative;
+
+  width: 100%;
+  height: 305px;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(57, 227, 160, 0.18);
+  border-radius: 17px;
+
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(0, 150, 110, 0.12),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 15% 80%,
+      rgba(37, 104, 79, 0.1),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      #041a14 0%,
+      #03120e 55%,
+      #020c09 100%
+    );
+
+  box-shadow:
+    inset 0 0 45px rgba(0, 0, 0, 0.36);
+}
+
+.campaign-world-map::before {
   position: absolute;
+  z-index: 0;
+
   inset: 0;
+
+  background:
+    radial-gradient(
+      ellipse at 20% 20%,
+      rgba(66, 230, 149, 0.04),
+      transparent 32%
+    );
+
+  content: "";
+
   pointer-events: none;
 }
 
-.road {
-  position: absolute;
-  height: 8px;
-  border-radius: 999px;
-  background: #2be3c4;
-  box-shadow: 0 0 10px rgba(43, 227, 196, 0.5);
-  opacity: 0.9;
-}
+/* =========================================================
+   PATH
+   ========================================================= */
 
-.campaign-world-map {
-    .campaign-path {
+.campaign-path {
   position: absolute;
+  z-index: 1;
+
   inset: 0;
 
   width: 100%;
   height: 100%;
-
-  z-index: 1;
 
   pointer-events: none;
 }
@@ -452,84 +403,23 @@
 }
 
 .campaign-path-shadow {
-  stroke: rgba(0, 0, 0, 0.45);
-  stroke-width: 3.4;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 3.5;
 }
 
 .campaign-path-main {
   stroke: #25d9bc;
-  stroke-width: 1.2;
-
+  stroke-width: 1.15;
   stroke-dasharray: 3 2;
 
-  filter: drop-shadow(
-    0 0 6px rgba(37, 217, 188, 0.8)
-  );
-}
-  position: relative;
-
-  width: 100%;
-  height: 520px;
-
-  overflow: hidden;
-
-  border: 1px solid rgba(66, 230, 149, 0.22);
-  border-radius: 24px;
-
-  background:
-    radial-gradient(
-      circle at 50% 35%,
-      rgba(0, 153, 112, 0.16),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 25% 75%,
-      rgba(42, 104, 80, 0.12),
-      transparent 28%
-    ),
-    linear-gradient(
-      180deg,
-      #041a14 0%,
-      #03110d 55%,
-      #020b09 100%
+  filter:
+    drop-shadow(
+      0 0 5px rgba(37, 217, 188, 0.7)
     );
-
-  box-shadow:
-    inset 0 0 70px rgba(0, 0, 0, 0.42),
-    0 18px 40px rgba(0, 0, 0, 0.3);
-}
-
-/* leichter Nebel / Landschaft */
-
-.campaign-world-map::before {
-  position: absolute;
-  inset: 0;
-
-  content: "";
-
-  background:
-    radial-gradient(
-      ellipse at 20% 20%,
-      rgba(66, 230, 149, 0.05),
-      transparent 30%
-    ),
-    radial-gradient(
-      ellipse at 80% 65%,
-      rgba(21, 89, 69, 0.08),
-      transparent 30%
-    );
-
-  pointer-events: none;
 }
 
 /* =========================================================
-   WEG
-   ========================================================= */
-
-
-
-/* =========================================================
-   LEVEL
+   LEVEL NODES
    ========================================================= */
 
 .map-level-node {
@@ -538,22 +428,22 @@
 
   display: flex;
 
-  width: 54px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
 
   align-items: center;
   justify-content: center;
 
   padding: 0;
 
-  border: 3px solid #24554a;
+  border: 2px solid #285249;
   border-radius: 50%;
 
   background:
     radial-gradient(
       circle at 50% 35%,
-      #102922,
-      #061612 75%
+      #102a22,
+      #061611 75%
     );
 
   color: #ffffff;
@@ -563,6 +453,8 @@
 
   cursor: pointer;
 
+  transform: translate(-50%, -50%);
+
   transition:
     transform 0.16s ease,
     box-shadow 0.16s ease,
@@ -570,196 +462,124 @@
 }
 
 .map-level-node.unlocked {
-  border-color: #22d5b8;
+  border-color: #25d8b9;
 
   box-shadow:
-    0 0 16px rgba(34, 213, 184, 0.28),
-    inset 0 0 16px rgba(34, 213, 184, 0.08);
+    0 0 13px rgba(37, 216, 185, 0.25),
+    inset 0 0 10px rgba(37, 216, 185, 0.08);
 }
 
 .map-level-node.selected {
   border-color: #47efa5;
 
-  transform: scale(1.08);
+  transform:
+    translate(-50%, -50%)
+    scale(1.1);
 
   box-shadow:
-    0 0 0 5px rgba(71, 239, 165, 0.08),
-    0 0 28px rgba(71, 239, 165, 0.7),
-    inset 0 0 18px rgba(71, 239, 165, 0.12);
+    0 0 0 4px rgba(71, 239, 165, 0.08),
+    0 0 22px rgba(71, 239, 165, 0.65);
 }
 
 .map-level-node.locked {
   border-color: #2a443d;
 
-  background: #091813;
-  color: #6d8079;
+  background: #081612;
+  color: #62756e;
 
-  opacity: 0.68;
+  opacity: 0.75;
 
   box-shadow: none;
+
   cursor: not-allowed;
 }
 
 .map-level-number {
-  font-size: 18px;
+  font-size: 13px;
   line-height: 1;
 }
-
-/* Sterne */
 
 .map-level-stars {
   position: absolute;
 
-  top: calc(100% + 7px);
+  top: calc(100% + 4px);
   left: 50%;
 
-  width: 80px;
+  width: 58px;
 
   color: #f3c843;
 
-  font-size: 12px;
+  font-size: 8px;
   line-height: 1;
+
   text-align: center;
 
   transform: translateX(-50%);
 
-  text-shadow:
-    0 0 8px rgba(243, 200, 67, 0.25);
-
   pointer-events: none;
 }
 
-/* =========================================================
-   BOSS
-   ========================================================= */
+/* Boss */
 
 .map-level-node.boss {
-  width: 66px;
-  height: 66px;
+  width: 49px;
+  height: 49px;
 
-  border-color: #efbe43;
+  border-color: #e9bb42;
 
   background:
     radial-gradient(
       circle at 50% 35%,
-      #2b2410,
-      #0c0d08 72%
+      #29230f,
+      #0d0e08 74%
     );
 
   box-shadow:
-    0 0 24px rgba(239, 190, 67, 0.35),
-    inset 0 0 18px rgba(239, 190, 67, 0.08);
+    0 0 18px rgba(233, 187, 66, 0.32);
 }
 
 .boss-crown {
   position: absolute;
 
-  bottom: calc(100% - 3px);
+  bottom: calc(100% - 2px);
   left: 50%;
 
   color: #f3c843;
 
-  font-size: 27px;
+  font-size: 19px;
 
   transform: translateX(-50%);
-
-  filter:
-    drop-shadow(
-      0 0 6px rgba(243, 200, 67, 0.4)
-    );
 }
 
 /* =========================================================
-   ABENTEUERPFAD
-   ========================================================= */
-
-.map-level-1 {
-  top: 7%;
-  left: 8%;
-}
-
-.map-level-2 {
-  top: 8%;
-  left: 36%;
-}
-
-.map-level-3 {
-  top: 18%;
-  left: 67%;
-}
-
-.map-level-4 {
-  top: 35%;
-  left: 71%;
-}
-
-.map-level-5 {
-  top: 47%;
-  left: 46%;
-}
-
-.map-level-6 {
-  top: 58%;
-  left: 12%;
-}
-
-.map-level-7 {
-  top: 72%;
-  left: 20%;
-}
-
-.map-level-8 {
-  top: 79%;
-  left: 45%;
-}
-
-.map-level-9 {
-  top: 75%;
-  left: 67%;
-}
-
-.map-level-10 {
-  top: 78%;
-  right: 3%;
-}
-
-/* =========================================================
-   SELECTED LEVEL CARD
+   SELECTED LEVEL
    ========================================================= */
 
 .selected-level-card {
-  position: static;
-
   display: grid;
-  grid-template-columns:
-    minmax(0, 1.4fr)
-    minmax(140px, 0.8fr);
-
-  gap: 16px;
+  grid-template-columns: 1fr 135px;
+  gap: 7px;
 
   width: 100%;
 
-  margin-top: 16px;
-  padding: 18px;
+  margin-top: 5px;
+  padding: 8px 9px;
 
-  border: 1px solid rgba(57, 227, 160, 0.2);
-  border-radius: 20px;
+  border: 1px solid rgba(57, 227, 160, 0.18);
+  border-radius: 13px;
 
   background:
     linear-gradient(
       135deg,
-      rgba(4, 22, 17, 0.99),
-      rgba(2, 15, 12, 0.99)
+      #061b15,
+      #03120e
     );
-
-  box-shadow:
-    0 15px 35px rgba(0, 0, 0, 0.28);
 }
 
 .selected-level-main {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 2px;
 
   min-width: 0;
 }
@@ -767,37 +587,41 @@
 .selected-level-main p {
   margin: 0;
 
-  color: #39e3a0;
+  color: #42e695;
 
-  font-size: 14px;
+  font-size: 9px;
 }
 
 .selected-level-main strong {
-  color: #f5faf8;
+  overflow: hidden;
 
-  font-size: 18px;
-  line-height: 1.25;
+  color: white;
+
+  font-size: 12px;
+  line-height: 1.15;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .selected-level-main span {
-  margin-top: 6px;
+  margin-top: 1px;
 
-  color: #849890;
+  color: #7f938b;
 
-  font-size: 11px;
+  font-size: 7px;
 }
 
 .selected-level-stars {
   color: #f3c843;
 
-  font-size: 21px;
-  line-height: 1.1;
+  font-size: 13px;
 }
 
 .selected-level-side {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 4px;
 }
 
 .reward-box {
@@ -805,18 +629,19 @@
   align-items: center;
   justify-content: center;
 
-  min-height: 43px;
+  min-height: 24px;
 
-  padding: 8px;
+  padding: 3px;
 
-  border: 1px solid rgba(57, 227, 160, 0.12);
-  border-radius: 11px;
+  border: 1px solid rgba(57, 227, 160, 0.1);
+  border-radius: 7px;
 
-  background: rgba(8, 30, 24, 0.86);
-  color: #e8f2ee;
+  background: #09241c;
+  color: #e5efeb;
 
-  font-size: 12px;
+  font-size: 7px;
   font-weight: 800;
+
   text-align: center;
 }
 
@@ -825,96 +650,87 @@
 
   width: 100%;
 
-  padding: 13px 15px;
+  padding: 6px;
 
   border: 0;
+  border-radius: 8px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #47e9a5,
+      #20cdb0
+    );
+
+  color: #03100d;
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   BOSS UNLOCK
+   ========================================================= */
+
+.boss-unlock-card {
+  display: grid;
+  grid-template-columns: 32px 1fr 58px;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 5px;
+  padding: 6px 7px;
+
+  border: 1px solid rgba(57, 227, 160, 0.15);
   border-radius: 12px;
 
   background:
     linear-gradient(
       135deg,
-      #48eba5,
-      #20cdb0
-    );
-
-  color: #03110d;
-
-  font: inherit;
-  font-size: 16px;
-  font-weight: 900;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 8px 20px rgba(32, 205, 176, 0.15);
-
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.selected-level-side button:active {
-  transform: scale(0.97);
-}
-
-/* =========================================================
-   BOSS UNLOCK CARD
-   ========================================================= */
-
-.boss-unlock-card {
-  display: grid;
-  grid-template-columns: 66px 1fr auto;
-  align-items: center;
-
-  gap: 16px;
-
-  margin-top: 16px;
-  padding: 18px;
-
-  border: 1px solid rgba(57, 227, 160, 0.18);
-  border-radius: 20px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(6, 26, 21, 0.98),
-      rgba(3, 17, 14, 0.98)
+      #061b15,
+      #03120e
     );
 }
 
 .boss-chest {
-  font-size: 42px;
-  text-align: center;
+  font-size: 22px;
 
-  filter:
-    drop-shadow(
-      0 8px 12px rgba(0, 0, 0, 0.25)
-    );
+  text-align: center;
 }
 
 .boss-unlock-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
+
+  min-width: 0;
 }
 
 .boss-unlock-info strong {
-  color: #f5faf8;
+  overflow: hidden;
 
-  font-size: 14px;
-  line-height: 1.25;
+  color: #ffffff;
+
+  font-size: 7px;
+  line-height: 1.1;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .boss-unlock-info span {
   color: #f3c843;
 
-  font-size: 14px;
+  font-size: 8px;
   font-weight: 800;
 }
 
 .boss-star-progress {
   width: 100%;
-  height: 7px;
+  height: 4px;
 
   overflow: hidden;
 
@@ -934,978 +750,77 @@
       #f5c72f,
       #eab534
     );
-
-  box-shadow:
-    0 0 12px rgba(245, 199, 47, 0.25);
 }
 
 .boss-unlock-card > button {
-  padding: 12px 14px;
+  padding: 6px 4px;
 
-  border: 1px solid rgba(57, 227, 160, 0.25);
-  border-radius: 12px;
+  border: 1px solid rgba(57, 227, 160, 0.2);
+  border-radius: 8px;
 
-  background: rgba(57, 227, 160, 0.07);
-  color: #39e3a0;
+  background: rgba(57, 227, 160, 0.06);
+  color: #42e695;
 
   font: inherit;
-  font-size: 12px;
+  font-size: 8px;
   font-weight: 900;
 
   cursor: pointer;
 }
 
 .boss-unlock-card > button:disabled {
-  border-color: rgba(255, 255, 255, 0.08);
-
-  background: rgba(255, 255, 255, 0.025);
   color: #66766f;
 
-  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* =========================================================
-   MOBILE
+   iPHONE
    ========================================================= */
 
 @media (max-width: 560px) {
-  .campaign-screen {
-    padding-bottom: 20px;
-  }
-
-  .campaign-header {
-    align-items: stretch;
-    flex-direction: column;
-
-    gap: 13px;
-  }
-
-  .campaign-header h1 {
-    font-size: 27px;
-  }
-
-  .campaign-select-button {
-    width: 100%;
-    max-width: none;
-  }
-
-  .campaign-summary-card {
-    grid-template-columns: 1fr;
-
-    gap: 15px;
-
-    padding: 16px;
-  }
-
-  .boss-rewards {
-    padding-top: 14px;
-    padding-left: 0;
-
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-    border-left: 0;
-  }
-
-  .campaign-world-map {
-    height: 500px;
-  }
-
-  .map-level-node {
-    width: 51px;
-    height: 51px;
-  }
-
-  .map-level-node.boss {
-    width: 63px;
-    height: 63px;
-  }
-
-  .map-level-number {
-    font-size: 17px;
-  }
-
-  .map-level-stars {
-    width: 74px;
-
-    font-size: 12px;
-  }
-
-  .selected-level-card {
-    grid-template-columns: 1fr 0.85fr;
-
-    gap: 12px;
-
-    padding: 15px;
-  }
-
-  .selected-level-main strong {
-    font-size: 16px;
-  }
-
-  .selected-level-stars {
-    font-size: 18px;
-  }
-
-  .selected-level-side {
-    grid-template-columns: 1fr;
-  }
-
-  .selected-level-side button {
-    grid-column: 1;
-  }
-
-  .reward-box {
-    min-height: 36px;
-
-    font-size: 11px;
-  }
-
-  .boss-unlock-card {
-    grid-template-columns: 54px 1fr;
-
-    gap: 13px;
-
-    padding: 15px;
-  }
-
-  .boss-chest {
-    font-size: 36px;
-  }
-
-  .boss-unlock-card > button {
-    grid-column: 1 / -1;
-
-    width: 100%;
-  }
-}
-
-/* =========================================================
-   SMALL PHONES
-   ========================================================= */
-
-@media (max-width: 390px) {
-  .campaign-world-map {
-    height: 470px;
-  }
-
-  .map-level-node {
-    width: 47px;
-    height: 47px;
-  }
-
-  .map-level-node.boss {
-    width: 58px;
-    height: 58px;
-  }
-
-  .map-level-stars {
-    font-size: 11px;
-  }
-
-  .selected-level-card {
-    grid-template-columns: 1fr;
-  }
-
-  .selected-level-side {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .selected-level-side button {
-    grid-column: 1 / -1;
-  }
-}
-/* =========================================================
-   FINAL MOBILE FIT – ALLES AUF EINEN BILDSCHIRM
-   ========================================================= */
-
-@media (max-width: 560px) {
-
-  .campaign-screen {
-    width: 100%;
-    padding-bottom: 0;
-  }
-
-  /* HEADER KOMPAKTER */
-
-  .campaign-game-header {
-    min-height: 46px;
-    margin-bottom: 5px;
-    gap: 6px;
-  }
-
-  .campaign-menu-button {
-    width: 34px;
-    height: 34px;
-
-    border-radius: 10px;
-
-    font-size: 19px;
-  }
-
-  .campaign-brand {
-    gap: 5px;
-
-    font-size: 14px;
-  }
-
-  .campaign-brand-dart {
-    font-size: 19px;
-  }
-
-  .campaign-player-stats {
-    gap: 5px;
-  }
-
-  .campaign-level-badge {
-    width: 38px;
-    height: 40px;
-
-    border-radius: 11px;
-  }
-
-  .campaign-level-badge span {
-    font-size: 7px;
-  }
-
-  .campaign-level-badge strong {
-    font-size: 15px;
-  }
-
-  .campaign-xp-box {
-    width: 84px;
-
-    padding: 5px 7px;
-
-    border-radius: 11px;
-  }
-
-  .campaign-xp-row {
-    margin-bottom: 3px;
-
-    font-size: 8px;
-  }
-
-  .campaign-xp-track {
-    height: 5px;
-  }
-
-  .campaign-coins-row {
-    margin-top: 4px;
-
-    font-size: 8px;
-  }
-
-  /* WELTAUSWAHL */
-
-  .campaign-world-row {
-    min-height: 38px;
-    margin-bottom: 2px;
-  }
-
-  .campaign-world-row h1 {
-    margin: 1px 0 0;
-
-    font-size: 17px;
-    line-height: 1;
-  }
-
-  .campaign-world-row .eyebrow {
-    font-size: 8px;
-    letter-spacing: 1px;
-  }
-
-  .campaign-select-button {
-    width: 130px;
-    max-width: 130px;
-
-    padding: 7px 7px;
-
-    border-radius: 10px;
-
-    font-size: 9px;
-  }
-
-  /* TABS */
-
-  .campaign-tabs {
-    gap: 20px;
-
-    height: 34px;
-    margin: 0;
-  }
-
-  .campaign-tabs button {
-    padding: 6px 9px;
-
-    font-size: 11px;
-  }
-
-  /* KARTE */
-
-  .campaign-world-map {
-    height: 300px;
-
-    border-radius: 18px;
-  }
-
-  /* LEVELKREISE */
-
-  .map-level-node {
-    width: 40px;
-    height: 40px;
-
-    border-width: 2px;
-  }
-
-  .map-level-node.boss {
-    width: 49px;
-    height: 49px;
-  }
-
-  .map-level-number {
-    font-size: 14px;
-  }
-
-  .map-level-stars {
-    top: calc(100% + 3px);
-
-    width: 60px;
-
-    font-size: 9px;
-  }
-
-  .boss-crown {
-    font-size: 20px;
-  }
-
-  /* AUSGEWÄHLTES LEVEL */
-
-  .selected-level-card {
-    display: grid;
-
-    grid-template-columns: 1fr 155px;
-
-    gap: 8px;
-
-    margin-top: 6px;
-    padding: 9px 10px;
-
-    border-radius: 14px;
-  }
-
-  .selected-level-main {
-    gap: 2px;
-  }
-
-  .selected-level-main p {
-    font-size: 10px;
-  }
-
-  .selected-level-main strong {
-    font-size: 13px;
-    line-height: 1.15;
-  }
-
-  .selected-level-main span {
-    margin-top: 2px;
-
-    font-size: 8px;
-  }
-
-  .selected-level-stars {
-    font-size: 14px;
-  }
-
-  .selected-level-side {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 4px;
-  }
-
-  .reward-box {
-    min-height: 27px;
-
-    padding: 4px 5px;
-
-    border-radius: 8px;
-
-    font-size: 8px;
-  }
-
-  .selected-level-side button {
-    grid-column: 1 / -1;
-
-    padding: 7px;
-
-    border-radius: 9px;
-
-    font-size: 12px;
-  }
-
-  /* BOSS KARTE */
-
-  .boss-unlock-card {
-    display: grid;
-
-    grid-template-columns: 38px 1fr 92px;
-
-    gap: 7px;
-
-    margin-top: 6px;
-    padding: 8px 9px;
-
-    border-radius: 14px;
-  }
-
-  .boss-chest {
-    font-size: 26px;
-  }
-
-  .boss-unlock-info {
-    gap: 3px;
-  }
-
-  .boss-unlock-info strong {
-    font-size: 9px;
-    line-height: 1.15;
-  }
-
-  .boss-unlock-info span {
-    font-size: 10px;
-  }
-
-  .boss-star-progress {
-    height: 4px;
-  }
-
-  .boss-unlock-card > button {
-    grid-column: auto;
-
-    width: auto;
-
-    padding: 7px 6px;
-
-    border-radius: 9px;
-
-    font-size: 8px;
-  }
-}
-
-
-/* SEHR KLEINE HANDYS */
-
-@media (max-width: 390px) {
-
-  .campaign-world-map {
-    height: 280px;
-  }
-
-  .map-level-node {
-    width: 37px;
-    height: 37px;
-  }
-
-  .map-level-node.boss {
-    width: 46px;
-    height: 46px;
-  }
-
-  .selected-level-card {
-    grid-template-columns: 1fr 135px;
-  }
-
-  .selected-level-side {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-/* =========================================================
-   iPHONE / MOBILE – ONE SCREEN LAYOUT
-   ========================================================= */
-
-@media (max-width: 560px) {
-
-  .campaign-screen {
-    width: 100%;
-    height: calc(100dvh - 82px);
-
-    padding: 0 0 4px;
-
-    overflow: hidden;
-  }
-
-  /* Alten großen Header stark verkleinern */
-
-  .campaign-header {
-    display: grid;
-
-    grid-template-columns: 1fr auto;
-
-    align-items: center;
-
-    gap: 8px;
-
-    margin: 0 0 5px;
-  }
-
-  .campaign-header .eyebrow {
-    font-size: 8px;
-    letter-spacing: 1px;
-  }
-
-  .campaign-header h1 {
-    margin: 1px 0;
-
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  .campaign-subtitle {
-    display: none;
-  }
-
-  /* Welt-Auswahl rechts */
-
-  .campaign-select-button {
-    width: 145px;
-    max-width: 145px;
-
-    padding: 7px 8px;
-
-    border-radius: 9px;
-
-    font-size: 10px;
-  }
-
-  /* GROSSE SUMMARY AUF HANDY AUSBLENDEN */
-
-  .campaign-summary-card {
-    display: none;
-  }
-
-  /* KARTE / LISTE */
-
-  .campaign-tabs {
-    height: 31px;
-
-    gap: 22px;
-
-    margin: 0;
-  }
-
-  .campaign-tabs button {
-    padding: 5px 9px;
-
-    font-size: 11px;
-  }
-
-  /* KARTE */
-
-  .campaign-world-map {
-    height: 355px;
-
-    margin: 0;
-
-    border-radius: 17px;
-  }
-
-  /* Levelpunkte etwas kleiner */
-
-  .map-level-node {
-    width: 40px;
-    height: 40px;
-
-    border-width: 2px;
-  }
-
-  .map-level-node.boss {
-    width: 50px;
-    height: 50px;
-  }
-
-  .map-level-number {
-    font-size: 14px;
-  }
-
-  .map-level-stars {
-    top: calc(100% + 3px);
-
-    width: 60px;
-
-    font-size: 9px;
-  }
-
-  .boss-crown {
-    font-size: 20px;
-  }
-
-  /* LEVELKARTE */
-
-  .selected-level-card {
-    display: grid;
-
-    grid-template-columns: 1fr 145px;
-
-    gap: 7px;
-
-    margin-top: 6px;
-    padding: 8px 10px;
-
-    border-radius: 14px;
-  }
-
-  .selected-level-main {
-    gap: 2px;
-  }
-
-  .selected-level-main p {
-    font-size: 10px;
-  }
-
-  .selected-level-main strong {
-    font-size: 13px;
-    line-height: 1.1;
-  }
-
-  .selected-level-main span {
-    margin-top: 1px;
-
-    font-size: 8px;
-  }
-
-  .selected-level-stars {
-    font-size: 14px;
-  }
-
-  .selected-level-side {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 4px;
-  }
-
-  .reward-box {
-    min-height: 25px;
-
-    padding: 3px;
-
-    font-size: 8px;
-  }
-
-  .selected-level-side button {
-    grid-column: 1 / -1;
-
-    padding: 7px;
-
-    font-size: 12px;
-
-    border-radius: 8px;
-  }
-
-  /* BOSS KARTE */
-
-  .boss-unlock-card {
-    display: grid;
-
-    grid-template-columns: 34px 1fr 85px;
-
-    gap: 6px;
-
-    margin-top: 5px;
-    padding: 7px 8px;
-
-    border-radius: 13px;
-  }
-
-  .boss-chest {
-    font-size: 24px;
-  }
-
-  .boss-unlock-info {
-    gap: 2px;
-  }
-
-  .boss-unlock-info strong {
-    font-size: 8px;
-    line-height: 1.1;
-  }
-
-  .boss-unlock-info span {
-    font-size: 9px;
-  }
-
-  .boss-star-progress {
-    height: 4px;
-  }
-
-  .boss-unlock-card > button {
-    grid-column: auto;
-
-    width: auto;
-
-    padding: 6px 4px;
-
-    font-size: 7px;
-
-    border-radius: 8px;
-  }
-}
-/* ==========================================
-   NEUES CAMPAIGN LAYOUT
-   ========================================== */
-
-.campaign-topbar {
-  display: grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items: center;
-  gap: 10px;
-
-  margin-bottom: 14px;
-}
-
-.campaign-topbar-button {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-
-  padding: 0;
-
-  border: 0;
-  border-radius: 12px;
-
-  background: #0d211b;
-  color: #cbd8d3;
-
-  font-size: 19px;
-}
-
-.campaign-topbar-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  color: white;
-
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.campaign-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 12px;
-
-  margin-bottom: 12px;
-}
-
-.campaign-title-row h1 {
-  margin: 0;
-
-  font-size: 21px;
-}
-
-.campaign-title-row p {
-  margin: 4px 0 0;
-
-  color: #82968f;
-
-  font-size: 10px;
-}
-
-.campaign-world-select {
-  width: 125px;
-
-  padding: 9px 10px;
-
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 11px;
-
-  background: #0b201a;
-  color: white;
-
-  font-size: 10px;
-}
-
-/* Übersicht */
-
-.campaign-overview {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-
-  gap: 12px;
-
-  margin-bottom: 10px;
-  padding: 12px;
-
-  border: 1px solid rgba(57,227,160,.17);
-  border-radius: 15px;
-
-  background: #061914;
-}
-
-.campaign-overview-progress {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-
-  align-items: center;
-
-  gap: 9px;
-}
-
-.campaign-overview-icon {
-  display: grid;
-
-  width: 43px;
-  height: 50px;
-
-  place-items: center;
-
-  border: 1px solid rgba(57,227,160,.35);
-  border-radius: 12px;
-
-  font-size: 22px;
-}
-
-.campaign-overview-info {
-  display: flex;
-  flex-direction: column;
-
-  gap: 4px;
-}
-
-.campaign-overview-info strong {
-  font-size: 10px;
-}
-
-.campaign-overview-info span,
-.campaign-overview-info small {
-  color: #82968f;
-
-  font-size: 8px;
-}
-
-.campaign-overview-progress-row {
-  display: flex;
-  align-items: center;
-
-  gap: 5px;
-}
-
-.campaign-overview-progressbar {
-  flex: 1;
-
-  height: 5px;
-
-  overflow: hidden;
-
-  border-radius: 99px;
-
-  background: #03100d;
-}
-
-.campaign-overview-progressbar > div {
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      #42e695,
-      #21c7a8
-    );
-}
-
-.campaign-overview-progress-row b {
-  color: #42e695;
-
-  font-size: 8px;
-}
-
-/* Rewards */
-
-.campaign-overview-rewards {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  padding-left: 10px;
-
-  border-left:
-    1px solid rgba(255,255,255,.06);
-}
-
-.campaign-overview-rewards > span {
-  margin-bottom: 8px;
-
-  color: #abbdb6;
-
-  font-size: 8px;
-}
-
-.campaign-overview-reward-items {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, 1fr);
-
-  gap: 4px;
-}
-
-.campaign-overview-reward-items strong {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  gap: 3px;
-
-  font-size: 15px;
-}
-
-.campaign-overview-reward-items small {
-  color: #dce7e3;
-
-  font-size: 7px;
-}
-
-/* MOBILE */
-
-@media (max-width: 560px) {
-
-  .campaign-topbar {
-    margin-bottom: 8px;
-  }
-
-  .campaign-title-row {
-    margin-bottom: 7px;
-  }
-
   .campaign-title-row p {
     display: none;
   }
 
-  .campaign-overview {
-    padding: 8px;
+  .campaign-topbar {
+    margin-bottom: 7px;
+  }
+
+  .campaign-title-row {
     margin-bottom: 6px;
   }
 
+  .campaign-overview {
+    margin-bottom: 5px;
+    padding: 7px;
+  }
+
   .campaign-tabs {
-    height: 29px;
-    margin: 0 0 3px;
+    margin-bottom: 2px;
   }
 
   .campaign-world-map {
-    height: 300px;
+    height: 295px;
+  }
+}
+
+/* Kleine iPhones */
+
+@media (max-width: 390px) {
+  .campaign-world-map {
+    height: 270px;
+  }
+
+  .campaign-overview {
+    gap: 6px;
+  }
+
+  .campaign-world-select {
+    width: 110px;
   }
 
   .selected-level-card {
-    margin-top: 5px;
-  }
-
-  .boss-unlock-card {
-    margin-top: 5px;
+    grid-template-columns: 1fr 120px;
   }
 }
