@@ -34,9 +34,11 @@ function Campaign() {
     useState(1)
 
   const [progress, setProgress] = useState({
-    unlockedLevel: 1,
-    results: {},
-  })
+  unlockedLevel: 1,
+  results: {},
+  xp: 0,
+  coins: 0,
+})
 
   const worldStartLevel =
     (selectedWorld - 1) * 10 + 1
@@ -121,10 +123,12 @@ function Campaign() {
         )
 
       setProgress({
-        unlockedLevel,
-        results:
-          parsedProgress.results ?? {},
-      })
+  unlockedLevel,
+  results:
+    parsedProgress.results ?? {},
+  xp: parsedProgress.xp ?? 0,
+  coins: parsedProgress.coins ?? 0,
+})
 
       setSelectedWorld(currentWorld)
       setPreviewLevelId(
@@ -257,15 +261,21 @@ function Campaign() {
                   result.darts,
                 )
 
-        const updatedResults = {
-          ...currentProgress.results,
+        const previousStars =
+  previousResult?.stars ?? 0
 
-          [level.id]: {
-            ...result,
-            stars: bestStars,
-            darts: bestDarts,
-          },
-        }
+const isBetterResult =
+  result.stars > previousStars
+
+const earnedXP =
+  isBetterResult
+    ? level.rewardXP ?? 0
+    : 0
+
+const earnedCoins =
+  isBetterResult
+    ? level.rewardCoins ?? 0
+    : 0
 
         const nextUnlockedLevel =
           Math.max(
@@ -277,12 +287,20 @@ function Campaign() {
           )
 
         const updatedProgress = {
-          unlockedLevel:
-            nextUnlockedLevel,
+  unlockedLevel:
+    nextUnlockedLevel,
 
-          results:
-            updatedResults,
-        }
+  results:
+    updatedResults,
+
+  xp:
+    (currentProgress.xp ?? 0) +
+    earnedXP,
+
+  coins:
+    (currentProgress.coins ?? 0) +
+    earnedCoins,
+}
 
         localStorage.setItem(
           CAMPAIGN_STORAGE_KEY,
