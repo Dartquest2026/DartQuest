@@ -1,186 +1,173 @@
 /* =========================================================
-   DARTQUEST CAMPAIGN
+   DARTQUEST CAMPAIGN – CLEAN VERSION
    ========================================================= */
 
-.campaign-screen {
+.dq-campaign {
   width: 100%;
-  padding-bottom: 22px;
+  max-width: 760px;
+
+  margin: 0 auto;
+
+  padding: 16px 18px 100px;
+
+  color: #f5faf8;
 }
 
-/* =========================================================
-   TOPBAR
-   ========================================================= */
+/* HEADER */
 
-.campaign-topbar {
+.dq-header {
   display: grid;
-  grid-template-columns: 54px 1fr 54px;
+  grid-template-columns: 52px 1fr 52px;
   align-items: center;
-
   gap: 12px;
 
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.campaign-icon-button {
+.dq-header-button {
   display: grid;
 
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
 
   place-items: center;
 
   padding: 0;
 
-  border: 1px solid
-    rgba(57, 227, 160, 0.15);
-
+  border: 1px solid rgba(55, 220, 166, 0.2);
   border-radius: 14px;
 
-  background:
-    rgba(9, 30, 24, 0.96);
-
-  color: #e7f1ed;
+  background: #0a211a;
+  color: white;
 
   font-size: 23px;
-
-  cursor: pointer;
 }
 
-.campaign-logo {
+.dq-logo {
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 9px;
+  gap: 8px;
 
-  color: #ffffff;
-
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 900;
 
-  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
-.campaign-logo-mark {
-  font-size: 25px;
+.dq-logo span {
+  font-size: 27px;
 }
 
-/* =========================================================
-   PLAYER STATUS
-   ========================================================= */
+/* STATUS */
 
-.campaign-playerbar {
+.dq-status {
   display: grid;
-  grid-template-columns:
-    62px 1fr auto;
+
+  grid-template-columns: 60px 1fr 105px;
 
   align-items: center;
 
-  gap: 12px;
+  gap: 11px;
 
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
-.player-level-badge {
+.dq-level {
   display: flex;
   flex-direction: column;
 
   align-items: center;
   justify-content: center;
 
-  width: 58px;
+  width: 56px;
   height: 62px;
 
-  border: 1px solid
-    rgba(57, 227, 160, 0.5);
+  border: 1px solid #39e3a0;
+  border-radius: 14px;
 
-  border-radius: 15px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #10362a,
-      #09251d
-    );
+  background: #0b2a21;
 }
 
-.player-level-badge span {
-  color: #42e695;
+.dq-level small {
+  color: #3fe6a4;
 
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 900;
 }
 
-.player-level-badge strong {
-  color: white;
-
+.dq-level strong {
   font-size: 25px;
 }
 
-.player-xp {
-  min-width: 0;
-}
-
-.player-xp-label {
+.dq-xp > div:first-child {
   display: flex;
-
-  gap: 14px;
+  justify-content: space-between;
 
   margin-bottom: 6px;
 
-  color: white;
-
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.player-xp-track {
+.dq-xp-track {
   width: 100%;
-  height: 8px;
+  height: 7px;
 
   overflow: hidden;
 
   border-radius: 999px;
 
-  background: #10231d;
+  background: #10251e;
 }
 
-.player-xp-fill {
+.dq-xp-track div {
   height: 100%;
 
-  border-radius: inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      #40e69e,
-      #20cdb0
-    );
+  background: linear-gradient(
+    90deg,
+    #42e695,
+    #21c7a8
+  );
 }
 
-.player-coins {
-  padding: 12px 14px;
+.dq-coins {
+  display: grid;
 
-  border: 1px solid
-    rgba(244, 198, 64, 0.25);
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
 
+  column-gap: 5px;
+
+  padding: 8px 10px;
+
+  border: 1px solid rgba(245, 199, 60, 0.3);
   border-radius: 13px;
 
-  background:
-    rgba(47, 40, 10, 0.4);
-
-  color: #f4cf58;
-
-  font-size: 14px;
-  font-weight: 900;
-
-  white-space: nowrap;
+  background: rgba(57, 46, 8, 0.35);
 }
 
-/* =========================================================
-   CAMPAIGN HEADING
-   ========================================================= */
+.dq-coins {
+  color: #f1c94d;
+}
 
-.campaign-heading {
+.dq-coins strong {
+  color: white;
+
+  font-size: 15px;
+}
+
+.dq-coins span {
+  grid-column: 2;
+
+  color: #d9d4bd;
+
+  font-size: 10px;
+}
+
+/* TITLE */
+
+.dq-title {
   display: flex;
 
   align-items: center;
@@ -188,249 +175,215 @@
 
   gap: 14px;
 
-  margin-bottom: 15px;
+  margin-bottom: 13px;
 }
 
-.campaign-heading h1 {
+.dq-title h1 {
   margin: 0;
 
+  font-size: 27px;
+}
+
+.dq-title p {
+  margin: 4px 0 0;
+
+  color: #91a59d;
+
+  font-size: 12px;
+}
+
+.dq-world-select {
+  min-width: 165px;
+
+  padding: 11px 12px;
+
+  border: 1px solid rgba(55, 220, 166, 0.2);
+  border-radius: 13px;
+
+  background: #092019;
   color: white;
+
+  font: inherit;
+  font-size: 12px;
+}
+
+/* OVERVIEW */
+
+.dq-overview {
+  display: grid;
+
+  grid-template-columns: 1.15fr 1fr;
+
+  gap: 14px;
+
+  margin-bottom: 11px;
+  padding: 14px;
+
+  border: 1px solid rgba(55, 220, 166, 0.2);
+  border-radius: 17px;
+
+  background: linear-gradient(
+    135deg,
+    #061b15,
+    #03120e
+  );
+}
+
+.dq-overview-left {
+  display: grid;
+
+  grid-template-columns: 58px 1fr;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+.dq-world-icon {
+  display: grid;
+
+  width: 56px;
+  height: 65px;
+
+  place-items: center;
+
+  border: 1px solid rgba(55, 220, 166, 0.4);
+  border-radius: 15px;
+
+  background: rgba(55, 220, 166, 0.07);
 
   font-size: 28px;
 }
 
-.campaign-heading p {
-  margin: 5px 0 0;
-
-  color: #94a79f;
-
-  font-size: 13px;
-}
-
-.campaign-world-select {
-  min-width: 170px;
-
-  padding: 12px 13px;
-
-  border: 1px solid
-    rgba(57, 227, 160, 0.18);
-
-  border-radius: 13px;
-
-  outline: none;
-
-  background: #0b211a;
-
-  color: white;
-
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-/* =========================================================
-   SUMMARY
-   ========================================================= */
-
-.campaign-summary {
-  display: grid;
-
-  grid-template-columns:
-    1.15fr 1fr;
-
-  gap: 16px;
-
-  margin-bottom: 16px;
-  padding: 16px;
-
-  border: 1px solid
-    rgba(57, 227, 160, 0.18);
-
-  border-radius: 18px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(8, 28, 22, 0.98),
-      rgba(3, 17, 13, 0.98)
-    );
-}
-
-.campaign-summary-left {
-  display: grid;
-
-  grid-template-columns:
-    65px 1fr;
-
-  align-items: center;
-
-  gap: 14px;
-}
-
-.campaign-shield {
-  display: grid;
-
-  width: 62px;
-  height: 72px;
-
-  place-items: center;
-
-  border: 1px solid
-    rgba(57, 227, 160, 0.4);
-
-  border-radius: 17px;
-
-  background:
-    rgba(57, 227, 160, 0.07);
-
-  font-size: 31px;
-}
-
-.campaign-summary-progress {
+.dq-progress-info {
   display: flex;
   flex-direction: column;
+
+  gap: 5px;
+}
+
+.dq-progress-info strong {
+  font-size: 13px;
+}
+
+.dq-progress-info span {
+  color: #8da199;
+
+  font-size: 10px;
+}
+
+.dq-progress-row {
+  display: flex;
+
+  align-items: center;
 
   gap: 7px;
 }
 
-.campaign-summary-progress strong {
-  color: white;
-
-  font-size: 14px;
-}
-
-.campaign-summary-progress > span {
-  color: #8ca098;
-
-  font-size: 11px;
-}
-
-.summary-progress-row {
-  display: flex;
-
-  align-items: center;
-
-  gap: 9px;
-}
-
-.summary-progress-track {
+.dq-progress-track {
   flex: 1;
 
-  height: 7px;
+  height: 6px;
 
   overflow: hidden;
 
-  border-radius: 999px;
+  border-radius: 99px;
 
-  background: #071510;
+  background: #07130f;
 }
 
-.summary-progress-track > div {
+.dq-progress-track div {
   height: 100%;
 
-  background:
-    linear-gradient(
-      90deg,
-      #42e695,
-      #20cdb0
-    );
+  background: linear-gradient(
+    90deg,
+    #42e695,
+    #20cdb0
+  );
 }
 
-.summary-progress-row b {
+.dq-progress-row b,
+.dq-progress-info small {
   color: #42e695;
 
-  font-size: 11px;
+  font-size: 10px;
 }
 
-.campaign-summary-progress small {
-  color: #42e695;
+.dq-boss-rewards {
+  padding-left: 12px;
 
-  font-size: 11px;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Rewards */
-
-.campaign-summary-rewards {
-  padding-left: 15px;
-
-  border-left: 1px solid
-    rgba(255, 255, 255, 0.07);
-}
-
-.campaign-summary-rewards > span {
+.dq-boss-rewards > span {
   display: block;
 
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 
-  color: #c2d0cb;
+  color: #becdc7;
 
-  font-size: 11px;
+  font-size: 10px;
 }
 
-.summary-rewards-grid {
+.dq-boss-rewards > div {
   display: grid;
 
-  grid-template-columns:
-    repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 
-  gap: 8px;
+  gap: 5px;
 }
 
-.summary-rewards-grid > div {
-  display: flex;
-  flex-direction: column;
-
-  align-items: center;
-
-  gap: 6px;
+.dq-boss-rewards figure {
+  margin: 0;
 
   text-align: center;
 }
 
-.summary-rewards-grid b {
-  font-size: 24px;
+.dq-boss-rewards b {
+  display: block;
+
+  margin-bottom: 3px;
+
+  font-size: 21px;
 }
 
-.summary-rewards-grid small {
-  color: #edf4f1;
+.dq-boss-rewards small {
+  color: #ecf3f0;
 
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
 }
 
-/* =========================================================
-   TABS
-   ========================================================= */
+/* TABS */
 
-.campaign-tabs {
+.dq-tabs {
   display: flex;
 
-  gap: 34px;
+  gap: 30px;
 
-  margin-bottom: 7px;
+  margin-bottom: 6px;
 }
 
-.campaign-tabs button {
+.dq-tabs button {
   position: relative;
 
-  padding: 10px 13px;
+  padding: 8px 11px;
 
   border: 0;
 
   background: transparent;
-
-  color: #758881;
+  color: #7d9189;
 
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
 }
 
-.campaign-tabs button.active {
+.dq-tabs button.active {
   color: #42e695;
 }
 
-.campaign-tabs button.active::after {
+.dq-tabs button.active::after {
   position: absolute;
 
   right: 0;
@@ -439,57 +392,38 @@
 
   height: 2px;
 
-  border-radius: 999px;
-
   background: #42e695;
 
   content: "";
 }
 
-/* =========================================================
-   MAP
-   ========================================================= */
+/* MAP */
 
-.campaign-world-map {
+.dq-map {
   position: relative;
 
   width: 100%;
-  height: 430px;
+  height: 410px;
 
   overflow: hidden;
 
-  border: 1px solid
-    rgba(57, 227, 160, 0.23);
-
-  border-radius: 20px;
+  border: 1px solid rgba(55, 220, 166, 0.23);
+  border-radius: 19px;
 
   background:
     radial-gradient(
-      circle at 50% 40%,
-      rgba(0, 145, 106, 0.14),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 20% 80%,
-      rgba(57, 227, 160, 0.06),
-      transparent 28%
+      circle at 50% 45%,
+      rgba(0, 145, 110, 0.14),
+      transparent 38%
     ),
     linear-gradient(
       180deg,
       #041912,
       #020d09
     );
-
-  box-shadow:
-    inset 0 0 60px
-      rgba(0, 0, 0, 0.45);
 }
 
-/* =========================================================
-   PATH
-   ========================================================= */
-
-.campaign-path {
+.dq-path {
   position: absolute;
 
   z-index: 1;
@@ -502,82 +436,69 @@
   pointer-events: none;
 }
 
-.campaign-path path {
+.dq-path path {
   fill: none;
 
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.campaign-path-shadow {
-  stroke:
-    rgba(0, 0, 0, 0.55);
-
-  stroke-width: 3.2;
+.dq-path-shadow {
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 3.5;
 }
 
-.campaign-path-main {
-  stroke: #24d9bb;
+.dq-path-main {
+  stroke: #27d9bc;
 
   stroke-width: 1.1;
-
   stroke-dasharray: 3 2;
 
-  filter:
-    drop-shadow(
-      0 0 6px
-      rgba(36, 217, 187, 0.75)
-    );
+  filter: drop-shadow(
+    0 0 5px rgba(39, 217, 188, 0.7)
+  );
 }
 
-/* =========================================================
-   LEVELS
-   ========================================================= */
+/* LEVEL NODES */
 
-.map-level-node {
+.dq-node {
   position: absolute;
 
   z-index: 3;
 
-  display: flex;
+  display: grid;
 
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
 
-  align-items: center;
-  justify-content: center;
+  place-items: center;
 
   padding: 0;
 
-  border: 2px solid #27564b;
-
+  border: 2px solid #285248;
   border-radius: 50%;
 
-  background:
-    radial-gradient(
-      circle at 50% 35%,
-      #102a21,
-      #05140f
-    );
+  background: radial-gradient(
+    circle at 50% 35%,
+    #102920,
+    #05140f
+  );
 
   color: white;
 
   font: inherit;
-  font-weight: 900;
 
-  transform:
-    translate(-50%, -50%);
+  transform: translate(-50%, -50%);
 }
 
-.map-level-node.unlocked {
-  border-color: #27d9b9;
+.dq-node.unlocked {
+  border-color: #28dabc;
 
   box-shadow:
-    0 0 16px
-      rgba(39, 217, 185, 0.3);
+    0 0 15px rgba(40, 218, 188, 0.3);
 }
 
-.map-level-node.selected {
+.dq-node.selected {
   border-color: #42e695;
 
   transform:
@@ -585,717 +506,428 @@
     scale(1.12);
 
   box-shadow:
-    0 0 0 5px
-      rgba(66, 230, 149, 0.08),
-    0 0 28px
-      rgba(66, 230, 149, 0.7);
+    0 0 0 4px rgba(66, 230, 149, 0.08),
+    0 0 27px rgba(66, 230, 149, 0.65);
 }
 
-.map-level-node.locked {
+.dq-node.locked {
   opacity: 0.55;
-
-  color: #71827c;
 }
 
-.map-level-number {
-  font-size: 19px;
+.dq-node strong {
+  font-size: 17px;
 }
 
-.map-level-stars {
+.dq-node-stars {
   position: absolute;
 
-  top: calc(100% + 6px);
+  top: calc(100% + 5px);
   left: 50%;
 
-  width: 76px;
+  width: 74px;
 
-  color: #f2c747;
+  color: #f4c842;
 
-  font-size: 12px;
+  font-size: 11px;
 
   text-align: center;
 
-  transform:
-    translateX(-50%);
+  transform: translateX(-50%);
 }
 
-/* Boss */
+.dq-node.boss {
+  width: 62px;
+  height: 62px;
 
-.map-level-node.boss {
-  width: 65px;
-  height: 65px;
-
-  border-color: #e9ba42;
+  border-color: #e9b943;
 
   box-shadow:
-    0 0 24px
-      rgba(233, 186, 66, 0.35);
+    0 0 20px rgba(233, 185, 67, 0.4);
 }
 
-.boss-crown {
+.dq-crown {
   position: absolute;
 
-  bottom: calc(100% - 3px);
-  left: 50%;
+  bottom: calc(100% - 2px);
 
-  color: #f4ca48;
+  color: #f4c842;
 
-  font-size: 27px;
-
-  transform:
-    translateX(-50%);
+  font-size: 25px;
 }
 
-/* =========================================================
-   SELECTED LEVEL CARD
-   ========================================================= */
+/* LEVEL CARD */
 
-.selected-level-card {
+.dq-level-card {
   display: grid;
 
-  grid-template-columns:
-    1fr 220px;
+  grid-template-columns: 1fr 210px;
 
-  gap: 16px;
+  gap: 12px;
 
-  margin-top: 9px;
-  padding: 15px;
+  margin-top: 8px;
+  padding: 13px;
 
-  border: 1px solid
-    rgba(57, 227, 160, 0.18);
+  border: 1px solid rgba(55, 220, 166, 0.2);
+  border-radius: 16px;
 
-  border-radius: 17px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #061b15,
-      #03110d
-    );
+  background: #051913;
 }
 
-.selected-level-main {
+.dq-level-description {
   display: flex;
   flex-direction: column;
 
-  gap: 5px;
+  gap: 4px;
 }
 
-.selected-level-main p {
-  margin: 0;
-
+.dq-level-description small {
   color: #42e695;
 
-  font-size: 13px;
+  font-size: 11px;
 }
 
-.selected-level-main strong {
+.dq-level-description strong {
   color: white;
+
+  font-size: 18px;
+}
+
+.dq-level-description span {
+  margin-top: 3px;
+
+  color: #81958d;
+
+  font-size: 9px;
+}
+
+.dq-level-description div {
+  color: #f4c842;
 
   font-size: 20px;
 }
 
-.selected-level-main span {
-  margin-top: 4px;
+.dq-level-actions {
+  display: grid;
 
-  color: #81948d;
+  gap: 7px;
+}
+
+.dq-level-rewards {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 6px;
+}
+
+.dq-level-rewards span {
+  display: grid;
+
+  min-height: 40px;
+
+  place-items: center;
+
+  padding: 6px;
+
+  border: 1px solid rgba(55, 220, 166, 0.14);
+  border-radius: 10px;
+
+  background: #09231c;
 
   font-size: 10px;
-}
-
-.selected-level-stars {
-  color: #f2c747;
-
-  font-size: 24px;
-}
-
-.selected-level-side {
-  display: grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
-  gap: 8px;
-}
-
-.reward-box {
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 10px;
-
-  border: 1px solid
-    rgba(57, 227, 160, 0.13);
-
-  border-radius: 11px;
-
-  background: #09251d;
-
-  color: white;
-
-  font-size: 12px;
   font-weight: 800;
-}
-
-.selected-level-side button {
-  grid-column: 1 / -1;
-
-  border: 0;
-
-  border-radius: 12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #46e9a3,
-      #1fc9ad
-    );
-
-  color: #03100c;
-
-  font: inherit;
-
-  font-size: 18px;
-  font-weight: 900;
-}
-
-/* =========================================================
-   BOSS CARD
-   ========================================================= */
-
-.boss-unlock-card {
-  display: grid;
-
-  grid-template-columns:
-    60px 1fr 120px;
-
-  align-items: center;
-
-  gap: 13px;
-
-  margin-top: 9px;
-  padding: 12px;
-
-  border: 1px solid
-    rgba(57, 227, 160, 0.17);
-
-  border-radius: 16px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #061b15,
-      #03110d
-    );
-}
-
-.boss-chest {
-  font-size: 39px;
 
   text-align: center;
 }
 
-.boss-unlock-info {
-  display: flex;
-  flex-direction: column;
+.dq-level-actions button {
+  padding: 11px;
 
-  gap: 5px;
-}
+  border: 0;
+  border-radius: 11px;
 
-.boss-unlock-info strong {
-  color: white;
+  background: linear-gradient(
+    135deg,
+    #47e9a5,
+    #20ccb0
+  );
 
-  font-size: 12px;
-}
+  color: #03100c;
 
-.boss-unlock-info span {
-  color: #f4ca48;
-
-  font-size: 13px;
+  font: inherit;
+  font-size: 16px;
   font-weight: 900;
 }
 
-.boss-star-progress {
-  width: 100%;
-  height: 6px;
+/* BOSS CARD */
+
+.dq-boss-card {
+  display: grid;
+
+  grid-template-columns: 48px 1fr 90px;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin-top: 7px;
+  padding: 10px;
+
+  border: 1px solid rgba(55, 220, 166, 0.18);
+  border-radius: 15px;
+
+  background: #051913;
+}
+
+.dq-boss-icon {
+  font-size: 32px;
+
+  text-align: center;
+}
+
+.dq-boss-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.dq-boss-info strong {
+  font-size: 11px;
+}
+
+.dq-boss-info span {
+  color: #f4c842;
+
+  font-size: 11px;
+}
+
+.dq-boss-track {
+  height: 5px;
 
   overflow: hidden;
 
-  border-radius: 999px;
+  border-radius: 99px;
 
   background: #17231f;
 }
 
-.boss-star-progress > div {
+.dq-boss-track div {
   height: 100%;
 
-  border-radius: inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      #f5ca37,
-      #e8b239
-    );
+  background: linear-gradient(
+    90deg,
+    #f5ca37,
+    #e8b239
+  );
 }
 
-.boss-unlock-card > button {
-  padding: 11px;
+.dq-boss-card > button {
+  padding: 9px 6px;
 
-  border: 1px solid
-    rgba(57, 227, 160, 0.3);
+  border: 1px solid rgba(55, 220, 166, 0.25);
+  border-radius: 10px;
 
-  border-radius: 12px;
-
-  background:
-    rgba(57, 227, 160, 0.07);
-
+  background: rgba(55, 220, 166, 0.07);
   color: #42e695;
 
   font: inherit;
-
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 900;
 }
 
 /* =========================================================
-   MOBILE
+   IPHONE
    ========================================================= */
 
 @media (max-width: 560px) {
 
-  .campaign-screen {
-    padding-bottom: 15px;
+  .dq-campaign {
+    padding:
+      10px 12px
+      calc(84px + env(safe-area-inset-bottom));
   }
 
-  .campaign-topbar {
-    grid-template-columns:
-      46px 1fr 46px;
-
-    margin-bottom: 9px;
-  }
-
-  .campaign-icon-button {
-    width: 44px;
-    height: 44px;
-
-    font-size: 20px;
-  }
-
-  .campaign-logo {
-    font-size: 20px;
-  }
-
-  .campaign-playerbar {
-    grid-template-columns:
-      55px 1fr auto;
-
-    margin-bottom: 14px;
-  }
-
-  .player-level-badge {
-    width: 52px;
-    height: 56px;
-  }
-
-  .player-level-badge strong {
-    font-size: 22px;
-  }
-
-  .player-coins {
-    padding: 9px 10px;
-
-    font-size: 12px;
-  }
-
-  .campaign-heading {
-    margin-bottom: 11px;
-  }
-
-  .campaign-heading h1 {
-    font-size: 23px;
-  }
-
-  .campaign-heading p {
-    font-size: 11px;
-  }
-
-  .campaign-world-select {
-    min-width: 150px;
-
-    padding: 9px 10px;
-
-    font-size: 11px;
-  }
-
-  .campaign-summary {
-    padding: 11px;
-
-    gap: 10px;
-  }
-
-  .campaign-summary-left {
-    grid-template-columns:
-      50px 1fr;
-
-    gap: 9px;
-  }
-
-  .campaign-shield {
-    width: 48px;
-    height: 57px;
-
-    font-size: 24px;
-  }
-
-  .campaign-summary-progress strong {
-    font-size: 11px;
-  }
-
-  .campaign-summary-rewards {
-    padding-left: 9px;
-  }
-
-  .campaign-summary-rewards > span {
-    font-size: 9px;
-  }
-
-  .summary-rewards-grid b {
-    font-size: 19px;
-  }
-
-  .summary-rewards-grid small {
-    font-size: 8px;
-  }
-
-  .campaign-world-map {
-    height: 410px;
-  }
-
-  .map-level-node {
-    width: 48px;
-    height: 48px;
-  }
-
-  .map-level-node.boss {
-    width: 59px;
-    height: 59px;
-  }
-
-  .map-level-number {
-    font-size: 17px;
-  }
-
-  .map-level-stars {
-    font-size: 11px;
-  }
-
-  .selected-level-card {
-    grid-template-columns:
-      1fr 190px;
-
-    padding: 12px;
-
-    gap: 10px;
-  }
-
-  .selected-level-main strong {
-    font-size: 17px;
-  }
-
-  .selected-level-stars {
-    font-size: 20px;
-  }
-
-  .boss-unlock-card {
-    grid-template-columns:
-      45px 1fr 95px;
-
-    padding: 10px;
-  }
-
-  .boss-chest {
-    font-size: 31px;
-  }
-}
-
-/* Kleine Handys */
-
-@media (max-width: 390px) {
-
-  .campaign-logo {
-    font-size: 17px;
-  }
-
-  .campaign-playerbar {
-    gap: 7px;
-  }
-
-  .player-coins {
-    font-size: 10px;
-  }
-
-  .campaign-heading h1 {
-    font-size: 20px;
-  }
-
-  .campaign-world-select {
-    min-width: 130px;
-
-    font-size: 10px;
-  }
-
-  .campaign-world-map {
-    height: 380px;
-  }
-
-  .selected-level-card {
-    grid-template-columns:
-      1fr 160px;
-  }
-
-  .selected-level-main strong {
-    font-size: 15px;
-  }
-
-  .reward-box {
-    font-size: 10px;
-  }
-
-  .selected-level-side button {
-    font-size: 15px;
-  }
-}
-/* =========================================================
-   FIX: HEADER + iPHONE FIT
-   ========================================================= */
-
-@media (max-width: 560px) {
-
-  /* TOPBAR sauber in einer Zeile */
-
-  .campaign-topbar {
-    display: grid;
-    grid-template-columns: 44px 1fr 44px;
-    align-items: center;
-    gap: 8px;
+  .dq-header {
+    grid-template-columns: 45px 1fr 45px;
 
     margin-bottom: 8px;
   }
 
-  .campaign-icon-button {
+  .dq-header-button {
     width: 42px;
     height: 42px;
-
-    font-size: 20px;
   }
 
-  .campaign-logo {
-    justify-content: center;
-
-    gap: 6px;
-
-    font-size: 18px;
-    white-space: nowrap;
+  .dq-logo {
+    font-size: 19px;
   }
 
-  .campaign-logo-mark {
+  .dq-logo span {
     font-size: 22px;
   }
 
-  /* PLAYER BAR ebenfalls sauber nebeneinander */
+  .dq-status {
+    grid-template-columns: 50px 1fr 88px;
 
-  .campaign-playerbar {
-    display: grid;
-    grid-template-columns: 50px 1fr 95px;
-    align-items: center;
-    gap: 8px;
+    gap: 7px;
 
     margin-bottom: 10px;
   }
 
-  .player-level-badge {
+  .dq-level {
     width: 48px;
     height: 52px;
   }
 
-  .player-level-badge span {
-    font-size: 9px;
-  }
-
-  .player-level-badge strong {
+  .dq-level strong {
     font-size: 20px;
   }
 
-  .player-xp-label {
-    gap: 8px;
-    margin-bottom: 4px;
-
-    font-size: 11px;
+  .dq-coins {
+    padding: 6px 7px;
   }
 
-  .player-xp-track {
-    height: 6px;
-  }
-
-  .player-coins {
-    padding: 8px 9px;
-
-    font-size: 10px;
-    text-align: center;
-  }
-
-  /* KAMPAGNENKOPF KOMPAKTER */
-
-  .campaign-heading {
+  .dq-title {
     margin-bottom: 8px;
   }
 
-  .campaign-heading h1 {
+  .dq-title h1 {
     font-size: 21px;
   }
 
-  .campaign-heading p {
+  .dq-title p {
     display: none;
   }
 
-  .campaign-world-select {
-    min-width: 135px;
-    padding: 8px 9px;
+  .dq-world-select {
+    min-width: 130px;
+
+    padding: 8px;
 
     font-size: 10px;
   }
 
-  /* SUMMARY ETWAS FLACHER */
-
-  .campaign-summary {
+  .dq-overview {
     gap: 8px;
 
-    margin-bottom: 8px;
+    margin-bottom: 7px;
     padding: 9px;
   }
 
-  .campaign-summary-left {
-    grid-template-columns: 45px 1fr;
-    gap: 8px;
+  .dq-overview-left {
+    grid-template-columns: 43px 1fr;
+
+    gap: 7px;
   }
 
-  .campaign-shield {
-    width: 43px;
+  .dq-world-icon {
+    width: 42px;
     height: 50px;
 
-    font-size: 22px;
+    font-size: 21px;
   }
 
-  .campaign-summary-progress {
-    gap: 4px;
+  .dq-progress-info strong {
+    font-size: 9px;
   }
 
-  .campaign-summary-progress strong {
-    font-size: 10px;
+  .dq-boss-rewards {
+    padding-left: 7px;
   }
 
-  .campaign-summary-progress > span,
-  .campaign-summary-progress small {
+  .dq-boss-rewards > span {
     font-size: 8px;
   }
 
-  .campaign-summary-rewards {
-    padding-left: 8px;
-  }
-
-  .campaign-summary-rewards > span {
-    margin-bottom: 7px;
-
-    font-size: 8px;
-  }
-
-  .summary-rewards-grid b {
+  .dq-boss-rewards b {
     font-size: 17px;
   }
 
-  .summary-rewards-grid small {
+  .dq-boss-rewards small {
     font-size: 7px;
   }
 
-  /* TABS */
-
-  .campaign-tabs {
+  .dq-tabs {
     margin-bottom: 3px;
   }
 
-  .campaign-tabs button {
-    padding: 7px 10px;
-
-    font-size: 11px;
+  .dq-map {
+    height: 355px;
   }
 
-  /* KARTE ETWAS KÜRZER */
-
-  .campaign-world-map {
-    height: 360px;
+  .dq-node {
+    width: 44px;
+    height: 44px;
   }
 
-  /* LEVEL-KARTE ETWAS FLACHER */
-
-  .selected-level-card {
-    grid-template-columns: 1fr 170px;
-
-    gap: 8px;
-
-    margin-top: 6px;
-    padding: 10px;
+  .dq-node.boss {
+    width: 55px;
+    height: 55px;
   }
 
-  .selected-level-main strong {
+  .dq-node strong {
     font-size: 15px;
   }
 
-  .selected-level-stars {
-    font-size: 18px;
+  .dq-node-stars {
+    font-size: 9px;
   }
 
-  .reward-box {
-    padding: 7px;
-
-    font-size: 10px;
+  .dq-crown {
+    font-size: 21px;
   }
 
-  .selected-level-side button {
-    font-size: 14px;
-  }
-
-  /* BOSS-KARTE ETWAS FLACHER */
-
-  .boss-unlock-card {
-    grid-template-columns: 42px 1fr 88px;
+  .dq-level-card {
+    grid-template-columns: 1fr 155px;
 
     gap: 7px;
 
     margin-top: 6px;
+    padding: 9px;
+  }
+
+  .dq-level-description strong {
+    font-size: 14px;
+  }
+
+  .dq-level-description div {
+    font-size: 16px;
+  }
+
+  .dq-level-rewards span {
+    min-height: 30px;
+
+    font-size: 8px;
+  }
+
+  .dq-level-actions button {
     padding: 8px;
+
+    font-size: 13px;
   }
 
-  .boss-chest {
-    font-size: 28px;
+  .dq-boss-card {
+    grid-template-columns: 38px 1fr 70px;
+
+    gap: 6px;
+
+    margin-top: 6px;
+    padding: 7px;
   }
 
-  .boss-unlock-info strong {
-    font-size: 10px;
+  .dq-boss-icon {
+    font-size: 26px;
   }
 
-  .boss-unlock-info span {
-    font-size: 10px;
-  }
-
-  .boss-unlock-card > button {
-    padding: 8px 6px;
-
+  .dq-boss-info strong,
+  .dq-boss-info span {
     font-size: 9px;
   }
-}
-.campaign-topbar {
-  background: red !important;
+
+  .dq-boss-card > button {
+    padding: 7px 4px;
+
+    font-size: 8px;
+  }
 }

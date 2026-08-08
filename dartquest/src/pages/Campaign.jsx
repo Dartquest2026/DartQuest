@@ -38,10 +38,6 @@ function Campaign() {
     results: {},
   })
 
-  /* =========================
-     WELT
-  ========================= */
-
   const worldStartLevel =
     (selectedWorld - 1) * 10 + 1
 
@@ -70,10 +66,6 @@ function Campaign() {
       (level) => !level.boss,
     )
 
-  /* =========================
-     FORTSCHRITT
-  ========================= */
-
   const worldStars =
     worldNormalLevels.reduce(
       (sum, level) =>
@@ -98,10 +90,6 @@ function Campaign() {
             100,
         )
       : 0
-
-  /* =========================
-     SPEICHER LADEN
-  ========================= */
 
   useEffect(() => {
     const savedProgress =
@@ -149,10 +137,6 @@ function Campaign() {
     }
   }, [])
 
-  /* =========================
-     STERNE PRO WELT
-  ========================= */
-
   function getWorldStars(
     worldNumber,
     currentResults,
@@ -179,10 +163,6 @@ function Campaign() {
       )
   }
 
-  /* =========================
-     FREISCHALTUNG
-  ========================= */
-
   function isLevelUnlocked(level) {
     if (
       progress.results[level.id]
@@ -194,15 +174,11 @@ function Campaign() {
       const levelWorld =
         Math.ceil(level.id / 10)
 
-      const stars =
+      return (
         getWorldStars(
           levelWorld,
           progress.results,
-        )
-
-      return (
-        stars >=
-        BOSS_STAR_REQUIREMENT
+        ) >= BOSS_STAR_REQUIREMENT
       )
     }
 
@@ -212,30 +188,18 @@ function Campaign() {
     )
   }
 
-  /* =========================
-     WELT WECHSELN
-  ========================= */
-
   function changeWorld(event) {
     const newWorld =
       Number(event.target.value)
 
-    const firstLevel =
-      (newWorld - 1) * 10 + 1
-
     setSelectedWorld(newWorld)
-    setPreviewLevelId(firstLevel)
+
+    setPreviewLevelId(
+      (newWorld - 1) * 10 + 1,
+    )
+
     setSelectedLevel(null)
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
   }
-
-  /* =========================
-     LEVEL AUSWÄHLEN
-  ========================= */
 
   function selectMapLevel(level) {
     if (!isLevelUnlocked(level)) {
@@ -263,10 +227,6 @@ function Campaign() {
   function closeLevel() {
     setSelectedLevel(null)
   }
-
-  /* =========================
-     LEVEL ABSCHLIESSEN
-  ========================= */
 
   function completeLevel(
     level,
@@ -302,8 +262,8 @@ function Campaign() {
 
           [level.id]: {
             ...result,
-            darts: bestDarts,
             stars: bestStars,
+            darts: bestDarts,
           },
         }
 
@@ -340,10 +300,6 @@ function Campaign() {
     )
   }
 
-  /* =========================
-     STERNE
-  ========================= */
-
   function getLevelStars(level) {
     const result =
       progress.results[level.id]
@@ -359,35 +315,22 @@ function Campaign() {
     )}`
   }
 
-  /* =========================
-     UI
-  ========================= */
-
   return (
-    <section className="campaign-screen">
+    <main className="dq-campaign">
 
-      {/* TOPBAR */}
+      {/* HEADER */}
 
-      <header
-  className="campaign-topbar"
-  style={{
-    background: 'red',
-    padding: '20px',
-  }}
->
-
+      <header className="dq-header">
         <button
-          className="campaign-icon-button"
           type="button"
+          className="dq-header-button"
           aria-label="Menü"
         >
           ☰
         </button>
 
-        <div className="campaign-logo">
-          <span className="campaign-logo-mark">
-            🎯
-          </span>
+        <div className="dq-logo">
+          <span>🎯</span>
 
           <strong>
             DART QUEST
@@ -395,22 +338,21 @@ function Campaign() {
         </div>
 
         <button
-          className="campaign-icon-button"
           type="button"
+          className="dq-header-button"
           aria-label="Benachrichtigungen"
         >
           ♧
         </button>
-
       </header>
 
 
-      {/* SPIELERSTATUS */}
+      {/* STATUS */}
 
-      <section className="campaign-playerbar">
+      <section className="dq-status">
 
-        <div className="player-level-badge">
-          <span>LVL</span>
+        <div className="dq-level">
+          <small>LVL</small>
 
           <strong>
             {Math.max(
@@ -423,28 +365,28 @@ function Campaign() {
           </strong>
         </div>
 
-        <div className="player-xp">
+        <div className="dq-xp">
+          <div>
+            <strong>XP</strong>
 
-          <div className="player-xp-label">
-            <span>XP</span>
-            <strong>
+            <span>
               0 / 500
-            </strong>
+            </span>
           </div>
 
-          <div className="player-xp-track">
+          <div className="dq-xp-track">
             <div
-              className="player-xp-fill"
               style={{
                 width: '0%',
               }}
             />
           </div>
-
         </div>
 
-        <div className="player-coins">
-          🪙 0 Coins
+        <div className="dq-coins">
+          🪙
+          <strong>0</strong>
+          <span>Coins</span>
         </div>
 
       </section>
@@ -452,24 +394,20 @@ function Campaign() {
 
       {/* KAMPAGNE */}
 
-      <section className="campaign-heading">
+      <section className="dq-title">
 
         <div>
-          <h1>
-            KAMPAGNE
-          </h1>
+          <h1>KAMPAGNE</h1>
 
           <p>
-            Steige Level für Level auf
-            und werde zur Legende!
+            Werde zur Dart-Legende
           </p>
         </div>
 
         <select
-          className="campaign-world-select"
           value={selectedWorld}
           onChange={changeWorld}
-          aria-label="Welt auswählen"
+          className="dq-world-select"
         >
           {worldNames.map(
             (world, index) => (
@@ -477,7 +415,6 @@ function Campaign() {
                 key={world}
                 value={index + 1}
               >
-                Welt {index + 1} –{' '}
                 {world}
               </option>
             ),
@@ -487,17 +424,17 @@ function Campaign() {
       </section>
 
 
-      {/* ÜBERSICHT */}
+      {/* FORTSCHRITT */}
 
-      <section className="campaign-summary">
+      <section className="dq-overview">
 
-        <div className="campaign-summary-left">
+        <div className="dq-overview-left">
 
-          <div className="campaign-shield">
+          <div className="dq-world-icon">
             🎯
           </div>
 
-          <div className="campaign-summary-progress">
+          <div className="dq-progress-info">
 
             <strong>
               Kampagne:{' '}
@@ -512,9 +449,9 @@ function Campaign() {
               Fortschritt
             </span>
 
-            <div className="summary-progress-row">
+            <div className="dq-progress-row">
 
-              <div className="summary-progress-track">
+              <div className="dq-progress-track">
                 <div
                   style={{
                     width: `${campaignPercent}%`,
@@ -539,18 +476,17 @@ function Campaign() {
         </div>
 
 
-        <div className="campaign-summary-rewards">
+        <div className="dq-boss-rewards">
 
           <span>
-            Belohnung für
             Boss-Level{' '}
             {worldBoss?.id ??
               worldEndLevel}
           </span>
 
-          <div className="summary-rewards-grid">
+          <div>
 
-            <div>
+            <figure>
               <b>🪙</b>
               <small>
                 +
@@ -559,9 +495,9 @@ function Campaign() {
                 <br />
                 Coins
               </small>
-            </div>
+            </figure>
 
-            <div>
+            <figure>
               <b>⭐</b>
               <small>
                 +
@@ -570,14 +506,14 @@ function Campaign() {
                 <br />
                 XP
               </small>
-            </div>
+            </figure>
 
-            <div>
+            <figure>
               <b>🃏</b>
               <small>
-                Kartenpaket
+                Karten
               </small>
-            </div>
+            </figure>
 
           </div>
 
@@ -588,11 +524,10 @@ function Campaign() {
 
       {/* TABS */}
 
-      <div className="campaign-tabs">
-
+      <nav className="dq-tabs">
         <button
-          className="active"
           type="button"
+          className="active"
         >
           KARTE
         </button>
@@ -600,23 +535,21 @@ function Campaign() {
         <button type="button">
           LISTE
         </button>
+      </nav>
 
-      </div>
 
+      {/* MAP */}
 
-      {/* KARTE */}
-
-      <section className="campaign-world-map">
+      <section className="dq-map">
 
         <svg
-          className="campaign-path"
+          className="dq-path"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
-          aria-hidden="true"
         >
 
           <path
-            className="campaign-path-shadow"
+            className="dq-path-shadow"
             d="
               M 15 12
               C 28 8, 40 12, 47 18
@@ -630,7 +563,7 @@ function Campaign() {
           />
 
           <path
-            className="campaign-path-main"
+            className="dq-path-main"
             d="
               M 15 12
               C 28 8, 40 12, 47 18
@@ -644,6 +577,7 @@ function Campaign() {
           />
 
         </svg>
+
 
         {visibleLevels.map(
           (level) => {
@@ -666,7 +600,7 @@ function Campaign() {
                 type="button"
 
                 className={[
-                  'map-level-node',
+                  'dq-node',
 
                   unlocked
                     ? 'unlocked'
@@ -683,13 +617,11 @@ function Campaign() {
 
                 style={{
                   left: `${
-                    position?.x ??
-                    50
+                    position?.x ?? 50
                   }%`,
 
                   top: `${
-                    position?.y ??
-                    50
+                    position?.y ?? 50
                   }%`,
                 }}
 
@@ -699,24 +631,22 @@ function Campaign() {
                   )
                 }
 
-                disabled={
-                  !unlocked
-                }
+                disabled={!unlocked}
               >
 
                 {level.boss && (
-                  <span className="boss-crown">
+                  <span className="dq-crown">
                     ♛
                   </span>
                 )}
 
-                <span className="map-level-number">
+                <strong>
                   {unlocked
                     ? level.id
                     : '🔒'}
-                </span>
+                </strong>
 
-                <span className="map-level-stars">
+                <span className="dq-node-stars">
                   {getLevelStars(
                     level,
                   )}
@@ -737,15 +667,15 @@ function Campaign() {
           selectedPreviewLevel,
         ) && (
 
-          <article className="selected-level-card">
+          <section className="dq-level-card">
 
-            <div className="selected-level-main">
+            <div className="dq-level-description">
 
-              <p>
+              <small>
                 {
                   selectedPreviewLevel.title
                 }
-              </p>
+              </small>
 
               <strong>
                 {
@@ -757,7 +687,7 @@ function Campaign() {
                 Beste Bewertung
               </span>
 
-              <div className="selected-level-stars">
+              <div>
                 {getLevelStars(
                   selectedPreviewLevel,
                 )}
@@ -766,24 +696,28 @@ function Campaign() {
             </div>
 
 
-            <div className="selected-level-side">
+            <div className="dq-level-actions">
 
-              <div className="reward-box">
-                ⭐ +
-                {
-                  selectedPreviewLevel
-                    .rewardXP
-                }{' '}
-                XP
-              </div>
+              <div className="dq-level-rewards">
 
-              <div className="reward-box">
-                🪙 +
-                {
-                  selectedPreviewLevel
-                    .rewardCoins
-                }{' '}
-                Coins
+                <span>
+                  ⭐ +
+                  {
+                    selectedPreviewLevel
+                      .rewardXP
+                  }{' '}
+                  XP
+                </span>
+
+                <span>
+                  🪙 +
+                  {
+                    selectedPreviewLevel
+                      .rewardCoins
+                  }{' '}
+                  Coins
+                </span>
+
               </div>
 
               <button
@@ -797,34 +731,27 @@ function Campaign() {
 
             </div>
 
-          </article>
+          </section>
         )}
 
 
       {/* BOSS */}
 
-      <section className="boss-unlock-card">
+      <section className="dq-boss-card">
 
-        <div className="boss-chest">
+        <div className="dq-boss-icon">
           {worldStars >=
           BOSS_STAR_REQUIREMENT
             ? '👑'
             : '🎁'}
         </div>
 
-        <div className="boss-unlock-info">
+        <div className="dq-boss-info">
 
           <strong>
-            {worldStars >=
-            BOSS_STAR_REQUIREMENT
-              ? `Boss-Level ${
-                  worldBoss?.id ??
-                  worldEndLevel
-                } ist freigeschaltet!`
-              : `Sammle Sterne, um Boss-Level ${
-                  worldBoss?.id ??
-                  worldEndLevel
-                } freizuschalten!`}
+            Boss-Level{' '}
+            {worldBoss?.id ??
+              worldEndLevel}
           </strong>
 
           <span>
@@ -832,7 +759,7 @@ function Campaign() {
             {BOSS_STAR_REQUIREMENT}
           </span>
 
-          <div className="boss-star-progress">
+          <div className="dq-boss-track">
             <div
               style={{
                 width: `${Math.min(
@@ -872,7 +799,7 @@ function Campaign() {
         >
           {worldStars >=
           BOSS_STAR_REQUIREMENT
-            ? 'Boss wählen'
+            ? 'BOSS'
             : '🔒'}
         </button>
 
@@ -885,7 +812,7 @@ function Campaign() {
         onComplete={completeLevel}
       />
 
-    </section>
+    </main>
   )
 }
 
