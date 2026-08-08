@@ -932,6 +932,100 @@
   }
 }
 /* =========================================================
+   MAP + WORLD SELECT UPDATE
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  .dq-title {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 6px;
+  }
+
+  .dq-title h1 {
+    font-size: 18px;
+  }
+
+  .dq-world-switcher {
+    display: grid;
+
+    grid-template-columns: 38px 1fr 38px;
+
+    align-items: center;
+
+    gap: 5px;
+
+    width: 100%;
+  }
+
+  .dq-world-arrow {
+    display: grid;
+
+    width: 36px;
+    height: 40px;
+
+    place-items: center;
+
+    padding: 0;
+
+    border: 1px solid rgba(66, 230, 149, 0.25);
+    border-radius: 10px;
+
+    background: #0a211a;
+    color: #42e695;
+
+    font-size: 25px;
+    font-weight: 800;
+
+    cursor: pointer;
+  }
+
+  .dq-world-current {
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 44px;
+
+    padding: 5px 8px;
+
+    border: 1px solid rgba(66, 230, 149, 0.3);
+    border-radius: 11px;
+
+    background:
+      linear-gradient(
+        135deg,
+        #0b2c22,
+        #071b15
+      );
+
+    color: white;
+
+    cursor: pointer;
+  }
+
+  .dq-world-current small {
+    color: #42e695;
+
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+  }
+
+  .dq-world-current strong {
+    margin-top: 2px;
+
+    font-size: 12px;
+    font-weight: 900;
+  }
+}
+/* =========================================================
    iPHONE – ALLES AUF EINEN BILDSCHIRM
    ========================================================= */
 
@@ -1399,5 +1493,431 @@
 
   .dq-boss-card {
     grid-template-columns: 34px 1fr 60px;
+  }
+}
+/* =========================================================
+   LEVEL CARD – FINAL OVERRIDE
+   ========================================================= */
+
+.dq-level-card {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(250px, 0.95fr);
+
+  gap: 0;
+
+  margin-top: 8px;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(55, 220, 166, 0.22);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(5, 27, 21, 0.98),
+      rgba(2, 16, 12, 0.99)
+    );
+}
+
+.dq-level-description {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-width: 0;
+
+  padding: 16px 18px;
+
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.dq-level-name {
+  margin-bottom: 5px;
+
+  color: #42e695;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dq-level-task {
+  color: #fff;
+
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.dq-level-best {
+  margin-top: 12px;
+
+  color: #7e938b;
+
+  font-size: 10px;
+}
+
+.dq-level-stars {
+  margin-top: 5px;
+
+  color: #f4c842;
+
+  font-size: 23px;
+}
+
+.dq-level-action-area {
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  gap: 9px;
+
+  padding: 12px;
+}
+
+.dq-level-rewards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 8px;
+}
+
+.dq-reward-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 45px;
+
+  padding: 8px;
+
+  border: 1px solid rgba(55, 220, 166, 0.16);
+  border-radius: 12px;
+
+  background: rgba(8, 35, 27, 0.88);
+
+  color: #fff;
+}
+
+.dq-reward-icon {
+  font-size: 19px;
+}
+
+.dq-reward-item strong {
+  font-size: 12px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.dq-play-button {
+  width: 100%;
+  min-height: 58px;
+
+  padding: 10px 16px;
+
+  border: 0;
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #45eaa5,
+      #20d2b4
+    );
+
+  color: #02110d;
+
+  font: inherit;
+  font-size: 22px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   LEVEL CARD – IPHONE
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  .dq-level-card {
+    grid-template-columns:
+      minmax(0, 1fr)
+      46%;
+
+    margin-top: 5px;
+
+    border-radius: 13px;
+  }
+
+  .dq-level-description {
+    padding: 8px 10px;
+  }
+
+  .dq-level-name {
+    margin-bottom: 3px;
+
+    font-size: 9px;
+  }
+
+  .dq-level-task {
+    font-size: 13px;
+  }
+
+  .dq-level-best {
+    margin-top: 5px;
+
+    font-size: 7px;
+  }
+
+  .dq-level-stars {
+    margin-top: 3px;
+
+    font-size: 15px;
+  }
+
+  .dq-level-action-area {
+    gap: 5px;
+
+    padding: 7px;
+  }
+
+  .dq-level-rewards {
+    gap: 5px;
+  }
+
+  .dq-reward-item {
+    min-height: 30px;
+
+    gap: 4px;
+
+    padding: 4px;
+
+    border-radius: 8px;
+  }
+
+  .dq-reward-icon {
+    font-size: 12px;
+  }
+
+  .dq-reward-item strong {
+    font-size: 8px;
+  }
+
+  .dq-play-button {
+    min-height: 42px;
+
+    padding: 6px;
+
+    border-radius: 9px;
+
+    font-size: 16px;
+  }
+}
+/* =========================================================
+   WORLD SWITCHER + LEVEL CARD FINAL
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  /* WELT-AUSWAHL */
+
+  .dq-title {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dq-world-switcher {
+    display: grid;
+    grid-template-columns: 34px 1fr 34px;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .dq-world-arrow {
+    width: 34px;
+    height: 38px;
+
+    padding: 0;
+
+    border: 1px solid rgba(66, 230, 149, 0.25);
+    border-radius: 9px;
+
+    background: #0a211a;
+    color: #42e695;
+
+    font-size: 24px;
+    font-weight: 900;
+  }
+
+  .dq-world-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    height: 38px;
+
+    padding: 3px 6px;
+
+    border: 1px solid rgba(66, 230, 149, 0.28);
+    border-radius: 9px;
+
+    background: #092019;
+    color: white;
+  }
+
+  .dq-world-current small {
+    color: #42e695;
+    font-size: 7px;
+    font-weight: 900;
+  }
+
+  .dq-world-current strong {
+    margin-top: 1px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+
+  /* KARTE ETWAS KLEINER */
+
+  .dq-map {
+    flex: 0 0 auto;
+    height: 285px;
+    min-height: 285px;
+  }
+
+
+  /* LEVELKARTE */
+
+  .dq-level-card {
+    display: grid;
+    grid-template-columns: 43% 57%;
+
+    gap: 0;
+
+    margin-top: 5px;
+    padding: 0;
+
+    overflow: hidden;
+
+    border-radius: 13px;
+  }
+
+  /* Linke Seite */
+
+  .dq-level-description {
+    justify-content: center;
+
+    padding: 8px 9px;
+
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .dq-level-name {
+    margin-bottom: 2px;
+
+    color: #42e695;
+    font-size: 9px;
+  }
+
+  .dq-level-task {
+    font-size: 13px;
+    line-height: 1.1;
+  }
+
+  .dq-level-best {
+    margin-top: 5px;
+
+    font-size: 7px;
+  }
+
+  .dq-level-stars {
+    margin-top: 3px;
+
+    font-size: 15px;
+  }
+
+
+  /* Rechte Seite */
+
+  .dq-level-action-area {
+    display: grid;
+    grid-template-rows: 28px 1fr;
+
+    gap: 5px;
+
+    padding: 7px;
+  }
+
+  .dq-level-rewards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 5px;
+  }
+
+  .dq-reward-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 3px;
+
+    min-height: 28px;
+
+    padding: 3px;
+
+    border: 1px solid rgba(55,220,166,0.15);
+    border-radius: 8px;
+
+    background: #09231c;
+  }
+
+  .dq-reward-icon {
+    font-size: 11px;
+  }
+
+  .dq-reward-item strong {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+
+  /* SPIELEN – GROSS */
+
+  .dq-play-button {
+    width: 100%;
+    min-height: 47px;
+
+    padding: 6px;
+
+    border: 0;
+    border-radius: 10px;
+
+    background:
+      linear-gradient(
+        135deg,
+        #47eaa6,
+        #20ceb0
+      );
+
+    color: #03100c;
+
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: .3px;
+
+    box-shadow:
+      0 6px 16px rgba(32,206,176,.16);
   }
 }
