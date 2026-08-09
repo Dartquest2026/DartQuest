@@ -9,6 +9,7 @@ const CAMPAIGN_STORAGE_KEY =
   'dartquest-campaign-progress'
 
 const BOSS_STAR_REQUIREMENT = 22
+const XP_PER_PLAYER_LEVEL = 500
 
 const worldNames = [
   'Anfänger I',
@@ -34,11 +35,15 @@ function Campaign() {
     useState(1)
 
   const [progress, setProgress] = useState({
-  unlockedLevel: 1,
-  results: {},
-  xp: 0,
-  coins: 0,
-})
+    unlockedLevel: 1,
+    results: {},
+    xp: 0,
+    coins: 0,
+  })
+
+  /* =======================================================
+     GRUNDWERTE
+     ======================================================= */
 
   const worldStartLevel =
     (selectedWorld - 1) * 10 + 1
@@ -93,6 +98,32 @@ function Campaign() {
         )
       : 0
 
+  const totalXP =
+    progress.xp ?? 0
+
+  const totalCoins =
+    progress.coins ?? 0
+
+  const playerLevel =
+    Math.floor(
+      totalXP / XP_PER_PLAYER_LEVEL,
+    ) + 1
+
+  const xpInsideCurrentLevel =
+    totalXP % XP_PER_PLAYER_LEVEL
+
+  const xpPercent =
+    Math.min(
+      (xpInsideCurrentLevel /
+        XP_PER_PLAYER_LEVEL) *
+        100,
+      100,
+    )
+
+  /* =======================================================
+     SPEICHER LADEN
+     ======================================================= */
+
   useEffect(() => {
     const savedProgress =
       localStorage.getItem(
@@ -116,21 +147,27 @@ function Campaign() {
 
       const currentWorld =
         Math.min(
-          Math.ceil(
-            unlockedLevel / 10,
+          Math.max(
+            1,
+            Math.ceil(
+              unlockedLevel / 10,
+            ),
           ),
           worldNames.length,
         )
 
       setProgress({
-  unlockedLevel,
-  results:
-    parsedProgress.results ?? {},
-  xp: parsedProgress.xp ?? 0,
-  coins: parsedProgress.coins ?? 0,
-})
+        unlockedLevel,
+        results:
+          parsedProgress.results ?? {},
+        xp:
+          parsedProgress.xp ?? 0,
+        coins:
+          parsedProgress.coins ?? 0,
+      })
 
       setSelectedWorld(currentWorld)
+
       setPreviewLevelId(
         unlockedLevel,
       )
@@ -140,6 +177,10 @@ function Campaign() {
       )
     }
   }, [])
+
+  /* =======================================================
+     HELFER
+     ======================================================= */
 
   function getWorldStars(
     worldNumber,
@@ -168,6 +209,10 @@ function Campaign() {
   }
 
   function isLevelUnlocked(level) {
+    if (!level) {
+      return false
+    }
+
     if (
       progress.results[level.id]
     ) {
@@ -176,13 +221,19 @@ function Campaign() {
 
     if (level.boss) {
       const levelWorld =
-        Math.ceil(level.id / 10)
+        Math.ceil(
+          level.id / 10,
+        )
 
-      return (
+      const starsInWorld =
         getWorldStars(
           levelWorld,
           progress.results,
-        ) >= BOSS_STAR_REQUIREMENT
+        )
+
+      return (
+        starsInWorld >=
+        BOSS_STAR_REQUIREMENT
       )
     }
 
@@ -192,25 +243,92 @@ function Campaign() {
     )
   }
 
-  function changeWorld(event) {
-    const newWorld =
-      Number(event.target.value)
+  function getLevelStars(level) {
+    if (!level) {
+      return '☆☆☆'
+    }
 
-    setSelectedWorld(newWorld)
+    const result =
+      progress.results[level.id]
+
+    if (!result) {
+      return '☆☆☆'
+    }
+
+    const stars =
+      Math.max(
+        0,
+        Math.min(
+          result.stars ?? 0,
+          3,
+        ),
+      )
+
+    return `${'⭐'.repeat(
+      stars,
+    )}${'☆'.repeat(
+      3 - stars,
+    )}`
+  }
+
+  function goToWorld(worldNumber) {
+    const boundedWorld =
+      Math.min(
+        Math.max(
+          worldNumber,
+          1,
+        ),
+        worldNames.length,
+      )
+
+    setSelectedWorld(
+      boundedWorld,
+    )
 
     setPreviewLevelId(
-      (newWorld - 1) * 10 + 1,
+      (boundedWorld - 1) *
+        10 +
+        1,
     )
 
     setSelectedLevel(null)
   }
 
-  function selectMapLevel(level) {
-    if (!isLevelUnlocked(level)) {
+  function goToPreviousWorld() {
+    if (
+      selectedWorld <= 1
+    ) {
       return
     }
 
-    setPreviewLevelId(level.id)
+    goToWorld(
+      selectedWorld - 1,
+    )
+  }
+
+  function goToNextWorld() {
+    if (
+      selectedWorld >=
+      worldNames.length
+    ) {
+      return
+    }
+
+    goToWorld(
+      selectedWorld + 1,
+    )
+  }
+
+  function selectMapLevel(level) {
+    if (
+      !isLevelUnlocked(level)
+    ) {
+      return
+    }
+
+    setPreviewLevelId(
+      level.id,
+    )
   }
 
   function startSelectedLevel() {
@@ -232,6 +350,10 @@ function Campaign() {
     setSelectedLevel(null)
   }
 
+  /* =======================================================
+     LEVEL ABSCHLIESSEN
+     ======================================================= */
+
   function completeLevel(
     level,
     result,
@@ -243,39 +365,38 @@ function Campaign() {
             level.id
           ]
 
+        const previousStars =
+          previousResult?.stars ??
+          0
+
         const bestStars =
           Math.max(
-            previousResult?.stars ??
-              0,
-            result.stars,
+            previousStars,
+            result.stars ?? 0,
           )
 
         const bestDarts =
           previousResult?.darts ==
           null
             ? result.darts
-            : result.darts == null
+            : result.darts ==
+                null
               ? previousResult.darts
               : Math.min(
                   previousResult.darts,
                   result.darts,
                 )
 
-        const previousStars =
-  previousResult?.stars ?? 0
+        const updatedResults = {
+          ...currentProgress.results,
 
-const isBetterResult =
-  result.stars > previousStars
-
-const earnedXP =
-  isBetterResult
-    ? level.rewardXP ?? 0
-    : 0
-
-const earnedCoins =
-  isBetterResult
-    ? level.rewardCoins ?? 0
-    : 0
+          [level.id]: {
+            ...previousResult,
+            ...result,
+            stars: bestStars,
+            darts: bestDarts,
+          },
+        }
 
         const nextUnlockedLevel =
           Math.max(
@@ -286,21 +407,46 @@ const earnedCoins =
             ),
           )
 
+        const isFirstCompletion =
+          !previousResult
+
+        const isBetterResult =
+          bestStars >
+          previousStars
+
+        const rewardAllowed =
+          isFirstCompletion ||
+          isBetterResult
+
+        const earnedXP =
+          rewardAllowed
+            ? level.rewardXP ??
+              0
+            : 0
+
+        const earnedCoins =
+          rewardAllowed
+            ? level.rewardCoins ??
+              0
+            : 0
+
         const updatedProgress = {
-  unlockedLevel:
-    nextUnlockedLevel,
+          unlockedLevel:
+            nextUnlockedLevel,
 
-  results:
-    updatedResults,
+          results:
+            updatedResults,
 
-  xp:
-    (currentProgress.xp ?? 0) +
-    earnedXP,
+          xp:
+            (currentProgress.xp ??
+              0) +
+            earnedXP,
 
-  coins:
-    (currentProgress.coins ?? 0) +
-    earnedCoins,
-}
+          coins:
+            (currentProgress.coins ??
+              0) +
+            earnedCoins,
+        }
 
         localStorage.setItem(
           CAMPAIGN_STORAGE_KEY,
@@ -309,29 +455,26 @@ const earnedCoins =
           ),
         )
 
+        const nextPreviewLevel =
+          Math.min(
+            level.id + 1,
+            levels.length,
+          )
+
         setPreviewLevelId(
-          nextUnlockedLevel,
+          nextPreviewLevel,
         )
 
         return updatedProgress
       },
     )
+
+    setSelectedLevel(null)
   }
 
-  function getLevelStars(level) {
-    const result =
-      progress.results[level.id]
-
-    if (!result) {
-      return '☆☆☆'
-    }
-
-    return `${'⭐'.repeat(
-      result.stars,
-    )}${'☆'.repeat(
-      3 - result.stars,
-    )}`
-  }
+  /* =======================================================
+     UI
+     ======================================================= */
 
   return (
     <main className="dq-campaign">
@@ -364,7 +507,6 @@ const earnedCoins =
         </button>
       </header>
 
-
       {/* STATUS */}
 
       <section className="dq-status">
@@ -373,49 +515,55 @@ const earnedCoins =
           <small>LVL</small>
 
           <strong>
-            {Math.max(
-              1,
-              Math.ceil(
-                progress.unlockedLevel /
-                  10,
-              ),
-            )}
+            {playerLevel}
           </strong>
         </div>
 
         <div className="dq-xp">
+
           <div>
             <strong>XP</strong>
 
             <span>
-              0 / 500
+              {xpInsideCurrentLevel}{' '}
+              /{' '}
+              {XP_PER_PLAYER_LEVEL}
             </span>
           </div>
 
           <div className="dq-xp-track">
             <div
               style={{
-                width: '0%',
+                width:
+                  `${xpPercent}%`,
               }}
             />
           </div>
+
         </div>
 
         <div className="dq-coins">
           🪙
-          <strong>0</strong>
-          <span>Coins</span>
+
+          <strong>
+            {totalCoins}
+          </strong>
+
+          <span>
+            Coins
+          </span>
         </div>
 
       </section>
-
 
       {/* KAMPAGNE */}
 
       <section className="dq-title">
 
         <div>
-          <h1>KAMPAGNE</h1>
+          <h1>
+            KAMPAGNE
+          </h1>
 
           <p>
             Werde zur Dart-Legende
@@ -423,98 +571,136 @@ const earnedCoins =
         </div>
 
         <div
-  className="dq-world-switcher"
-  style={{
-    display: 'grid',
-    gridTemplateColumns: '56px 122px 56px',
-    alignItems: 'center',
-    justifyContent: 'end',
-    gap: '8px',
-  }}
->
+          className="dq-world-switcher"
+          style={{
+            display:
+              'grid',
 
-  <button
-    type="button"
-    className="dq-world-arrow"
-    style={{
-      width: '56px',
-      height: '42px',
-      padding: 0,
-      borderRadius: '11px',
-      fontSize: '30px',
-      fontWeight: 900,
-    }}
-    onClick={() => {
-      const previousWorld =
-        selectedWorld === 1
-          ? worldNames.length
-          : selectedWorld - 1
+            gridTemplateColumns:
+              '56px 122px 56px',
 
-      setSelectedWorld(previousWorld)
+            alignItems:
+              'center',
 
-      setPreviewLevelId(
-        (previousWorld - 1) * 10 + 1,
-      )
+            justifyContent:
+              'end',
 
-      setSelectedLevel(null)
-    }}
-  >
-    ‹
-  </button>
+            gap:
+              '8px',
+          }}
+        >
 
+          <button
+            type="button"
+            className="dq-world-arrow"
+            disabled={
+              selectedWorld === 1
+            }
+            style={{
+              width:
+                '56px',
 
-  <div
-    className="dq-world-current"
-    style={{
-      width: '122px',
-      height: '42px',
-      padding: '3px 5px',
-      borderRadius: '11px',
-    }}
-  >
-    <small>
-      WELT {selectedWorld} / {worldNames.length}
-    </small>
+              height:
+                '42px',
 
-    <strong>
-      {worldNames[selectedWorld - 1]}
-    </strong>
-  </div>
+              padding:
+                0,
 
+              borderRadius:
+                '11px',
 
-  <button
-    type="button"
-    className="dq-world-arrow"
-    style={{
-      width: '56px',
-      height: '42px',
-      padding: 0,
-      borderRadius: '11px',
-      fontSize: '30px',
-      fontWeight: 900,
-    }}
-    onClick={() => {
-      const nextWorld =
-        selectedWorld === worldNames.length
-          ? 1
-          : selectedWorld + 1
+              fontSize:
+                '30px',
 
-      setSelectedWorld(nextWorld)
+              fontWeight:
+                900,
 
-      setPreviewLevelId(
-        (nextWorld - 1) * 10 + 1,
-      )
+              opacity:
+                selectedWorld === 1
+                  ? 0.35
+                  : 1,
+            }}
+            onClick={
+              goToPreviousWorld
+            }
+          >
+            ‹
+          </button>
 
-      setSelectedLevel(null)
-    }}
-  >
-    ›
-  </button>
+          <div
+            className="dq-world-current"
+            style={{
+              width:
+                '122px',
 
-</div>
+              height:
+                '42px',
+
+              padding:
+                '3px 5px',
+
+              borderRadius:
+                '11px',
+            }}
+          >
+            <small>
+              WELT{' '}
+              {selectedWorld}{' '}
+              /{' '}
+              {worldNames.length}
+            </small>
+
+            <strong>
+              {
+                worldNames[
+                  selectedWorld - 1
+                ]
+              }
+            </strong>
+          </div>
+
+          <button
+            type="button"
+            className="dq-world-arrow"
+            disabled={
+              selectedWorld ===
+              worldNames.length
+            }
+            style={{
+              width:
+                '56px',
+
+              height:
+                '42px',
+
+              padding:
+                0,
+
+              borderRadius:
+                '11px',
+
+              fontSize:
+                '30px',
+
+              fontWeight:
+                900,
+
+              opacity:
+                selectedWorld ===
+                worldNames.length
+                  ? 0.35
+                  : 1,
+            }}
+            onClick={
+              goToNextWorld
+            }
+          >
+            ›
+          </button>
+
+        </div>
 
       </section>
-
 
       {/* FORTSCHRITT */}
 
@@ -546,7 +732,8 @@ const earnedCoins =
               <div className="dq-progress-track">
                 <div
                   style={{
-                    width: `${campaignPercent}%`,
+                    width:
+                      `${campaignPercent}%`,
                   }}
                 />
               </div>
@@ -567,7 +754,6 @@ const earnedCoins =
 
         </div>
 
-
         <div className="dq-boss-rewards">
 
           <span>
@@ -580,10 +766,12 @@ const earnedCoins =
 
             <figure>
               <b>🪙</b>
+
               <small>
                 +
                 {worldBoss
-                  ?.rewardCoins ?? 0}
+                  ?.rewardCoins ??
+                  0}
                 <br />
                 Coins
               </small>
@@ -591,10 +779,12 @@ const earnedCoins =
 
             <figure>
               <b>⭐</b>
+
               <small>
                 +
                 {worldBoss
-                  ?.rewardXP ?? 0}
+                  ?.rewardXP ??
+                  0}
                 <br />
                 XP
               </small>
@@ -602,6 +792,7 @@ const earnedCoins =
 
             <figure>
               <b>🃏</b>
+
               <small>
                 Karten
               </small>
@@ -612,9 +803,7 @@ const earnedCoins =
         </div>
 
       </section>
-
-
-      {/* TABS */}
+            {/* TABS */}
 
       <nav className="dq-tabs">
         <button
@@ -624,7 +813,9 @@ const earnedCoins =
           KARTE
         </button>
 
-        <button type="button">
+        <button
+          type="button"
+        >
           LISTE
         </button>
       </nav>
@@ -638,6 +829,7 @@ const earnedCoins =
           className="dq-path"
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
+          aria-hidden="true"
         >
 
           <path
@@ -671,88 +863,86 @@ const earnedCoins =
         </svg>
 
 
-        {visibleLevels.map(
-          (level) => {
-            const unlocked =
-              isLevelUnlocked(level)
+        {visibleLevels.map((level) => {
+          const unlocked =
+            isLevelUnlocked(level)
 
-            const selected =
-              selectedPreviewLevel
-                ?.id === level.id
+          const selected =
+            selectedPreviewLevel?.id ===
+            level.id
 
-            const position =
-              getWorldPosition(
-                selectedWorld,
-                level.id,
-              )
-
-            return (
-              <button
-                key={level.id}
-                type="button"
-
-                className={[
-                  'dq-node',
-
-                  unlocked
-                    ? 'unlocked'
-                    : 'locked',
-
-                  selected
-                    ? 'selected'
-                    : '',
-
-                  level.boss
-                    ? 'boss'
-                    : '',
-                ].join(' ')}
-
-                style={{
-                  left: `${
-                    position?.x ?? 50
-                  }%`,
-
-                  top: `${
-                    position?.y ?? 50
-                  }%`,
-                }}
-
-                onClick={() =>
-                  selectMapLevel(
-                    level,
-                  )
-                }
-
-                disabled={!unlocked}
-              >
-
-                {level.boss && (
-                  <span className="dq-crown">
-                    ♛
-                  </span>
-                )}
-
-                <strong>
-                  {unlocked
-                    ? level.id
-                    : '🔒'}
-                </strong>
-
-                <span className="dq-node-stars">
-                  {getLevelStars(
-                    level,
-                  )}
-                </span>
-
-              </button>
+          const position =
+            getWorldPosition(
+              selectedWorld,
+              level.id,
             )
-          },
-        )}
+
+          return (
+            <button
+              key={level.id}
+              type="button"
+
+              className={[
+                'dq-node',
+
+                unlocked
+                  ? 'unlocked'
+                  : 'locked',
+
+                selected
+                  ? 'selected'
+                  : '',
+
+                level.boss
+                  ? 'boss'
+                  : '',
+              ].join(' ')}
+
+              style={{
+                left:
+                  `${position?.x ?? 50}%`,
+
+                top:
+                  `${position?.y ?? 50}%`,
+              }}
+
+              onClick={() =>
+                selectMapLevel(level)
+              }
+
+              disabled={!unlocked}
+
+              aria-label={
+                unlocked
+                  ? `${level.title} auswählen`
+                  : `${level.title} gesperrt`
+              }
+            >
+
+              {level.boss && (
+                <span className="dq-crown">
+                  ♛
+                </span>
+              )}
+
+              <strong>
+                {unlocked
+                  ? level.id
+                  : '🔒'}
+              </strong>
+
+              <span className="dq-node-stars">
+                {getLevelStars(level)}
+              </span>
+
+            </button>
+          )
+        })}
 
       </section>
 
 
-      {/* LEVEL INFO */}
+      {/* AUSGEWÄHLTES LEVEL */}
 
       {selectedPreviewLevel &&
         isLevelUnlocked(
@@ -761,67 +951,84 @@ const earnedCoins =
 
           <section className="dq-level-card">
 
-  <div className="dq-level-description">
+            <div className="dq-level-description">
 
-    <small className="dq-level-name">
-      {selectedPreviewLevel.title}
-    </small>
+              <small className="dq-level-name">
+                {selectedPreviewLevel.title}
+              </small>
 
-    <strong className="dq-level-task">
-      {selectedPreviewLevel.task}
-    </strong>
+              <strong className="dq-level-task">
+                {selectedPreviewLevel.task}
+              </strong>
 
-    <span className="dq-level-best">
-      Beste Bewertung
-    </span>
+              <span className="dq-level-best">
+                Beste Bewertung
+              </span>
 
-    <div className="dq-level-stars">
-      {getLevelStars(
-        selectedPreviewLevel,
-      )}
-    </div>
+              <div className="dq-level-stars">
+                {getLevelStars(
+                  selectedPreviewLevel,
+                )}
+              </div>
 
-  </div>
-
-
-  <div className="dq-level-action-area">
-
-    <div className="dq-level-rewards">
-
-      <div className="dq-reward-item">
-        <span className="dq-reward-icon">
-          ⭐
-        </span>
-
-        <strong>
-          +{selectedPreviewLevel.rewardXP} XP
-        </strong>
-      </div>
-
-      <div className="dq-reward-item">
-        <span className="dq-reward-icon">
-          🪙
-        </span>
-
-        <strong>
-          +{selectedPreviewLevel.rewardCoins} Coins
-        </strong>
-      </div>
-
-    </div>
+            </div>
 
 
-    <button
-      className="dq-play-button"
-      type="button"
-      onClick={startSelectedLevel}
-    >
-      SPIELEN
-    </button>
+            <div className="dq-level-action-area">
 
-  </div>
+              <div className="dq-level-rewards">
 
-</section>
+                <div className="dq-reward-item">
+
+                  <span className="dq-reward-icon">
+                    ⭐
+                  </span>
+
+                  <strong>
+                    +
+                    {
+                      selectedPreviewLevel
+                        .rewardXP
+                    }{' '}
+                    XP
+                  </strong>
+
+                </div>
+
+
+                <div className="dq-reward-item">
+
+                  <span className="dq-reward-icon">
+                    🪙
+                  </span>
+
+                  <strong>
+                    +
+                    {
+                      selectedPreviewLevel
+                        .rewardCoins
+                    }{' '}
+                    Coins
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <button
+                className="dq-play-button"
+                type="button"
+                onClick={
+                  startSelectedLevel
+                }
+              >
+                SPIELEN
+              </button>
+
+            </div>
+
+          </section>
         )}
 
 
@@ -835,6 +1042,7 @@ const earnedCoins =
             ? '👑'
             : '🎁'}
         </div>
+
 
         <div className="dq-boss-info">
 
@@ -850,19 +1058,24 @@ const earnedCoins =
           </span>
 
           <div className="dq-boss-track">
+
             <div
               style={{
-                width: `${Math.min(
-                  (worldStars /
-                    BOSS_STAR_REQUIREMENT) *
+                width:
+                  `${Math.min(
+                    (
+                      worldStars /
+                      BOSS_STAR_REQUIREMENT
+                    ) * 100,
                     100,
-                  100,
-                )}%`,
+                  )}%`,
               }}
             />
+
           </div>
 
         </div>
+
 
         <button
           type="button"
@@ -887,14 +1100,18 @@ const earnedCoins =
             )
           }
         >
+
           {worldStars >=
           BOSS_STAR_REQUIREMENT
             ? 'BOSS'
             : '🔒'}
+
         </button>
 
       </section>
 
+
+      {/* LEVEL MODAL */}
 
       <LevelModal
         level={selectedLevel}
