@@ -1,0 +1,660 @@
+/* =========================================================
+   DARTQUEST – HOME
+   ========================================================= */
+
+.home-screen {
+  width: 100%;
+  max-width: 760px;
+
+  margin: 0 auto;
+
+  color: #f5faf8;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.home-header {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 22px;
+}
+
+.home-menu-button {
+  display: grid;
+
+  width: 40px;
+  height: 40px;
+
+  place-items: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 12px;
+
+  background: #0a211a;
+  color: #b7c8c1;
+
+  font-size: 23px;
+
+  cursor: pointer;
+}
+
+.home-logo-wrap {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+}
+
+.home-logo {
+  width: 140px;
+  height: 62px;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(
+      0 0 12px rgba(66, 230, 149, 0.18)
+    );
+}
+
+
+/* =========================================================
+   LEVEL / XP / COINS
+   ========================================================= */
+
+.home-player-info {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.home-level-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 50px;
+  height: 56px;
+
+  border: 1px solid rgba(66, 230, 149, 0.38);
+  border-radius: 14px;
+
+  background: #071b15;
+}
+
+.home-level-badge span {
+  color: #42e695;
+
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.home-level-badge strong {
+  color: #ffffff;
+
+  font-size: 20px;
+}
+
+.home-xp-area {
+  width: 105px;
+}
+
+.home-xp-row {
+  display: flex;
+  justify-content: space-between;
+
+  gap: 6px;
+
+  margin-bottom: 5px;
+
+  font-size: 10px;
+}
+
+.home-xp-row span {
+  color: #42e695;
+
+  font-weight: 900;
+}
+
+.home-xp-row strong {
+  color: #dce8e3;
+}
+
+.home-xp-bar {
+  width: 100%;
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: #081713;
+}
+
+.home-xp-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #42e695,
+      #21c7a8
+    );
+}
+
+.home-coins {
+  margin-top: 6px;
+
+  color: #f4c542;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   HOME MAIN
+   ========================================================= */
+
+.home-main {
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+
+/* =========================================================
+   WILLKOMMEN
+   ========================================================= */
+
+.home-welcome {
+  padding: 4px 2px 8px;
+}
+
+.home-eyebrow {
+  color: #42e695;
+
+  font-size: 11px;
+  font-weight: 900;
+
+  letter-spacing: 1.5px;
+}
+
+.home-welcome h1 {
+  margin: 6px 0 6px;
+
+  color: #ffffff;
+
+  font-size: 27px;
+  line-height: 1.08;
+}
+
+.home-welcome p {
+  margin: 0;
+
+  color: #879b93;
+
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   KAMPAGNE FORTSETZEN
+   ========================================================= */
+
+.home-campaign-card {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 58px 1fr 30px;
+  align-items: center;
+
+  gap: 14px;
+
+  width: 100%;
+
+  padding: 18px;
+
+  border: 1px solid rgba(66, 230, 149, 0.35);
+  border-radius: 20px;
+
+  background:
+    radial-gradient(
+      circle at 88% 45%,
+      rgba(66, 230, 149, 0.14),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #08251c,
+      #041510
+    );
+
+  color: white;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 14px 35px rgba(0, 0, 0, 0.28),
+    0 0 18px rgba(66, 230, 149, 0.05);
+}
+
+.home-campaign-card:active {
+  transform: scale(0.985);
+}
+
+.home-card-icon {
+  display: grid;
+
+  width: 56px;
+  height: 56px;
+
+  place-items: center;
+
+  border: 1px solid rgba(66, 230, 149, 0.32);
+  border-radius: 16px;
+
+  background:
+    rgba(66, 230, 149, 0.07);
+
+  font-size: 28px;
+}
+
+.home-card-content {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 4px;
+}
+
+.home-card-content > span {
+  color: #42e695;
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: 1.1px;
+}
+
+.home-card-content strong {
+  color: #ffffff;
+
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.home-card-content small {
+  color: #8da199;
+
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.home-card-arrow {
+  color: #42e695;
+
+  font-size: 32px;
+  font-weight: 900;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   EINZELSPIELER / MEHRSPIELER
+   ========================================================= */
+
+.home-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+}
+
+.home-mode-card {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  min-height: 150px;
+
+  padding: 16px;
+
+  border: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(7, 29, 22, 0.98),
+      rgba(3, 17, 13, 0.99)
+    );
+
+  color: #ffffff;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.22);
+}
+
+.home-mode-card:active {
+  transform: scale(0.98);
+}
+
+.home-mode-icon {
+  display: grid;
+
+  width: 43px;
+  height: 43px;
+
+  place-items: center;
+
+  margin-bottom: 13px;
+
+  border: 1px solid rgba(66, 230, 149, 0.25);
+  border-radius: 13px;
+
+  background:
+    rgba(66, 230, 149, 0.06);
+
+  font-size: 22px;
+}
+
+.home-mode-card strong {
+  margin-bottom: 6px;
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.home-mode-card span {
+  padding-right: 16px;
+
+  color: #899d95;
+
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.home-mode-arrow {
+  position: absolute;
+
+  right: 14px;
+  bottom: 11px;
+
+  color: #42e695;
+
+  font-size: 25px;
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+.dev-reset-button {
+  width: 100%;
+
+  margin-top: 2px;
+
+  padding: 12px 15px;
+
+  border: 1px solid rgba(255, 92, 92, 0.25);
+  border-radius: 13px;
+
+  background:
+    rgba(101, 27, 27, 0.45);
+
+  color: #dba1a1;
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.dev-reset-button:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================================================
+   MOBILE / IPHONE
+   ========================================================= */
+
+@media (max-width: 560px) {
+
+  .home-screen {
+    padding-bottom: 4px;
+  }
+
+  .home-header {
+    grid-template-columns: 34px 1fr auto;
+
+    gap: 7px;
+
+    margin-bottom: 12px;
+  }
+
+  .home-menu-button {
+    width: 32px;
+    height: 32px;
+
+    border-radius: 10px;
+
+    font-size: 19px;
+  }
+
+  .home-logo {
+    width: 108px;
+    height: 50px;
+  }
+
+  .home-player-info {
+    gap: 6px;
+  }
+
+  .home-level-badge {
+    width: 42px;
+    height: 47px;
+
+    border-radius: 11px;
+  }
+
+  .home-level-badge span {
+    font-size: 7px;
+  }
+
+  .home-level-badge strong {
+    font-size: 17px;
+  }
+
+  .home-xp-area {
+    width: 82px;
+  }
+
+  .home-xp-row {
+    margin-bottom: 3px;
+
+    font-size: 8px;
+  }
+
+  .home-xp-bar {
+    height: 5px;
+  }
+
+  .home-coins {
+    margin-top: 4px;
+
+    font-size: 9px;
+  }
+
+
+  /* Willkommen */
+
+  .home-main {
+    gap: 9px;
+  }
+
+  .home-welcome {
+    padding-bottom: 3px;
+  }
+
+  .home-eyebrow {
+    font-size: 8px;
+
+    letter-spacing: 1.1px;
+  }
+
+  .home-welcome h1 {
+    margin: 3px 0;
+
+    font-size: 20px;
+  }
+
+  .home-welcome p {
+    font-size: 9px;
+  }
+
+
+  /* Kampagne */
+
+  .home-campaign-card {
+    grid-template-columns: 46px 1fr 23px;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    border-radius: 15px;
+  }
+
+  .home-card-icon {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 12px;
+
+    font-size: 22px;
+  }
+
+  .home-card-content > span {
+    font-size: 7px;
+  }
+
+  .home-card-content strong {
+    font-size: 15px;
+  }
+
+  .home-card-content small {
+    font-size: 8px;
+  }
+
+  .home-card-arrow {
+    font-size: 25px;
+  }
+
+
+  /* Spielmodi */
+
+  .home-mode-grid {
+    gap: 8px;
+  }
+
+  .home-mode-card {
+    min-height: 113px;
+
+    padding: 11px;
+
+    border-radius: 14px;
+  }
+
+  .home-mode-icon {
+    width: 34px;
+    height: 34px;
+
+    margin-bottom: 7px;
+
+    border-radius: 10px;
+
+    font-size: 17px;
+  }
+
+  .home-mode-card strong {
+    margin-bottom: 3px;
+
+    font-size: 12px;
+  }
+
+  .home-mode-card span {
+    font-size: 8px;
+  }
+
+  .home-mode-arrow {
+    right: 10px;
+    bottom: 8px;
+
+    font-size: 20px;
+  }
+
+
+  /* Reset */
+
+  .dev-reset-button {
+    padding: 9px;
+
+    font-size: 9px;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 390px) {
+
+  .home-logo {
+    width: 96px;
+  }
+
+  .home-xp-area {
+    width: 72px;
+  }
+
+  .home-mode-card {
+    min-height: 108px;
+  }
+
+  .home-card-content strong {
+    font-size: 14px;
+  }
+}

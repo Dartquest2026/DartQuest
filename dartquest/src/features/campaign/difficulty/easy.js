@@ -1,0 +1,1251 @@
+export const easyLevels = [
+
+  // =========================================================
+  // WELT 1 – ERSTE TREFFER
+  // =========================================================
+
+  {
+    id: 1,
+    world: 1,
+    title: 'Erster Treffer',
+    task: 'Treffe 1× S16',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 2,
+    world: 1,
+    title: 'Die 8',
+    task: 'Treffe 1× S8',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 3,
+    world: 1,
+    title: 'Die 4',
+    task: 'Treffe 1× S4',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 4,
+    world: 1,
+    title: 'Die 2',
+    task: 'Treffe 1× S2',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 5,
+    world: 1,
+    title: 'Die 1',
+    task: 'Treffe 1× S1',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 6,
+    world: 1,
+    title: 'Die 12',
+    task: 'Treffe 1× S12',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 7,
+    world: 1,
+    title: 'Die 6',
+    task: 'Treffe 1× S6',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 8,
+    world: 1,
+    title: 'Die 3',
+    task: 'Treffe 1× S3',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 20,
+    rewardCoins: 10,
+  },
+
+  {
+    id: 9,
+    world: 1,
+    title: 'Die 20',
+    task: 'Treffe 1× S20',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 25,
+    rewardCoins: 12,
+  },
+
+  {
+    id: 10,
+    world: 1,
+    title: 'Boss – Erste Treffer',
+    task: 'Treffe S16, S8 und S20',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: true,
+    rewardXP: 80,
+    rewardCoins: 50,
+  },
+
+
+  // =========================================================
+  // WELT 2 – ZAHLEN FESTIGEN
+  // =========================================================
+
+  {
+    id: 11,
+    world: 2,
+    title: 'Die 10',
+    task: 'Treffe 1× S10',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 22,
+    rewardCoins: 11,
+  },
+
+  {
+    id: 12,
+    world: 2,
+    title: 'Die 5',
+    task: 'Treffe 1× S5',
+    targetHits: 1,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 22,
+    rewardCoins: 11,
+  },
+
+  {
+    id: 13,
+    world: 2,
+    title: 'Zweimal 16',
+    task: 'Treffe 2× S16',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 25,
+    rewardCoins: 12,
+  },
+
+  {
+    id: 14,
+    world: 2,
+    title: 'Zweimal 8',
+    task: 'Treffe 2× S8',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 25,
+    rewardCoins: 12,
+  },
+
+  {
+    id: 15,
+    world: 2,
+    title: 'Zweimal 4',
+    task: 'Treffe 2× S4',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 25,
+    rewardCoins: 12,
+  },
+
+  {
+    id: 16,
+    world: 2,
+    title: 'Zweimal 12',
+    task: 'Treffe 2× S12',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 25,
+    rewardCoins: 12,
+  },
+
+  {
+    id: 17,
+    world: 2,
+    title: 'Zweimal 6',
+    task: 'Treffe 2× S6',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 25,
+    rewardCoins: 12,
+  },
+
+  {
+    id: 18,
+    world: 2,
+    title: 'Zweimal 20',
+    task: 'Treffe 2× S20',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 28,
+    rewardCoins: 14,
+  },
+
+  {
+    id: 19,
+    world: 2,
+    title: 'Zweimal 10',
+    task: 'Treffe 2× S10',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 28,
+    rewardCoins: 14,
+  },
+
+  {
+    id: 20,
+    world: 2,
+    title: 'Boss – Sicher treffen',
+    task: 'Treffe 2× S16, 2× S12 und 2× S20',
+    targetHits: 6,
+    perfectDarts: 18,
+    boss: true,
+    rewardXP: 90,
+    rewardCoins: 55,
+  },
+
+
+  // =========================================================
+  // WELT 3 – EINFACHE KOMBINATIONEN
+  // =========================================================
+
+  {
+    id: 21,
+    world: 3,
+    title: '16 und 8',
+    task: 'Treffe 1× S16 und 1× S8',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 30,
+    rewardCoins: 15,
+  },
+
+  {
+    id: 22,
+    world: 3,
+    title: '8 und 4',
+    task: 'Treffe 1× S8 und 1× S4',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 30,
+    rewardCoins: 15,
+  },
+
+  {
+    id: 23,
+    world: 3,
+    title: '4 und 2',
+    task: 'Treffe 1× S4 und 1× S2',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 30,
+    rewardCoins: 15,
+  },
+
+  {
+    id: 24,
+    world: 3,
+    title: '12 und 6',
+    task: 'Treffe 1× S12 und 1× S6',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 30,
+    rewardCoins: 15,
+  },
+
+  {
+    id: 25,
+    world: 3,
+    title: '6 und 3',
+    task: 'Treffe 1× S6 und 1× S3',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 30,
+    rewardCoins: 15,
+  },
+
+  {
+    id: 26,
+    world: 3,
+    title: '20 und 10',
+    task: 'Treffe 1× S20 und 1× S10',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 32,
+    rewardCoins: 16,
+  },
+
+  {
+    id: 27,
+    world: 3,
+    title: '10 und 5',
+    task: 'Treffe 1× S10 und 1× S5',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 32,
+    rewardCoins: 16,
+  },
+
+  {
+    id: 28,
+    world: 3,
+    title: 'Drei Ziele',
+    task: 'Treffe S16, S8 und S4',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 35,
+    rewardCoins: 18,
+  },
+
+  {
+    id: 29,
+    world: 3,
+    title: 'Drei Ziele II',
+    task: 'Treffe S20, S10 und S5',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 35,
+    rewardCoins: 18,
+  },
+
+  {
+    id: 30,
+    world: 3,
+    title: 'Boss – Kombinationen',
+    task: 'Treffe S16, S8, S4, S12, S6 und S3',
+    targetHits: 6,
+    perfectDarts: 18,
+    boss: true,
+    rewardXP: 100,
+    rewardCoins: 60,
+  },
+
+
+  // =========================================================
+  // WELT 4 – MEHR TREFFER
+  // =========================================================
+
+  {
+    id: 31,
+    world: 4,
+    title: 'Dreimal 16',
+    task: 'Treffe 3× S16',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 35,
+    rewardCoins: 18,
+  },
+
+  {
+    id: 32,
+    world: 4,
+    title: 'Dreimal 8',
+    task: 'Treffe 3× S8',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 35,
+    rewardCoins: 18,
+  },
+
+  {
+    id: 33,
+    world: 4,
+    title: 'Dreimal 12',
+    task: 'Treffe 3× S12',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 35,
+    rewardCoins: 18,
+  },
+
+  {
+    id: 34,
+    world: 4,
+    title: 'Dreimal 20',
+    task: 'Treffe 3× S20',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 38,
+    rewardCoins: 19,
+  },
+
+  {
+    id: 35,
+    world: 4,
+    title: 'Dreimal 10',
+    task: 'Treffe 3× S10',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 38,
+    rewardCoins: 19,
+  },
+
+  {
+    id: 36,
+    world: 4,
+    title: 'Drei plus drei',
+    task: 'Treffe 3× S16 und 3× S8',
+    targetHits: 6,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 42,
+    rewardCoins: 21,
+  },
+
+  {
+    id: 37,
+    world: 4,
+    title: 'Zwölf und sechs',
+    task: 'Treffe 3× S12 und 3× S6',
+    targetHits: 6,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 42,
+    rewardCoins: 21,
+  },
+
+  {
+    id: 38,
+    world: 4,
+    title: 'Zwanzig und zehn',
+    task: 'Treffe 3× S20 und 3× S10',
+    targetHits: 6,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 45,
+    rewardCoins: 22,
+  },
+
+  {
+    id: 39,
+    world: 4,
+    title: 'Neun Treffer',
+    task: 'Treffe insgesamt 9 Singles aus 16, 12 oder 20',
+    targetHits: 9,
+    perfectDarts: 27,
+    boss: false,
+    rewardXP: 48,
+    rewardCoins: 24,
+  },
+
+  {
+    id: 40,
+    world: 4,
+    title: 'Boss – Trefferjäger',
+    task: 'Treffe 3× S16, 3× S12 und 3× S20',
+    targetHits: 9,
+    perfectDarts: 27,
+    boss: true,
+    rewardXP: 110,
+    rewardCoins: 65,
+  },
+
+
+  // =========================================================
+  // WELT 5 – ZIELWECHSEL
+  // =========================================================
+
+  {
+    id: 41,
+    world: 5,
+    title: '16 → 8',
+    task: 'Treffe S16 und danach S8',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 40,
+    rewardCoins: 20,
+  },
+
+  {
+    id: 42,
+    world: 5,
+    title: '8 → 4',
+    task: 'Treffe S8 und danach S4',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 40,
+    rewardCoins: 20,
+  },
+
+  {
+    id: 43,
+    world: 5,
+    title: '4 → 2',
+    task: 'Treffe S4 und danach S2',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 40,
+    rewardCoins: 20,
+  },
+
+  {
+    id: 44,
+    world: 5,
+    title: '12 → 6',
+    task: 'Treffe S12 und danach S6',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 40,
+    rewardCoins: 20,
+  },
+
+  {
+    id: 45,
+    world: 5,
+    title: '20 → 10',
+    task: 'Treffe S20 und danach S10',
+    targetHits: 2,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 42,
+    rewardCoins: 21,
+  },
+
+  {
+    id: 46,
+    world: 5,
+    title: '16 → 8 → 4',
+    task: 'Treffe S16 → S8 → S4',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 45,
+    rewardCoins: 22,
+  },
+
+  {
+    id: 47,
+    world: 5,
+    title: '12 → 6 → 3',
+    task: 'Treffe S12 → S6 → S3',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 45,
+    rewardCoins: 22,
+  },
+
+  {
+    id: 48,
+    world: 5,
+    title: '20 → 10 → 5',
+    task: 'Treffe S20 → S10 → S5',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 48,
+    rewardCoins: 24,
+  },
+
+  {
+    id: 49,
+    world: 5,
+    title: 'Fünferkette',
+    task: 'Treffe S16 → S8 → S4 → S2 → S1',
+    targetHits: 5,
+    perfectDarts: 15,
+    boss: false,
+    rewardXP: 50,
+    rewardCoins: 25,
+  },
+
+  {
+    id: 50,
+    world: 5,
+    title: 'Boss – Zielwechsel',
+    task: 'Treffe S20 → S10 → S5 und S16 → S8 → S4',
+    targetHits: 6,
+    perfectDarts: 18,
+    boss: true,
+    rewardXP: 120,
+    rewardCoins: 70,
+  },
+
+
+  // =========================================================
+  // WELT 6 – EINFACHES SCORING
+  // =========================================================
+
+  {
+    id: 51,
+    world: 6,
+    title: '20 Punkte',
+    task: 'Erziele mindestens 20 Punkte',
+    targetHits: null,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 45,
+    rewardCoins: 22,
+  },
+
+  {
+    id: 52,
+    world: 6,
+    title: '30 Punkte',
+    task: 'Erziele mindestens 30 Punkte',
+    targetHits: null,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 45,
+    rewardCoins: 22,
+  },
+
+  {
+    id: 53,
+    world: 6,
+    title: '40 Punkte',
+    task: 'Erziele mindestens 40 Punkte',
+    targetHits: null,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 48,
+    rewardCoins: 24,
+  },
+
+  {
+    id: 54,
+    world: 6,
+    title: '50 Punkte',
+    task: 'Erziele mindestens 50 Punkte',
+    targetHits: null,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 48,
+    rewardCoins: 24,
+  },
+
+  {
+    id: 55,
+    world: 6,
+    title: '60 Punkte',
+    task: 'Erziele mindestens 60 Punkte',
+    targetHits: null,
+    perfectDarts: 3,
+    boss: false,
+    rewardXP: 50,
+    rewardCoins: 25,
+  },
+
+  {
+    id: 56,
+    world: 6,
+    title: 'Zweimal 30',
+    task: 'Erziele zweimal mindestens 30 Punkte',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 52,
+    rewardCoins: 26,
+  },
+
+  {
+    id: 57,
+    world: 6,
+    title: 'Zweimal 40',
+    task: 'Erziele zweimal mindestens 40 Punkte',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 55,
+    rewardCoins: 28,
+  },
+
+  {
+    id: 58,
+    world: 6,
+    title: 'Gesamt 80',
+    task: 'Erziele insgesamt mindestens 80 Punkte',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 55,
+    rewardCoins: 28,
+  },
+
+  {
+    id: 59,
+    world: 6,
+    title: 'Gesamt 100',
+    task: 'Erziele insgesamt mindestens 100 Punkte',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 58,
+    rewardCoins: 29,
+  },
+
+  {
+    id: 60,
+    world: 6,
+    title: 'Boss – Scoring',
+    task: 'Erziele insgesamt mindestens 120 Punkte',
+    targetHits: null,
+    perfectDarts: 9,
+    boss: true,
+    rewardXP: 140,
+    rewardCoins: 80,
+  },
+
+
+  // =========================================================
+  // WELT 7 – ERSTE DOPPEL
+  // =========================================================
+
+  {
+    id: 61,
+    world: 7,
+    title: 'Erstes Doppel',
+    task: 'Treffe 1× D16',
+    targetHits: 1,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 55,
+    rewardCoins: 28,
+  },
+
+  {
+    id: 62,
+    world: 7,
+    title: 'Doppel 8',
+    task: 'Treffe 1× D8',
+    targetHits: 1,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 55,
+    rewardCoins: 28,
+  },
+
+  {
+    id: 63,
+    world: 7,
+    title: 'Doppel 4',
+    task: 'Treffe 1× D4',
+    targetHits: 1,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 55,
+    rewardCoins: 28,
+  },
+
+  {
+    id: 64,
+    world: 7,
+    title: 'Doppel 20',
+    task: 'Treffe 1× D20',
+    targetHits: 1,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 58,
+    rewardCoins: 29,
+  },
+
+  {
+    id: 65,
+    world: 7,
+    title: 'Doppel 10',
+    task: 'Treffe 1× D10',
+    targetHits: 1,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 58,
+    rewardCoins: 29,
+  },
+
+  {
+    id: 66,
+    world: 7,
+    title: 'Single plus Doppel',
+    task: 'Treffe S16 und D16',
+    targetHits: 2,
+    perfectDarts: 12,
+    boss: false,
+    rewardXP: 60,
+    rewardCoins: 30,
+  },
+
+  {
+    id: 67,
+    world: 7,
+    title: 'Single plus Doppel II',
+    task: 'Treffe S20 und D20',
+    targetHits: 2,
+    perfectDarts: 12,
+    boss: false,
+    rewardXP: 60,
+    rewardCoins: 30,
+  },
+
+  {
+    id: 68,
+    world: 7,
+    title: 'Zwei Doppel',
+    task: 'Treffe 2 Doppel deiner Wahl',
+    targetHits: 2,
+    perfectDarts: 12,
+    boss: false,
+    rewardXP: 65,
+    rewardCoins: 32,
+  },
+
+  {
+    id: 69,
+    world: 7,
+    title: 'Doppelrunde',
+    task: 'Treffe D16 und D8',
+    targetHits: 2,
+    perfectDarts: 12,
+    boss: false,
+    rewardXP: 65,
+    rewardCoins: 32,
+  },
+
+  {
+    id: 70,
+    world: 7,
+    title: 'Boss – Doppelstart',
+    task: 'Treffe D16, D8 und D20',
+    targetHits: 3,
+    perfectDarts: 18,
+    boss: true,
+    rewardXP: 150,
+    rewardCoins: 90,
+  },
+
+
+  // =========================================================
+  // WELT 8 – ERSTE TRIPLE
+  // =========================================================
+
+  {
+    id: 71,
+    world: 8,
+    title: 'Erstes Triple',
+    task: 'Treffe 1× T20',
+    targetHits: 1,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 60,
+    rewardCoins: 30,
+  },
+
+  {
+    id: 72,
+    world: 8,
+    title: 'Triple 16',
+    task: 'Treffe 1× T16',
+    targetHits: 1,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 60,
+    rewardCoins: 30,
+  },
+
+  {
+    id: 73,
+    world: 8,
+    title: 'Triple 12',
+    task: 'Treffe 1× T12',
+    targetHits: 1,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 60,
+    rewardCoins: 30,
+  },
+
+  {
+    id: 74,
+    world: 8,
+    title: 'Single und Triple',
+    task: 'Treffe S20 und T20',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 65,
+    rewardCoins: 32,
+  },
+
+  {
+    id: 75,
+    world: 8,
+    title: 'Single und Triple II',
+    task: 'Treffe S16 und T16',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 65,
+    rewardCoins: 32,
+  },
+
+  {
+    id: 76,
+    world: 8,
+    title: 'Zwei Triple',
+    task: 'Treffe 2 Triple deiner Wahl',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 68,
+    rewardCoins: 34,
+  },
+
+  {
+    id: 77,
+    world: 8,
+    title: 'T20 doppelt',
+    task: 'Treffe 2× T20',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 70,
+    rewardCoins: 35,
+  },
+
+  {
+    id: 78,
+    world: 8,
+    title: 'T16 doppelt',
+    task: 'Treffe 2× T16',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 70,
+    rewardCoins: 35,
+  },
+
+  {
+    id: 79,
+    world: 8,
+    title: 'Triple Mix',
+    task: 'Treffe T20 und T16',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 72,
+    rewardCoins: 36,
+  },
+
+  {
+    id: 80,
+    world: 8,
+    title: 'Boss – Tripleprüfung',
+    task: 'Treffe T20, T16 und T12',
+    targetHits: 3,
+    perfectDarts: 27,
+    boss: true,
+    rewardXP: 170,
+    rewardCoins: 100,
+  },
+
+
+  // =========================================================
+  // WELT 9 – EINFACHE CHECKOUTS
+  // =========================================================
+
+  {
+    id: 81,
+    world: 9,
+    title: 'Checkout 16',
+    task: 'Checke 16',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 70,
+    rewardCoins: 35,
+  },
+
+  {
+    id: 82,
+    world: 9,
+    title: 'Checkout 20',
+    task: 'Checke 20',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 70,
+    rewardCoins: 35,
+  },
+
+  {
+    id: 83,
+    world: 9,
+    title: 'Checkout 24',
+    task: 'Checke 24',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 70,
+    rewardCoins: 35,
+  },
+
+  {
+    id: 84,
+    world: 9,
+    title: 'Checkout 32',
+    task: 'Checke 32',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 75,
+    rewardCoins: 38,
+  },
+
+  {
+    id: 85,
+    world: 9,
+    title: 'Checkout 40',
+    task: 'Checke 40',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 75,
+    rewardCoins: 38,
+  },
+
+  {
+    id: 86,
+    world: 9,
+    title: 'Checkout 36',
+    task: 'Checke 36',
+    targetHits: null,
+    perfectDarts: 6,
+    boss: false,
+    rewardXP: 75,
+    rewardCoins: 38,
+  },
+
+  {
+    id: 87,
+    world: 9,
+    title: 'Checkout 48',
+    task: 'Checke 48',
+    targetHits: null,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 78,
+    rewardCoins: 39,
+  },
+
+  {
+    id: 88,
+    world: 9,
+    title: 'Checkout 52',
+    task: 'Checke 52',
+    targetHits: null,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 78,
+    rewardCoins: 39,
+  },
+
+  {
+    id: 89,
+    world: 9,
+    title: 'Checkout 60',
+    task: 'Checke 60',
+    targetHits: null,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 80,
+    rewardCoins: 40,
+  },
+
+  {
+    id: 90,
+    world: 9,
+    title: 'Boss – Checkout',
+    task: 'Checke 60 oder weniger',
+    targetHits: null,
+    perfectDarts: 12,
+    boss: true,
+    rewardXP: 190,
+    rewardCoins: 110,
+  },
+
+
+  // =========================================================
+  // WELT 10 – ANFÄNGER MEISTER
+  // =========================================================
+
+  {
+    id: 91,
+    world: 10,
+    title: 'Singles Prüfung',
+    task: 'Treffe 5× S20',
+    targetHits: 5,
+    perfectDarts: 15,
+    boss: false,
+    rewardXP: 80,
+    rewardCoins: 40,
+  },
+
+  {
+    id: 92,
+    world: 10,
+    title: 'Singles Prüfung II',
+    task: 'Treffe 5× S16',
+    targetHits: 5,
+    perfectDarts: 15,
+    boss: false,
+    rewardXP: 80,
+    rewardCoins: 40,
+  },
+
+  {
+    id: 93,
+    world: 10,
+    title: 'Kettenprüfung',
+    task: 'Treffe S20 → S10 → S5',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 82,
+    rewardCoins: 41,
+  },
+
+  {
+    id: 94,
+    world: 10,
+    title: 'Kettenprüfung II',
+    task: 'Treffe S16 → S8 → S4',
+    targetHits: 3,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 82,
+    rewardCoins: 41,
+  },
+
+  {
+    id: 95,
+    world: 10,
+    title: 'Doppelprüfung',
+    task: 'Treffe 2 Doppel deiner Wahl',
+    targetHits: 2,
+    perfectDarts: 12,
+    boss: false,
+    rewardXP: 85,
+    rewardCoins: 42,
+  },
+
+  {
+    id: 96,
+    world: 10,
+    title: 'Tripleprüfung',
+    task: 'Treffe 2 Triple deiner Wahl',
+    targetHits: 2,
+    perfectDarts: 18,
+    boss: false,
+    rewardXP: 85,
+    rewardCoins: 42,
+  },
+
+  {
+    id: 97,
+    world: 10,
+    title: 'Scoringprüfung',
+    task: 'Erziele insgesamt mindestens 150 Punkte',
+    targetHits: null,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 90,
+    rewardCoins: 45,
+  },
+
+  {
+    id: 98,
+    world: 10,
+    title: 'Checkoutprüfung',
+    task: 'Checke 40',
+    targetHits: null,
+    perfectDarts: 9,
+    boss: false,
+    rewardXP: 90,
+    rewardCoins: 45,
+  },
+
+  {
+    id: 99,
+    world: 10,
+    title: 'Letzte Prüfung',
+    task: 'Treffe 3× S20, 1× D20 und 1× T20',
+    targetHits: 5,
+    perfectDarts: 30,
+    boss: false,
+    rewardXP: 100,
+    rewardCoins: 50,
+  },
+
+  {
+    id: 100,
+    world: 10,
+    title: 'Boss – Anfänger Meister',
+    task: 'Treffe S20 → S10 → S5, S16 → S8 → S4 und 1 Doppel',
+    targetHits: 7,
+    perfectDarts: 21,
+    boss: true,
+    rewardXP: 250,
+    rewardCoins: 150,
+  },
+]

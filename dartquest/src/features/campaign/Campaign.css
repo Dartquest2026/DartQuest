@@ -962,27 +962,7 @@
     width: 100%;
   }
 
-  .dq-world-arrow {
-    display: grid;
-
-    width: 36px;
-    height: 40px;
-
-    place-items: center;
-
-    padding: 0;
-
-    border: 1px solid rgba(66, 230, 149, 0.25);
-    border-radius: 10px;
-
-    background: #0a211a;
-    color: #42e695;
-
-    font-size: 25px;
-    font-weight: 800;
-
-    cursor: pointer;
-  }
+  
 
   .dq-world-current {
     display: flex;
@@ -1720,204 +1700,31 @@
   }
 }
 /* =========================================================
-   WORLD SWITCHER + LEVEL CARD FINAL
+   WORLD ARROWS – FINAL
    ========================================================= */
 
 @media (max-width: 560px) {
 
-  /* WELT-AUSWAHL */
-
-  .dq-title {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .dq-world-switcher {
-    display: grid;
-    grid-template-columns: 34px 1fr 34px;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-  }
-
   .dq-world-arrow {
-    width: 34px;
-    height: 38px;
+    display: grid;
+    place-items: center;
+
+    width: 46px;
+    height: 40px;
 
     padding: 0;
 
-    border: 1px solid rgba(66, 230, 149, 0.25);
-    border-radius: 9px;
-
-    background: #0a211a;
-    color: #42e695;
-
-    font-size: 24px;
-    font-weight: 900;
-  }
-
-  .dq-world-current {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    height: 38px;
-
-    padding: 3px 6px;
-
-    border: 1px solid rgba(66, 230, 149, 0.28);
-    border-radius: 9px;
-
-    background: #092019;
-    color: white;
-  }
-
-  .dq-world-current small {
-    color: #42e695;
-    font-size: 7px;
-    font-weight: 900;
-  }
-
-  .dq-world-current strong {
-    margin-top: 1px;
-    font-size: 10px;
-    white-space: nowrap;
-  }
-
-
-  /* KARTE ETWAS KLEINER */
-
-  .dq-map {
-    flex: 0 0 auto;
-    height: 285px;
-    min-height: 285px;
-  }
-
-
-  /* LEVELKARTE */
-
-  .dq-level-card {
-    display: grid;
-    grid-template-columns: 43% 57%;
-
-    gap: 0;
-
-    margin-top: 5px;
-    padding: 0;
-
-    overflow: hidden;
-
-    border-radius: 13px;
-  }
-
-  /* Linke Seite */
-
-  .dq-level-description {
-    justify-content: center;
-
-    padding: 8px 9px;
-
-    border-right: 1px solid rgba(255,255,255,0.08);
-  }
-
-  .dq-level-name {
-    margin-bottom: 2px;
-
-    color: #42e695;
-    font-size: 9px;
-  }
-
-  .dq-level-task {
-    font-size: 13px;
-    line-height: 1.1;
-  }
-
-  .dq-level-best {
-    margin-top: 5px;
-
-    font-size: 7px;
-  }
-
-  .dq-level-stars {
-    margin-top: 3px;
-
-    font-size: 15px;
-  }
-
-
-  /* Rechte Seite */
-
-  .dq-level-action-area {
-    display: grid;
-    grid-template-rows: 28px 1fr;
-
-    gap: 5px;
-
-    padding: 7px;
-  }
-
-  .dq-level-rewards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-
-    gap: 5px;
-  }
-
-  .dq-reward-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 3px;
-
-    min-height: 28px;
-
-    padding: 3px;
-
-    border: 1px solid rgba(55,220,166,0.15);
-    border-radius: 8px;
-
-    background: #09231c;
-  }
-
-  .dq-reward-icon {
-    font-size: 11px;
-  }
-
-  .dq-reward-item strong {
-    font-size: 8px;
-    white-space: nowrap;
-  }
-
-
-  /* SPIELEN – GROSS */
-
-  .dq-play-button {
-    width: 100%;
-    min-height: 47px;
-
-    padding: 6px;
-
-    border: 0;
+    border: 1px solid rgba(66, 230, 149, 0.35);
     border-radius: 10px;
 
-    background:
-      linear-gradient(
-        135deg,
-        #47eaa6,
-        #20ceb0
-      );
+    background: #092019;
+    color: #42e695;
 
-    color: #03100c;
-
-    font-size: 18px;
+    font-size: 28px;
     font-weight: 900;
-    letter-spacing: .3px;
+    line-height: 1;
 
-    box-shadow:
-      0 6px 16px rgba(32,206,176,.16);
+    cursor: pointer;
   }
+
 }
