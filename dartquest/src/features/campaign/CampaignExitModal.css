@@ -1,0 +1,11 @@
+.campaign-exit-backdrop { position: fixed; z-index: 3000; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(0,8,6,.84); backdrop-filter: blur(7px); }
+.campaign-exit-modal { position: relative; width: min(100%,410px); padding: 27px 20px 20px; border: 1px solid rgba(66,230,149,.48); border-radius: 22px; background: radial-gradient(circle at 50% 0,rgba(66,230,149,.12),transparent 38%),#051913; box-shadow: 0 25px 70px rgba(0,0,0,.62),0 0 25px rgba(66,230,149,.1); text-align: center; }
+.campaign-exit-close { position: absolute; top: 11px; right: 11px; display: grid; width: 38px; height: 38px; place-items: center; padding: 0; border: 1px solid rgba(66,230,149,.22); border-radius: 11px; background: #092019; color: #42e695; font-size: 24px; }
+.campaign-exit-icon { margin-bottom: 9px; font-size: 31px; filter: drop-shadow(0 0 9px rgba(66,230,149,.3)); }
+.campaign-exit-modal h2 { margin: 0 35px 10px; color: #fff; font-size: clamp(23px,7vw,28px); }
+.campaign-exit-modal p { margin: 0 0 21px; color: #afc2bb; font-size: 15px; line-height: 1.5; }
+.campaign-exit-modal > button:not(.campaign-exit-close) { width: 100%; min-height: 50px; margin-top: 9px; border-radius: 13px; font-size: 14px; font-weight: 900; }
+.campaign-exit-save { border: 1px solid #42e695; background: linear-gradient(135deg,#42e695,#20cdae); color: #03110d; }
+.campaign-exit-without { border: 1px solid rgba(255,105,115,.35); background: rgba(76,22,27,.28); color: #ffabb1; }
+.campaign-exit-cancel { border: 1px solid rgba(255,255,255,.12); background: #0a211a; color: #d5e2dd; }
+@media (max-width:430px) { .campaign-exit-backdrop { align-items: end; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); } .campaign-exit-modal { padding: 24px 16px 17px; } }

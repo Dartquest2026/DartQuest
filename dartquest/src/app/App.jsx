@@ -4,6 +4,9 @@ import Home from '../features/home/Home'
 import Singleplayer from '../features/singleplayer/Singleplayer'
 import Campaign from '../features/campaign/Campaign'
 import Multiplayer from '../features/multiplayer/Multiplayer'
+import AuthScreen from '../features/auth/AuthScreen'
+import Profile from '../features/profile/Profile'
+import { getActiveProfile, logoutProfile } from '../features/auth/profileStorage'
 import BottomNav from '../shared/components/BottomNav'
 
 import './App.css'
@@ -52,8 +55,14 @@ const soloDifficulties = [
 ]
 
 function App() {
+  const [activeProfile, setActiveProfile] =
+    useState(getActiveProfile)
+
   const [activePage, setActivePage] =
     useState('home')
+
+  const [campaignExitRequest, setCampaignExitRequest] =
+    useState(0)
 
   const [
     singleplayerCampaignSettings,
@@ -166,6 +175,29 @@ function App() {
     setActivePage(
       'multiplayerCampaign',
     )
+  }
+
+  function logout() {
+    logoutProfile()
+    setActiveProfile(null)
+    setActivePage('home')
+  }
+
+  function changePage(nextPage) {
+    const campaignIsOpen =
+      activePage === 'singleplayerCampaign' ||
+      activePage === 'multiplayerCampaign'
+
+    if (campaignIsOpen && nextPage === 'home') {
+      setCampaignExitRequest((request) => request + 1)
+      return
+    }
+
+    setActivePage(nextPage)
+  }
+
+  if (!activeProfile) {
+    return <AuthScreen onAuthenticated={setActiveProfile} />
   }
 
   return (
@@ -342,6 +374,11 @@ function App() {
           settings={
             singleplayerCampaignSettings
           }
+          exitRequest={campaignExitRequest}
+          onExit={() => {
+            setCampaignExitRequest(0)
+            setActivePage('home')
+          }}
         />
       )}
 
@@ -355,6 +392,11 @@ function App() {
           settings={
             multiplayerCampaignSettings
           }
+          exitRequest={campaignExitRequest}
+          onExit={() => {
+            setCampaignExitRequest(0)
+            setActivePage('home')
+          }}
         />
       )}
 
@@ -384,26 +426,13 @@ function App() {
 
       {/* PROFIL */}
 
-      {activePage ===
-        'profile' && (
-
-        <div
-          style={{
-            padding: 20,
-          }}
-        >
-
-          <h2>
-            👤 Profil
-          </h2>
-
-          <p>
-            Kommt bald...
-          </p>
-
-        </div>
+      {activePage === 'profile' && (
+        <Profile
+          activeProfile={activeProfile}
+          onProfileChanged={setActiveProfile}
+          onLogout={logout}
+        />
       )}
-
 
       {/* NAVIGATION */}
 
@@ -413,7 +442,7 @@ function App() {
         }
 
         onChangePage={
-          setActivePage
+          changePage
         }
       />
 

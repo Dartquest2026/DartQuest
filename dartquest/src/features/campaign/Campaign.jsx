@@ -14,6 +14,7 @@ import {
 } from '../multiplayer/multiplayerSaves'
 
 import LevelModal from './LevelModal'
+import CampaignExitModal from './CampaignExitModal'
 import {
   getCampaignPlayerCount,
   scaleLevelForMultiplayer,
@@ -62,6 +63,8 @@ function Campaign({
     campaignType: 'solo',
     difficulty: 1,
   },
+  exitRequest = 0,
+  onExit = () => {},
 }) {
 
   const baseLevels =
@@ -145,6 +148,18 @@ function Campaign({
 
   const [multiplayerSaves, setMultiplayerSaves] =
     useState([])
+
+  const [leaveModalOpen, setLeaveModalOpen] =
+    useState(false)
+
+  const [exitAfterSlotSave, setExitAfterSlotSave] =
+    useState(false)
+
+  useEffect(() => {
+    if (exitRequest > 0) {
+      setLeaveModalOpen(true)
+    }
+  }, [exitRequest])
 
 
   /* =======================================================
@@ -238,12 +253,16 @@ function Campaign({
   }
 
 
-  function saveToSlot(slotIndex) {
+  function saveToSlot(
+    slotIndex,
+    { confirmOverwrite = true, leaveAfterSaving = exitAfterSlotSave } = {},
+  ) {
     const existingSave =
       multiplayerSaves[slotIndex]
 
     if (
       existingSave &&
+      confirmOverwrite &&
       !window.confirm(
         'Diesen Spielstand wirklich überschreiben?',
       )
@@ -271,12 +290,54 @@ function Campaign({
       previewLevelId,
       savedAt,
       lastPlayed: savedAt,
+      saveSlotId: slotIndex + 1,
+      slotIndex,
     })
 
     setMultiplayerSaves(
       getMultiplayerSaves(),
     )
     setSaveModalOpen(false)
+
+    if (leaveAfterSaving) {
+      setExitAfterSlotSave(false)
+      onExit()
+    }
+  }
+
+  function closeSaveModal() {
+    setSaveModalOpen(false)
+    setExitAfterSlotSave(false)
+  }
+
+  function saveAndExit() {
+    if (!settings.multiplayer) {
+      localStorage.setItem(
+        CAMPAIGN_STORAGE_KEY,
+        JSON.stringify(progress),
+      )
+      setLeaveModalOpen(false)
+      onExit()
+      return
+    }
+
+    if (Number.isInteger(settings.slotIndex)) {
+      saveToSlot(settings.slotIndex, {
+        confirmOverwrite: false,
+        leaveAfterSaving: true,
+      })
+      setLeaveModalOpen(false)
+      return
+    }
+
+    setLeaveModalOpen(false)
+    setExitAfterSlotSave(true)
+    openSaveModal()
+  }
+
+  function exitWithoutSaving() {
+    setLeaveModalOpen(false)
+    onExit()
   }
 
 
@@ -1553,10 +1614,19 @@ function Campaign({
       </section>
 
 
+      {leaveModalOpen && (
+        <CampaignExitModal
+          onSaveAndExit={saveAndExit}
+          onExitWithoutSaving={exitWithoutSaving}
+          onCancel={() => setLeaveModalOpen(false)}
+        />
+      )}
+
+
       {settings.multiplayer && saveModalOpen && (
         <div
           className="dq-save-modal-backdrop"
-          onClick={() => setSaveModalOpen(false)}
+          onClick={closeSaveModal}
         >
           <section
             className="dq-save-modal"
@@ -1575,7 +1645,7 @@ function Campaign({
 
               <button
                 type="button"
-                onClick={() => setSaveModalOpen(false)}
+                onClick={closeSaveModal}
                 aria-label="Speichern schließen"
               >
                 ×

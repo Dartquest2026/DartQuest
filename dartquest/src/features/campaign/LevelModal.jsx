@@ -92,11 +92,12 @@ function formatDarts(
   min,
   max,
 ) {
-  if (
-    min == null ||
-    max == null
-  ) {
+  if (min == null) {
     return ''
+  }
+
+  if (max == null) {
+    return `${min} oder mehr Pfeile`
   }
 
 
@@ -110,6 +111,11 @@ function formatDarts(
 
 
   return `${min}–${max} Pfeile`
+}
+
+function formatTaskForDisplay(task) {
+  return String(task ?? '')
+    .replace(/\s+mit maximal\s+\d+\s+Darts?$/i, '')
 }
 
 
@@ -192,24 +198,9 @@ function LevelModal({
   const starOptions =
     getStarOptions(level)
 
+  const displayedTask =
+    formatTaskForDisplay(level.task)
 
-  const hasDartLimit =
-    Number.isFinite(
-      Number(
-        level.perfectDarts,
-      ),
-    ) &&
-    Number(
-      level.perfectDarts,
-    ) > 0
-
-
-  const maxDarts =
-    hasDartLimit
-      ? Number(
-          level.perfectDarts,
-        ) * 4
-      : null
 
   const playerNames = Array.isArray(players)
     ? players
@@ -350,7 +341,7 @@ function LevelModal({
 
 
             <h2 className="level-modal-title">
-              {level.task}
+              {displayedTask}
             </h2>
 
 
@@ -366,7 +357,6 @@ function LevelModal({
 
                 <span>
                   {level.multiplayerGoal}
-                  {maxDarts ? ` · maximal ${maxDarts} Pfeile` : ''}
                 </span>
               </div>
             )}
@@ -378,30 +368,15 @@ function LevelModal({
                 Deine Aufgabe:{' '}
 
                 <strong>
-                  {level.task}
+                  {displayedTask}
                 </strong>
               </p>
 
 
-              {hasDartLimit ? (
-
-                <p>
-                  Du hast maximal{' '}
-
-                  <strong>
-                    {maxDarts}{' '}
-                    Pfeile
-                  </strong>.
-                </p>
-
-              ) : (
-
-                <p>
-                  Schließe die Aufgabe
-                  erfolgreich ab.
-                </p>
-
-              )}
+              <p>
+                Schließe die Aufgabe
+                erfolgreich ab.
+              </p>
 
             </div>
 

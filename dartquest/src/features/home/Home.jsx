@@ -9,7 +9,7 @@ function Home({
 }) {
   function resetProgress() {
     const confirmed = window.confirm(
-      'Fortschritt wirklich komplett zurücksetzen?',
+      'Wirklich alle DartQuest-Fortschritte, Spielstände und lokalen Profile löschen?',
     )
 
     if (!confirmed) {

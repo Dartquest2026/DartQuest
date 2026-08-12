@@ -25,7 +25,7 @@ function getReward(darts) {
     }
   }
 
-  if (darts >= 7 && darts <= 9) {
+  if (darts >= 7) {
     return {
       stars: 1,
       xp: 20,
@@ -99,12 +99,11 @@ function Dashboard({ onStartCampaign }) {
 
     if (
       !Number.isInteger(dartsNumber) ||
-      dartsNumber < 1 ||
-      dartsNumber > 9
+      dartsNumber < 1
     ) {
       setResult({
         error: true,
-        message: 'Bitte gib eine Zahl von 1 bis 9 ein.',
+        message: 'Bitte gib eine ganze Zahl ab 1 ein.',
       })
 
       return
@@ -183,7 +182,7 @@ function Dashboard({ onStartCampaign }) {
           <p>
             {dailyCompleted
               ? `${result?.label ?? ''} Neue Aufgabe morgen`
-              : 'Du hast maximal 9 Pfeile.'}
+              : 'Schaffe die Aufgabe mit so wenigen Pfeilen wie möglich.'}
           </p>
         </div>
 
@@ -223,7 +222,7 @@ function Dashboard({ onStartCampaign }) {
                 <div className="daily-task-info">
                   <span>Deine Aufgabe</span>
                   <strong>
-                    Schaffe die Aufgabe mit maximal 9 Pfeilen.
+                    Schließe die Aufgabe erfolgreich ab.
                   </strong>
                 </div>
 
@@ -239,9 +238,8 @@ function Dashboard({ onStartCampaign }) {
                   className="daily-input"
                   type="number"
                   min="1"
-                  max="9"
                   inputMode="numeric"
-                  placeholder="1 bis 9"
+                  placeholder="Anzahl der Pfeile"
                   value={darts}
                   onChange={(event) =>
                     setDarts(event.target.value)
