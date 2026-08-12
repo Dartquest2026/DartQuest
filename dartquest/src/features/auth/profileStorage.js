@@ -99,6 +99,31 @@ export async function authenticateProfile(nameOrId, password) {
   return profile
 }
 
+export async function verifyProfilePassword(profileId, password) {
+  const profile = readStore().profiles.find((item) => item.id === profileId)
+  if (!profile) return false
+  const hash = await hashPassword(password, base64ToBytes(profile.passwordSalt))
+  return hash === profile.passwordHash
+}
+
+export function deleteProfile(profileId) {
+  const store = readStore()
+  if (!store.profiles.some((profile) => profile.id === profileId)) return false
+
+  writeStore({
+    profiles: store.profiles.filter((profile) => profile.id !== profileId),
+    activeProfileId: store.activeProfileId === profileId ? null : store.activeProfileId,
+  })
+
+  // Nur ausdrücklich profilgebundene Erweiterungsdaten entfernen.
+  const profileDataPrefix = `dartquest-profile-${profileId}-`
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith(profileDataPrefix))
+    .forEach((key) => localStorage.removeItem(key))
+
+  return true
+}
+
 export function logoutProfile() {
   const store = readStore()
   writeStore({ ...store, activeProfileId: null })

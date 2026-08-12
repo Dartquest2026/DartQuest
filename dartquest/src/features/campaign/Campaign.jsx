@@ -62,6 +62,7 @@ function Campaign({
     playerCount: 1,
     campaignType: 'solo',
     difficulty: 1,
+    isNewGame: false,
   },
   exitRequest = 0,
   onExit = () => {},
@@ -359,10 +360,19 @@ function Campaign({
     setSelectedLevel(null)
 
 
+    const isNewMultiplayerGame =
+      settings.multiplayer &&
+      settings.isNewGame === true
+
     const savedMultiplayerGame =
-      settings.multiplayer
+      settings.multiplayer &&
+      settings.isNewGame === false
         ? settings.savedGame
         : null
+
+    if (isNewMultiplayerGame) {
+      return
+    }
 
 
     if (savedMultiplayerGame) {
@@ -485,6 +495,7 @@ function Campaign({
   }, [
     settings.difficulty,
     settings.multiplayer,
+    settings.isNewGame,
     settings.savedGame,
     CAMPAIGN_STORAGE_KEY,
     levels.length,
@@ -835,13 +846,15 @@ function Campaign({
         }
 
 
-        localStorage.setItem(
-          CAMPAIGN_STORAGE_KEY,
+        if (!settings.multiplayer) {
+          localStorage.setItem(
+            CAMPAIGN_STORAGE_KEY,
 
-          JSON.stringify(
-            updatedProgress,
-          ),
-        )
+            JSON.stringify(
+              updatedProgress,
+            ),
+          )
+        }
 
 
         const nextPreviewLevel =

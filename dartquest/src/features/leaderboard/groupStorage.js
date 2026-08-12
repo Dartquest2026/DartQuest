@@ -4,7 +4,25 @@ export const MAX_GROUPS_PER_PROFILE = 5
 function readGroups() {
   try {
     const parsed = JSON.parse(localStorage.getItem(GROUP_STORAGE_KEY))
-    return Array.isArray(parsed?.groups) ? parsed.groups : []
+    const groups = Array.isArray(parsed?.groups) ? parsed.groups : []
+    const usedCodes = new Set()
+    let migrated = false
+
+    const migratedGroups = groups.map((group) => {
+      const currentCode = String(group.inviteCode ?? '')
+      if (/^\d{6}$/.test(currentCode) && !usedCodes.has(currentCode)) {
+        usedCodes.add(currentCode)
+        return group
+      }
+
+      const inviteCode = createInviteCode([], usedCodes)
+      usedCodes.add(inviteCode)
+      migrated = true
+      return { ...group, inviteCode }
+    })
+
+    if (migrated) writeGroups(migratedGroups)
+    return migratedGroups
   } catch {
     return []
   }
@@ -15,13 +33,15 @@ function writeGroups(groups) {
   localStorage.setItem(GROUP_STORAGE_KEY, JSON.stringify({ groups }))
 }
 
-function createInviteCode(groups) {
-  const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+export function createInviteCode(groups, additionalCodes = new Set()) {
   let code
   do {
-    const random = crypto.getRandomValues(new Uint8Array(5))
-    code = `DQ-${Array.from(random, (value) => alphabet[value % alphabet.length]).join('')}`
-  } while (groups.some((group) => group.inviteCode === code))
+    const random = crypto.getRandomValues(new Uint32Array(1))[0]
+    code = String(random % 1000000).padStart(6, '0')
+  } while (
+    additionalCodes.has(code) ||
+    groups.some((group) => String(group.inviteCode) === code)
+  )
   return code
 }
 
@@ -53,11 +73,11 @@ export function createGroup(name, ownerProfileId) {
 
 export function joinGroup(inviteCode, profileId) {
   const groups = readGroups()
-  const normalizedCode = inviteCode.trim().toUpperCase()
+  const normalizedCode = String(inviteCode).replace(/\D/g, '').slice(0, 6)
   const groupIndex = groups.findIndex((group) => group.inviteCode === normalizedCode)
-  if (groupIndex < 0) throw new Error('Einladungscode wurde nicht gefunden.')
+  if (groupIndex < 0) throw new Error('Keine Gruppe mit diesem Code gefunden.')
   if (groups[groupIndex].members.some((member) => member.profileId === profileId)) {
-    return groups[groupIndex]
+    throw new Error('Du bist bereits Mitglied dieser Gruppe.')
   }
   if (getGroupsForProfile(profileId).length >= MAX_GROUPS_PER_PROFILE) {
     throw new Error('Du kannst maximal 5 Gruppen haben.')
@@ -68,6 +88,41 @@ export function joinGroup(inviteCode, profileId) {
   }
   writeGroups(groups)
   return groups[groupIndex]
+}
+
+export function deleteGroup(groupId, ownerProfileId) {
+  const groups = readGroups()
+  const group = groups.find((item) => item.id === groupId)
+  if (!group || group.ownerProfileId !== ownerProfileId) return false
+  writeGroups(groups.filter((item) => item.id !== groupId))
+  return true
+}
+
+export function leaveGroup(groupId, profileId) {
+  const groups = readGroups()
+  const index = groups.findIndex((item) => item.id === groupId)
+  if (index < 0 || groups[index].ownerProfileId === profileId) return false
+  groups[index] = {
+    ...groups[index],
+    members: groups[index].members.filter((member) => member.profileId !== profileId),
+  }
+  writeGroups(groups)
+  return true
+}
+
+export function getOwnedGroups(profileId) {
+  return readGroups().filter((group) => group.ownerProfileId === profileId)
+}
+
+export function removeProfileFromGroups(profileId) {
+  const groups = readGroups()
+  if (groups.some((group) => group.ownerProfileId === profileId)) return false
+
+  writeGroups(groups.map((group) => ({
+    ...group,
+    members: group.members.filter((member) => member.profileId !== profileId),
+  })))
+  return true
 }
 
 export function getRankedMembers(group, profiles) {

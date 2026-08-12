@@ -182,6 +182,7 @@ function Multiplayer({
       players: activePlayers,
       campaignType,
       difficulty: selectedDifficulty,
+      isNewGame: true,
     })
   }
 

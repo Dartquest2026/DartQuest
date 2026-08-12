@@ -2,12 +2,18 @@ import { useState } from 'react'
 import {
   authenticateProfile,
   createProfile,
+  deleteProfile,
   getProfiles,
+  verifyProfilePassword,
 } from '../auth/profileStorage'
 import { resetCurrentProfileProgress } from './progressReset'
+import {
+  getOwnedGroups,
+  removeProfileFromGroups,
+} from '../leaderboard/groupStorage'
 import './Profile.css'
 
-function Profile({ activeProfile, onProfileChanged, onLogout, onOpenLeaderboard }) {
+function Profile({ activeProfile, onProfileChanged, onLogout, onProfileDeleted }) {
   const [view, setView] = useState('main')
   const [profiles, setProfiles] = useState(getProfiles)
   const [selectedId, setSelectedId] = useState('')
@@ -17,6 +23,47 @@ function Profile({ activeProfile, onProfileChanged, onLogout, onOpenLeaderboard 
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [resetModalOpen, setResetModalOpen] = useState(false)
+  const [deleteProfileModalOpen, setDeleteProfileModalOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+
+  function openDeleteProfileModal() {
+    setDeletePassword('')
+    setDeleteError('')
+    setDeleteProfileModalOpen(true)
+  }
+
+  async function confirmProfileDeletion(event) {
+    event.preventDefault()
+    setBusy(true)
+    setDeleteError('')
+
+    const passwordIsCorrect = await verifyProfilePassword(
+      activeProfile.id,
+      deletePassword,
+    )
+
+    if (!passwordIsCorrect) {
+      setBusy(false)
+      setDeleteError('Passwort ist falsch.')
+      return
+    }
+
+    if (getOwnedGroups(activeProfile.id).length > 0) {
+      setBusy(false)
+      setDeleteError('Du besitzt noch eine oder mehrere Gruppen. Lösche diese Gruppen zuerst.')
+      return
+    }
+
+    removeProfileFromGroups(activeProfile.id)
+    const deleted = deleteProfile(activeProfile.id)
+    setBusy(false)
+
+    if (deleted) {
+      setDeleteProfileModalOpen(false)
+      onProfileDeleted()
+    }
+  }
 
   function confirmProgressReset() {
     resetCurrentProfileProgress(activeProfile.id)
@@ -67,7 +114,6 @@ function Profile({ activeProfile, onProfileChanged, onLogout, onOpenLeaderboard 
           <p>AKTIVES PROFIL</p><h2>{activeProfile.name}</h2>
           <div className="profile-stats"><span>XP <strong>{activeProfile.xp ?? 0}</strong></span><span>Coins <strong>{activeProfile.coins ?? 0}</strong></span></div>
           <button className="profile-primary" type="button" onClick={() => { setView('switch'); setError('') }}>PROFIL WECHSELN</button>
-          <button className="profile-leaderboard" type="button" onClick={onOpenLeaderboard}>🏆 RANGLISTE</button>
           <button className="profile-secondary" type="button" onClick={() => { setView('create'); setError('') }}>NEUES PROFIL</button>
           <button className="profile-logout" type="button" onClick={onLogout}>ABMELDEN</button>
         </section>
@@ -79,7 +125,32 @@ function Profile({ activeProfile, onProfileChanged, onLogout, onOpenLeaderboard 
             <span><strong>Fortschritt zurücksetzen</strong><small>Kampagnenfortschritt, Sterne, XP und Coins zurücksetzen</small></span>
           </button>
         </section>
+
+        <section className="profile-account-card">
+          <p>KONTO &amp; PROFIL</p>
+          <button type="button" onClick={openDeleteProfileModal}>
+            <span>🗑</span>
+            <span><strong>PROFIL LÖSCHEN</strong><small>Dieses Profil und die zugehörigen lokalen Profildaten dauerhaft entfernen.</small></span>
+          </button>
+        </section>
         </>
+      )}
+
+      {deleteProfileModalOpen && (
+        <div className="profile-delete-backdrop" onClick={() => !busy && setDeleteProfileModalOpen(false)}>
+          <section className="profile-delete-modal" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title" onClick={(event) => event.stopPropagation()}>
+            <div className="profile-delete-icon">🗑</div>
+            <h2 id="profile-delete-title">Profil wirklich löschen?</h2>
+            <p>Dieses Profil wird dauerhaft entfernt. Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
+            <strong className="profile-delete-name">Profil: {activeProfile.name}</strong>
+            <form onSubmit={confirmProfileDeletion}>
+              <label>Passwort bestätigen<input type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} autoComplete="current-password" required /></label>
+              {deleteError && <p className="profile-delete-error" role="alert">{deleteError}</p>}
+              <button className="profile-delete-cancel" type="button" disabled={busy} onClick={() => setDeleteProfileModalOpen(false)}>ABBRECHEN</button>
+              <button className="profile-delete-confirm" type="submit" disabled={busy || !deletePassword}>{busy ? 'BITTE WARTEN …' : 'PROFIL LÖSCHEN'}</button>
+            </form>
+          </section>
+        </div>
       )}
 
       {resetModalOpen && (

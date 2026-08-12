@@ -11,9 +11,9 @@ function BottomNav({ activePage, onChangePage }) {
       label: 'Kampagne',
     },
     {
-      id: 'achievements',
-      icon: '★',
-      label: 'Erfolge',
+      id: 'leaderboard',
+      icon: '🏆',
+      label: 'Rangliste',
     },
     {
       id: 'profile',

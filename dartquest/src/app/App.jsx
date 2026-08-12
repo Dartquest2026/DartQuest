@@ -65,6 +65,9 @@ function App() {
   const [campaignExitRequest, setCampaignExitRequest] =
     useState(0)
 
+  const [pageAfterCampaignExit, setPageAfterCampaignExit] =
+    useState('home')
+
   const [
     singleplayerCampaignSettings,
     setSingleplayerCampaignSettings,
@@ -84,6 +87,7 @@ function App() {
     players: [],
     campaignType: 'coop',
     difficulty: 1,
+    isNewGame: true,
     savedGame: null,
     saveSlotId: null,
     slotIndex: null,
@@ -141,6 +145,7 @@ function App() {
         settings.campaignType,
       difficulty:
         settings.difficulty,
+      isNewGame: true,
       savedGame: null,
       saveSlotId: null,
       slotIndex: null,
@@ -167,6 +172,7 @@ function App() {
         savedGame.campaignType,
       difficulty:
         savedGame.difficulty,
+      isNewGame: false,
       savedGame,
       saveSlotId:
         savedGame.id ?? slotIndex + 1,
@@ -184,13 +190,37 @@ function App() {
     setActivePage('home')
   }
 
+  function profileDeleted() {
+    setActiveProfile(null)
+    setActivePage('home')
+  }
+
   function changePage(nextPage) {
     const campaignIsOpen =
       activePage === 'singleplayerCampaign' ||
       activePage === 'multiplayerCampaign'
 
-    if (campaignIsOpen && nextPage === 'home') {
+    if (campaignIsOpen && nextPage !== activePage) {
+      setPageAfterCampaignExit(nextPage)
       setCampaignExitRequest((request) => request + 1)
+      return
+    }
+
+    if (nextPage === 'campaign') {
+      continueSoloCampaign()
+      return
+    }
+
+    setActivePage(nextPage)
+  }
+
+  function finishCampaignExit() {
+    const nextPage = pageAfterCampaignExit
+    setCampaignExitRequest(0)
+    setPageAfterCampaignExit('home')
+
+    if (nextPage === 'campaign') {
+      continueSoloCampaign()
       return
     }
 
@@ -377,10 +407,7 @@ function App() {
             singleplayerCampaignSettings
           }
           exitRequest={campaignExitRequest}
-          onExit={() => {
-            setCampaignExitRequest(0)
-            setActivePage('home')
-          }}
+          onExit={finishCampaignExit}
         />
       )}
 
@@ -395,34 +422,8 @@ function App() {
             multiplayerCampaignSettings
           }
           exitRequest={campaignExitRequest}
-          onExit={() => {
-            setCampaignExitRequest(0)
-            setActivePage('home')
-          }}
+          onExit={finishCampaignExit}
         />
-      )}
-
-
-      {/* ERFOLGE */}
-
-      {activePage ===
-        'achievements' && (
-
-        <div
-          style={{
-            padding: 20,
-          }}
-        >
-
-          <h2>
-            🏆 Erfolge
-          </h2>
-
-          <p>
-            Kommt bald...
-          </p>
-
-        </div>
       )}
 
 
@@ -433,14 +434,14 @@ function App() {
           activeProfile={activeProfile}
           onProfileChanged={setActiveProfile}
           onLogout={logout}
-          onOpenLeaderboard={() => setActivePage('leaderboard')}
+          onProfileDeleted={profileDeleted}
         />
       )}
 
       {activePage === 'leaderboard' && (
         <Leaderboard
           activeProfile={activeProfile}
-          onBack={() => setActivePage('profile')}
+          onBack={() => setActivePage('home')}
         />
       )}
 
