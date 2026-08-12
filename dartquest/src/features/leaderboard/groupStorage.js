@@ -4,7 +4,11 @@ export const MAX_GROUPS_PER_PROFILE = 5
 function readGroups() {
   try {
     const parsed = JSON.parse(localStorage.getItem(GROUP_STORAGE_KEY))
-    const groups = Array.isArray(parsed?.groups) ? parsed.groups : []
+    const groups = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.groups)
+        ? parsed.groups
+        : []
     const usedCodes = new Set()
     let migrated = false
 
@@ -12,7 +16,9 @@ function readGroups() {
       const currentCode = String(group.inviteCode ?? '')
       if (/^\d{6}$/.test(currentCode) && !usedCodes.has(currentCode)) {
         usedCodes.add(currentCode)
-        return group
+        if (group.inviteCode === currentCode) return group
+        migrated = true
+        return { ...group, inviteCode: currentCode }
       }
 
       const inviteCode = createInviteCode([], usedCodes)
@@ -51,6 +57,23 @@ export function getGroupsForProfile(profileId) {
   )
 }
 
+export function getAllGroups() {
+  return readGroups()
+}
+
+export function normalizeInviteCode(inviteCode) {
+  return String(inviteCode ?? '').trim().replace(/\D/g, '')
+}
+
+export function findGroupByInviteCode(inviteCode) {
+  const normalizedCode = normalizeInviteCode(inviteCode)
+  if (!/^\d{6}$/.test(normalizedCode)) return null
+
+  return readGroups().find(
+    (group) => String(group.inviteCode) === normalizedCode,
+  ) ?? null
+}
+
 export function createGroup(name, ownerProfileId) {
   const cleanName = name.trim()
   if (cleanName.length < 2) throw new Error('Der Gruppenname muss mindestens 2 Zeichen haben.')
@@ -73,8 +96,13 @@ export function createGroup(name, ownerProfileId) {
 
 export function joinGroup(inviteCode, profileId) {
   const groups = readGroups()
-  const normalizedCode = String(inviteCode).replace(/\D/g, '').slice(0, 6)
-  const groupIndex = groups.findIndex((group) => group.inviteCode === normalizedCode)
+  const normalizedCode = normalizeInviteCode(inviteCode)
+  if (!/^\d{6}$/.test(normalizedCode)) {
+    throw new Error('Keine Gruppe mit diesem Code gefunden.')
+  }
+  const groupIndex = groups.findIndex(
+    (group) => String(group.inviteCode) === normalizedCode,
+  )
   if (groupIndex < 0) throw new Error('Keine Gruppe mit diesem Code gefunden.')
   if (groups[groupIndex].members.some((member) => member.profileId === profileId)) {
     throw new Error('Du bist bereits Mitglied dieser Gruppe.')
