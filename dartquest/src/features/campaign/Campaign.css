@@ -2697,8 +2697,8 @@
   .dq-map {
     flex: none;
 
-    min-height: 280px;
-    height: clamp(280px, 36dvh, 314px);
+    min-height: 308px;
+    height: clamp(308px, 40dvh, 345px);
 
     margin: 0;
 
