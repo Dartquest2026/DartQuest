@@ -1272,18 +1272,6 @@ function Campaign({
             </figure>
 
 
-            <figure>
-
-              <b>
-                🃏
-              </b>
-
-              <small>
-                Karten
-              </small>
-
-            </figure>
-
           </div>
 
         </div>

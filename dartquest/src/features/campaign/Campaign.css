@@ -13,6 +13,178 @@
   color: #f5faf8;
 }
 
+/* Campaign layout for phone-sized viewports */
+@media (max-width: 480px) {
+  .app-shell:has(.dq-campaign) {
+    padding-top: max(4px, env(safe-area-inset-top));
+  }
+
+  .dq-campaign {
+    gap: 0;
+
+    padding-top: 0;
+    padding-right: 8px;
+    padding-left: 8px;
+    padding-bottom:
+      calc(118px + env(safe-area-inset-bottom));
+  }
+
+  .dq-header {
+    min-height: 0;
+
+    gap: 6px;
+
+    margin-top: 0;
+    margin-bottom: 2px;
+  }
+
+  .dq-logo img {
+    height: 100px;
+  }
+
+  .dq-header-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dq-status {
+    gap: 7px;
+
+    margin-top: 0;
+    margin-bottom: 6px;
+  }
+
+  .dq-overview {
+    gap: 6px;
+
+    margin-top: 0;
+    margin-bottom: 6px;
+    padding: 7px;
+  }
+
+  .dq-title-world-only {
+    width: 100%;
+
+    margin: 0 0 6px;
+  }
+
+  .dq-title-world-only .dq-world-switcher {
+    grid-template-columns:
+      48px
+      minmax(130px, 1fr)
+      48px !important;
+
+    width: min(100%, 310px) !important;
+    max-width: 310px;
+
+    gap: 8px !important;
+
+    margin-inline: auto;
+  }
+
+  .dq-title-world-only .dq-world-arrow {
+    width: 48px !important;
+    height: 42px !important;
+  }
+
+  .dq-title-world-only .dq-world-current {
+    width: auto !important;
+    min-width: 0;
+    height: 42px !important;
+  }
+
+  .dq-map {
+    min-height: 210px;
+    height: clamp(210px, 28dvh, 255px);
+
+    margin: 0;
+
+    border-radius: 15px;
+  }
+
+  .dq-node {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dq-node.selected {
+    transform:
+      translate(-50%, -50%)
+      scale(1.08);
+  }
+
+  .dq-node.boss {
+    width: 50px;
+    height: 50px;
+  }
+
+  .dq-crown {
+    font-size: 19px;
+  }
+
+  .dq-node-stars {
+    top: calc(100% + 3px);
+
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .dq-level-card {
+    gap: 0;
+
+    margin-top: 6px;
+  }
+
+  .dq-level-description {
+    padding: 7px 8px;
+  }
+
+  .dq-level-name {
+    margin-bottom: 2px;
+  }
+
+  .dq-level-best {
+    margin-top: 3px;
+  }
+
+  .dq-level-stars {
+    margin-top: 2px;
+  }
+
+  .dq-level-action-area {
+    gap: 4px;
+
+    padding: 6px;
+  }
+
+  .dq-level-rewards {
+    gap: 4px;
+  }
+
+  .dq-reward-item {
+    min-height: 34px;
+
+    gap: 3px;
+
+    padding: 4px;
+  }
+
+  .dq-play-button {
+    min-height: 44px;
+
+    padding: 6px 10px;
+
+    font-size: 18px;
+  }
+
+  .dq-boss-card {
+    margin-top: 6px;
+    margin-bottom: 0;
+
+    padding: 7px;
+  }
+}
+
 .dq-save-game-button {
   width: 100%;
 
@@ -557,7 +729,7 @@
 .dq-boss-rewards > div {
   display: grid;
 
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
 
   gap: 5px;
 }
@@ -1961,12 +2133,70 @@
 /* Smartphone typography */
 @media (max-width: 560px) {
   .dq-logo img {
-    width: clamp(150px, 52vw, 210px);
-    height: 48px;
+    width: clamp(220px, 65vw, 300px);
+    height: 110px;
   }
 
   .dq-title-world-only {
     margin-bottom: 8px;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    min-height: 100%;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .dq-campaign {
+    display: flex;
+    flex-direction: column;
+
+    height: auto;
+    min-height: calc(
+      100dvh - 76px - env(safe-area-inset-bottom)
+    );
+    max-height: none;
+
+    padding-bottom:
+      calc(104px + env(safe-area-inset-bottom));
+
+    overflow: visible;
+  }
+
+  .dq-header {
+    order: 1;
+  }
+
+  .dq-status {
+    order: 2;
+  }
+
+  .dq-overview {
+    order: 3;
+  }
+
+  .dq-title-world-only {
+    order: 4;
+  }
+
+  .dq-map {
+    order: 5;
+    flex: none;
+
+    min-height: 245px;
+    height: clamp(245px, 34dvh, 310px);
+  }
+
+  .dq-level-card {
+    order: 6;
+  }
+
+  .dq-boss-card {
+    order: 7;
   }
 
   .dq-save-game-button,
@@ -2049,5 +2279,179 @@
   .dq-save-slot > strong {
     font-size: 17px;
     line-height: 1.3;
+  }
+}
+
+/* Final compact campaign layout for 360-430px phones */
+@media (max-width: 480px) {
+  .app-shell:has(.dq-campaign) {
+    padding-top: max(4px, env(safe-area-inset-top));
+  }
+
+  .dq-campaign {
+    gap: 0;
+
+    height: auto;
+    max-height: none;
+
+    padding:
+      0 8px
+      calc(118px + env(safe-area-inset-bottom));
+
+    overflow: visible;
+  }
+
+  .dq-header {
+    min-height: 0;
+
+    gap: 6px;
+
+    margin: 0 0 2px;
+  }
+
+  .dq-logo img {
+    height: 100px;
+  }
+
+  .dq-header-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dq-status {
+    gap: 7px;
+
+    margin: 0 0 6px;
+  }
+
+  .dq-overview {
+    gap: 6px;
+
+    margin: 0 0 6px;
+    padding: 7px;
+  }
+
+  .dq-title-world-only {
+    width: 100%;
+
+    margin: 0 0 6px;
+  }
+
+  .dq-title-world-only .dq-world-switcher {
+    grid-template-columns:
+      48px
+      minmax(130px, 1fr)
+      48px !important;
+
+    width: min(100%, 310px) !important;
+    max-width: 310px;
+
+    gap: 8px !important;
+
+    margin-inline: auto;
+  }
+
+  .dq-title-world-only .dq-world-arrow {
+    width: 48px !important;
+    height: 42px !important;
+  }
+
+  .dq-title-world-only .dq-world-current {
+    width: auto !important;
+    min-width: 0;
+    height: 42px !important;
+  }
+
+  .dq-map {
+    flex: none;
+
+    min-height: 210px;
+    height: clamp(210px, 28dvh, 255px);
+
+    margin: 0;
+
+    border-radius: 15px;
+  }
+
+  .dq-node {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dq-node.selected {
+    transform:
+      translate(-50%, -50%)
+      scale(1.08);
+  }
+
+  .dq-node.boss {
+    width: 50px;
+    height: 50px;
+  }
+
+  .dq-crown {
+    font-size: 19px;
+  }
+
+  .dq-node-stars {
+    top: calc(100% + 3px);
+
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .dq-level-card {
+    gap: 0;
+
+    margin-top: 6px;
+  }
+
+  .dq-level-description {
+    padding: 7px 8px;
+  }
+
+  .dq-level-name {
+    margin-bottom: 2px;
+  }
+
+  .dq-level-best {
+    margin-top: 3px;
+  }
+
+  .dq-level-stars {
+    margin-top: 2px;
+  }
+
+  .dq-level-action-area {
+    gap: 4px;
+
+    padding: 6px;
+  }
+
+  .dq-level-rewards {
+    gap: 4px;
+  }
+
+  .dq-reward-item {
+    min-height: 34px;
+
+    gap: 3px;
+
+    padding: 4px;
+  }
+
+  .dq-play-button {
+    min-height: 44px;
+
+    padding: 6px 10px;
+
+    font-size: 18px;
+  }
+
+  .dq-boss-card {
+    margin-top: 6px;
+    margin-bottom: 0;
+
+    padding: 7px;
   }
 }
