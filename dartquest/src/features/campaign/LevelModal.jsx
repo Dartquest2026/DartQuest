@@ -119,6 +119,9 @@ function formatDarts(
 
 function LevelModal({
   level,
+  multiplayer = false,
+  playerCount = 1,
+  players = [],
   onClose,
   onComplete,
 }) {
@@ -207,6 +210,13 @@ function LevelModal({
           level.perfectDarts,
         ) * 4
       : null
+
+  const playerNames = Array.isArray(players)
+    ? players
+        .filter((player) => player?.active !== false)
+        .map((player) => player?.name)
+        .filter(Boolean)
+    : []
 
 
   /* =======================================================
@@ -342,6 +352,24 @@ function LevelModal({
             <h2 className="level-modal-title">
               {level.task}
             </h2>
+
+
+            {multiplayer && (
+              <div className="level-modal-multiplayer">
+                <strong>
+                  👥 {playerCount} Spieler
+                </strong>
+
+                {playerNames.length > 0 && (
+                  <span>{playerNames.join(' · ')}</span>
+                )}
+
+                <span>
+                  {level.multiplayerGoal}
+                  {maxDarts ? ` · maximal ${maxDarts} Pfeile` : ''}
+                </span>
+              </div>
+            )}
 
 
             <div className="level-modal-task">

@@ -14,6 +14,14 @@ import {
 } from '../multiplayer/multiplayerSaves'
 
 import LevelModal from './LevelModal'
+import {
+  getCampaignPlayerCount,
+  scaleLevelForMultiplayer,
+} from './multiplayerLevelScaling'
+import {
+  isBossUnlocked as checkBossUnlocked,
+  isNormalLevelUnlocked,
+} from './campaignUnlocking'
 import logo from '../../assets/dartquest-logo.png'
 
 import './Campaign.css'
@@ -56,10 +64,23 @@ function Campaign({
   },
 }) {
 
-  const levels =
+  const baseLevels =
     getLevelsByDifficulty(
       settings.difficulty,
     )
+
+  const campaignPlayerCount =
+    getCampaignPlayerCount(settings)
+
+  const levels =
+    settings.multiplayer
+      ? baseLevels.map((level) =>
+          scaleLevelForMultiplayer(
+            level,
+            campaignPlayerCount,
+          ),
+        )
+      : baseLevels
 
 
   const campaignStorageScope =
@@ -457,13 +478,6 @@ function Campaign({
     }
 
 
-    if (
-      progress.results[level.id]
-    ) {
-      return true
-    }
-
-
     if (level.boss) {
 
       const levelWorld =
@@ -478,17 +492,25 @@ function Campaign({
           progress.results,
         )
 
+      const normalLevelsInWorld =
+        levels.filter(
+          (candidate) =>
+            Math.ceil(candidate.id / 10) === levelWorld &&
+            !candidate.boss,
+        )
 
-      return (
-        starsInWorld >=
-        BOSS_STAR_REQUIREMENT
-      )
+      return checkBossUnlocked({
+        normalLevels: normalLevelsInWorld,
+        results: progress.results,
+        worldStars: starsInWorld,
+        requiredStars: BOSS_STAR_REQUIREMENT,
+      })
     }
 
 
-    return (
-      level.id <=
-      progress.unlockedLevel
+    return isNormalLevelUnlocked(
+      level,
+      progress.results,
     )
   }
 
@@ -692,16 +714,16 @@ function Campaign({
         }
 
 
-        const nextUnlockedLevel =
-          Math.max(
-            currentProgress
-              .unlockedLevel,
+        const completedSuccessfully =
+          bestStars >= 1
 
-            Math.min(
-              level.id + 1,
-              levels.length,
-            ),
-          )
+        const nextUnlockedLevel =
+          completedSuccessfully
+            ? Math.max(
+                currentProgress.unlockedLevel,
+                Math.min(level.id + 1, levels.length),
+              )
+            : currentProgress.unlockedLevel
 
 
         const isFirstCompletion =
@@ -785,6 +807,41 @@ function Campaign({
   /* =======================================================
      UI
      ======================================================= */
+
+  const mapLevelPathPositions = [
+    0,
+    11.65,
+    23.87,
+    33.06,
+    42.11,
+    53.62,
+    65.6,
+    73.49,
+    86.59,
+    100,
+  ]
+
+  const highestUnlockedMapIndex =
+    visibleLevels.reduce(
+      (highestIndex, level, index) =>
+        isLevelUnlocked(level)
+          ? index
+          : highestIndex,
+      0,
+    )
+
+  const bossUnlocked =
+    checkBossUnlocked({
+      normalLevels: worldNormalLevels,
+      results: progress.results,
+      worldStars,
+      requiredStars: BOSS_STAR_REQUIREMENT,
+    })
+
+  const mapPathProgress =
+    mapLevelPathPositions[
+      highestUnlockedMapIndex
+    ] ?? 0
 
   return (
     <main className="dq-campaign">
@@ -1146,18 +1203,40 @@ function Campaign({
           aria-hidden="true"
         >
 
+          <defs>
+            <mask id="dq-unlocked-path-mask">
+              <path
+                pathLength="100"
+                d="
+                  M 12 10
+                  C 30 8, 52 10, 66 19
+                  C 78 26, 84 31, 80 36
+                  C 74 44, 57 47, 38 48
+                  C 22 49, 12 53, 14 60
+                  C 16 69, 34 74, 56 76
+                  C 70 77, 79 82, 84 88
+                "
+                fill="none"
+                stroke="white"
+                strokeWidth="5"
+                strokeDasharray={`${mapPathProgress} 100`}
+              />
+            </mask>
+          </defs>
+
           <path
             className="dq-path-shadow"
 
+            pathLength="100"
+
             d="
-              M 15 12
-              C 28 8, 40 12, 47 18
-              C 58 26, 74 25, 77 36
-              C 80 48, 61 48, 51 55
-              C 41 62, 24 60, 22 70
-              C 20 79, 36 84, 48 84
-              C 62 84, 71 79, 80 84
-              C 86 87, 88 91, 90 94
+              M 12 10
+              C 30 8, 52 10, 66 19
+              C 78 26, 84 31, 80 36
+              C 74 44, 57 47, 38 48
+              C 22 49, 12 53, 14 60
+              C 16 69, 34 74, 56 76
+              C 70 77, 79 82, 84 88
             "
           />
 
@@ -1165,15 +1244,18 @@ function Campaign({
           <path
             className="dq-path-main"
 
+            pathLength="100"
+
+            mask="url(#dq-unlocked-path-mask)"
+
             d="
-              M 15 12
-              C 28 8, 40 12, 47 18
-              C 58 26, 74 25, 77 36
-              C 80 48, 61 48, 51 55
-              C 41 62, 24 60, 22 70
-              C 20 79, 36 84, 48 84
-              C 62 84, 71 79, 80 84
-              C 86 87, 88 91, 90 94
+              M 12 10
+              C 30 8, 52 10, 66 19
+              C 78 26, 84 31, 80 36
+              C 74 44, 57 47, 38 48
+              C 22 49, 12 53, 14 60
+              C 16 69, 34 74, 56 76
+              C 70 77, 79 82, 84 88
             "
           />
 
@@ -1390,31 +1472,24 @@ function Campaign({
 
         <div className="dq-boss-icon">
 
-          {
-            worldStars >=
-            BOSS_STAR_REQUIREMENT
-              ? '👑'
-              : '🎁'
-          }
+          <span>♛</span>
+          <strong>BOSS</strong>
 
         </div>
 
 
         <div className="dq-boss-info">
 
-          <strong>
-            Boss-Level{' '}
-            {
-              worldBoss?.id ??
-              worldEndLevel
-            }
-          </strong>
-
-
           <span>
-            ⭐ {worldStars}
-            {' / '}
-            {BOSS_STAR_REQUIREMENT}
+            <b className="dq-boss-star-icon">
+              ★
+            </b>
+
+            <span className="dq-boss-star-count">
+              <strong>{worldStars}</strong>
+              <small>/</small>
+              <strong>{BOSS_STAR_REQUIREMENT}</strong>
+            </span>
           </span>
 
 
@@ -1468,8 +1543,7 @@ function Campaign({
         >
 
           {
-            worldStars >=
-            BOSS_STAR_REQUIREMENT
+            bossUnlocked
               ? 'BOSS'
               : '🔒'
           }
@@ -1598,6 +1672,18 @@ function Campaign({
       <LevelModal
         level={
           selectedLevel
+        }
+
+        multiplayer={
+          settings.multiplayer === true
+        }
+
+        playerCount={
+          campaignPlayerCount
+        }
+
+        players={
+          settings.players
         }
 
         onClose={
