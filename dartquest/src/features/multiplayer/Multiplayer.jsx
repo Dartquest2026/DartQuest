@@ -1,6 +1,19 @@
 import { useState } from 'react'
 
+import {
+  getMultiplayerSaves,
+  MAX_MULTIPLAYER_SAVES,
+} from './multiplayerSaves'
+
 import './Multiplayer.css'
+
+const difficultyNames = {
+  1: 'ANFÄNGER',
+  2: 'LEICHT',
+  3: 'MITTEL',
+  4: 'SCHWER',
+  5: 'PROFI',
+}
 
 const difficulties = [
   {
@@ -43,12 +56,37 @@ const difficulties = [
 function Multiplayer({
   onBack,
   onStartCampaign,
+  onContinueCampaign,
 }) {
-  const [playerCount, setPlayerCount] =
-    useState(null)
+  const [players, setPlayers] = useState([
+    {
+      id: 1,
+      name: 'Spieler 1',
+      active: true,
+    },
+    {
+      id: 2,
+      name: 'Spieler 2',
+      active: false,
+    },
+    {
+      id: 3,
+      name: 'Spieler 3',
+      active: false,
+    },
+    {
+      id: 4,
+      name: 'Spieler 4',
+      active: false,
+    },
+  ])
 
   const [selectedMode, setSelectedMode] =
-    useState(null)
+    useState('entry')
+
+  const [multiplayerSaves] = useState(
+    getMultiplayerSaves,
+  )
 
   const [campaignType, setCampaignType] =
     useState(null)
@@ -56,10 +94,41 @@ function Multiplayer({
   const [difficulty, setDifficulty] =
     useState(null)
 
-  function selectPlayers(count) {
-    setPlayerCount(count)
+  const activePlayers = players.filter(
+    (player) => player.active,
+  )
 
-    setSelectedMode(null)
+  const playerCount = activePlayers.length
+
+  function updatePlayerName(id, name) {
+    setPlayers((currentPlayers) =>
+      currentPlayers.map((player) =>
+        player.id === id
+          ? { ...player, name }
+          : player,
+      ),
+    )
+  }
+
+  function togglePlayer(id) {
+    setPlayers((currentPlayers) =>
+      currentPlayers.map((player) =>
+        player.id === id
+          ? {
+              ...player,
+              active: !player.active,
+            }
+          : player,
+      ),
+    )
+  }
+
+  function continueToModes() {
+    if (playerCount < 2) {
+      return
+    }
+
+    setSelectedMode('modes')
     setCampaignType(null)
     setDifficulty(null)
   }
@@ -84,8 +153,21 @@ function Multiplayer({
     }
 
     if (selectedMode === 'campaign') {
-      setSelectedMode(null)
+      setSelectedMode('modes')
       setCampaignType(null)
+      return
+    }
+
+    if (selectedMode === 'modes') {
+      setSelectedMode('players')
+      return
+    }
+
+    if (
+      selectedMode === 'players' ||
+      selectedMode === 'saves'
+    ) {
+      setSelectedMode('entry')
       return
     }
 
@@ -97,6 +179,7 @@ function Multiplayer({
 
     onStartCampaign?.({
       playerCount,
+      players: activePlayers,
       campaignType,
       difficulty: selectedDifficulty,
     })
@@ -134,8 +217,8 @@ function Multiplayer({
           HAUPTANSICHT
           ===================================================== */}
 
-      {selectedMode === null && (
-        <>
+      {selectedMode === 'entry' && (
+        <section className="multiplayer-entry">
 
           <section className="multiplayer-intro">
 
@@ -143,60 +226,296 @@ function Multiplayer({
               👥
             </div>
 
-            <h2>
-              Wie viele Spieler?
-            </h2>
+            <h2>Wie möchtet ihr spielen?</h2>
 
             <p>
-              Wähle aus, wie viele Spieler
-              gemeinsam spielen.
+              Startet neu oder setzt eine Kampagne fort.
             </p>
 
           </section>
 
+          <div className="multiplayer-entry-grid">
 
-          <section className="player-count-grid">
+            <button
+              type="button"
+              className="multiplayer-entry-card"
+              onClick={() =>
+                setSelectedMode('players')
+              }
+            >
+              <span className="multiplayer-entry-icon">
+                ➕
+              </span>
 
-            {[2, 3, 4].map((count) => (
-              <button
-                key={count}
-                type="button"
-
-                className={[
-                  'player-count-card',
-
-                  playerCount === count
-                    ? 'selected'
-                    : '',
-                ].join(' ')}
-
-                onClick={() =>
-                  selectPlayers(count)
-                }
-              >
-
-                <span className="player-count-icon">
-                  {count === 2 && '👥'}
-                  {count === 3 && '👥👤'}
-                  {count === 4 && '👥👥'}
-                </span>
-
-                <strong>
-                  {count}
-                </strong>
-
+              <span className="multiplayer-entry-content">
+                <strong>NEUES SPIEL</strong>
                 <small>
-                  Spieler
+                  Spieler auswählen und neue Runde starten
                 </small>
+              </span>
 
-              </button>
-            ))}
+              <span className="multiplayer-entry-arrow">
+                &rsaquo;
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="multiplayer-entry-card saved"
+              onClick={() =>
+                setSelectedMode('saves')
+              }
+            >
+              <span className="multiplayer-entry-icon">
+                💾
+              </span>
+
+              <span className="multiplayer-entry-content">
+                <strong>GESPEICHERTE SPIELE</strong>
+                <small>
+                  Gemeinsame Kampagne fortsetzen
+                </small>
+              </span>
+
+              <span className="multiplayer-entry-arrow">
+                &rsaquo;
+              </span>
+            </button>
+
+          </div>
+
+        </section>
+      )}
+
+
+      {selectedMode === 'saves' && (
+        <section className="multiplayer-saves">
+
+          <div className="multiplayer-saves-heading">
+            <span>MEHRSPIELER</span>
+            <h2>Gespeicherte Spiele</h2>
+            <p>Bis zu drei gemeinsame Kampagnen.</p>
+          </div>
+
+          <div className="multiplayer-save-list">
+
+            {Array.from(
+              { length: MAX_MULTIPLAYER_SAVES },
+              (_, index) => {
+                const slotId = index + 1
+                const save = multiplayerSaves.find(
+                  (item) => item?.id === slotId,
+                )
+
+                if (!save) {
+                  return (
+                    <article
+                      key={slotId}
+                      className="multiplayer-save-card empty"
+                    >
+                      <span className="multiplayer-save-icon">
+                        💾
+                      </span>
+
+                      <div>
+                        <strong>
+                          Speicherplatz {slotId}
+                        </strong>
+                        <small>Noch keine Kampagne</small>
+                      </div>
+                    </article>
+                  )
+                }
+
+                const unlockedLevel =
+                  save.unlockedLevel ?? 1
+                const world = Math.max(
+                  1,
+                  Math.ceil(unlockedLevel / 10),
+                )
+                const progress = Math.min(
+                  100,
+                  Math.round(unlockedLevel),
+                )
+                const stars = Object.values(
+                  save.results ?? {},
+                ).reduce(
+                  (total, result) =>
+                    total + (result?.stars ?? 0),
+                  0,
+                )
+                const playerNames = (
+                  save.players ?? []
+                )
+                  .map((player) => player.name)
+                  .filter(Boolean)
+                  .join(' & ')
+
+                return (
+                  <article
+                    key={slotId}
+                    className="multiplayer-save-card occupied"
+                  >
+                    <div className="multiplayer-save-title">
+                      <span>Speicherplatz {slotId}</span>
+                      <strong>
+                        {playerNames || 'Mehrspieler-Kampagne'}
+                      </strong>
+                      <small>
+                        {(save.campaignType ?? 'coop').toUpperCase()}
+                        {' · '}
+                        {difficultyNames[save.difficulty] ?? 'ANFÄNGER'}
+                        {' · '}
+                        {save.playerCount ?? save.players?.length ?? 0}
+                        {' SPIELER'}
+                      </small>
+                    </div>
+
+                    <div className="multiplayer-save-progress">
+                      <span>Welt {world}</span>
+                      <span>Level {unlockedLevel}</span>
+                      <span>Fortschritt {progress} %</span>
+                    </div>
+
+                    <div className="multiplayer-save-rewards">
+                      <span>⭐ {stars} Sterne</span>
+                      <span>⭐ {save.xp ?? 0} XP</span>
+                      <span>🪙 {save.coins ?? 0} Coins</span>
+                    </div>
+
+                    <p className="multiplayer-save-date">
+                      Zuletzt gespielt:{' '}
+                      {save.lastPlayed
+                        ? new Date(
+                            save.lastPlayed,
+                          ).toLocaleDateString('de-DE')
+                        : '–'}
+                    </p>
+
+                    <button
+                      type="button"
+                      className="multiplayer-save-continue"
+                      onClick={() =>
+                        onContinueCampaign?.(
+                          save,
+                          index,
+                        )
+                      }
+                    >
+                      FORTSETZEN
+                    </button>
+                  </article>
+                )
+              },
+            )}
+
+          </div>
+
+        </section>
+      )}
+
+      {selectedMode === 'players' && (
+        <section className="multiplayer-player-select">
+
+          <section className="multiplayer-intro">
+
+            <div className="multiplayer-intro-icon">
+              👥
+            </div>
+
+            <h2>Wer spielt mit?</h2>
+
+            <p>
+              Aktiviere mindestens einen weiteren Spieler.
+            </p>
 
           </section>
 
+          <div className="multiplayer-player-list">
 
-          {playerCount && (
-            <section className="multiplayer-mode-section">
+            {players.map((player) => (
+              <article
+                key={player.id}
+                className={[
+                  'multiplayer-player-card',
+                  player.active ? 'active' : '',
+                ].join(' ')}
+              >
+
+                <span className="multiplayer-player-number">
+                  {player.id}
+                </span>
+
+                <div className="multiplayer-player-field">
+                  <small>
+                    {player.id === 1
+                      ? 'HAUPTSPIELER'
+                      : `SPIELER ${player.id}`}
+                  </small>
+
+                  {player.id === 1 ? (
+                    <strong>{player.name}</strong>
+                  ) : (
+                    <input
+                      type="text"
+                      value={player.name}
+                      maxLength="24"
+                      aria-label={`Name für Spieler ${player.id}`}
+                      onChange={(event) =>
+                        updatePlayerName(
+                          player.id,
+                          event.target.value,
+                        )
+                      }
+                    />
+                  )}
+                </div>
+
+                {player.id === 1 ? (
+                  <span className="multiplayer-player-fixed">
+                    ✓
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="multiplayer-player-toggle"
+                    onClick={() =>
+                      togglePlayer(player.id)
+                    }
+                    aria-label={
+                      player.active
+                        ? `Spieler ${player.id} entfernen`
+                        : `Spieler ${player.id} aktivieren`
+                    }
+                  >
+                    {player.active ? '−' : '+'}
+                  </button>
+                )}
+
+              </article>
+            ))}
+
+          </div>
+
+          <p className="multiplayer-player-summary">
+            {playerCount} Spieler ausgewählt
+          </p>
+
+          <button
+            type="button"
+            className="multiplayer-continue"
+            disabled={playerCount < 2}
+            onClick={continueToModes}
+          >
+            WEITER
+          </button>
+
+        </section>
+      )}
+
+
+      {selectedMode === 'modes' && (
+        <section className="multiplayer-mode-section">
 
               <div className="multiplayer-mode-heading">
 
@@ -293,10 +612,7 @@ function Multiplayer({
 
               </div>
 
-            </section>
-          )}
-
-        </>
+        </section>
       )}
 
 

@@ -484,3 +484,23 @@
     font-size: 14px;
   }
 }
+
+@media (max-width: 560px) {
+  .level-result-rewards span {
+    color: #afc0ba;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .level-modal-subtitle,
+  .level-modal-description {
+    color: #d5e3de;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .level-choice-text {
+    font-size: 15px;
+    line-height: 1.35;
+  }
+}

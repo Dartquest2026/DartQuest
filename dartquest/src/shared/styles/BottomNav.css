@@ -60,3 +60,15 @@
 .bottom-nav button:active {
   transform: scale(.94);
 }
+
+@media (max-width: 560px) {
+  .bottom-nav button {
+    width: min(23vw, 88px);
+    min-height: 48px;
+
+    gap: 5px;
+
+    font-size: clamp(12px, 3.4vw, 14px);
+    line-height: 1.2;
+  }
+}

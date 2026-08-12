@@ -13,6 +13,208 @@
   color: #f5faf8;
 }
 
+.dq-save-game-button {
+  width: 100%;
+
+  margin: 0 0 16px;
+  padding: 11px 15px;
+
+  border: 1px solid rgba(66, 230, 149, 0.36);
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(66, 230, 149, 0.14),
+      rgba(33, 199, 168, 0.07)
+    ),
+    #071f18;
+
+  color: #42e695;
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  cursor: pointer;
+}
+
+.dq-save-game-button:active {
+  transform: scale(0.985);
+}
+
+.dq-save-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  padding: 18px;
+
+  background: rgba(1, 8, 6, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.dq-save-modal {
+  width: min(100%, 430px);
+  max-height: min(720px, 90vh);
+
+  overflow-y: auto;
+
+  padding: 17px;
+
+  border: 1px solid rgba(66, 230, 149, 0.3);
+  border-radius: 19px;
+
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      rgba(66, 230, 149, 0.1),
+      transparent 34%
+    ),
+    #03130f;
+
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.55);
+}
+
+.dq-save-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  margin-bottom: 13px;
+}
+
+.dq-save-modal-header span,
+.dq-save-slot-label {
+  color: #42e695;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.9px;
+}
+
+.dq-save-modal-header h2 {
+  margin: 3px 0 0;
+
+  color: #ffffff;
+
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.dq-save-modal-header button {
+  display: grid;
+  place-items: center;
+
+  width: 36px;
+  height: 36px;
+
+  padding: 0;
+
+  border: 1px solid rgba(66, 230, 149, 0.26);
+  border-radius: 10px;
+
+  background: #092019;
+  color: #42e695;
+
+  font-size: 22px;
+
+  cursor: pointer;
+}
+
+.dq-save-slot-list {
+  display: grid;
+
+  gap: 9px;
+}
+
+.dq-save-slot {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  padding: 12px;
+
+  border: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #071f18,
+      #03130f
+    );
+}
+
+.dq-save-slot.occupied {
+  border-color: rgba(66, 230, 149, 0.34);
+}
+
+.dq-save-slot > strong {
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.dq-save-slot > small,
+.dq-save-slot > p {
+  color: #82978f;
+
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.dq-save-slot > p {
+  margin: 1px 0;
+}
+
+.dq-save-slot > button {
+  width: 100%;
+
+  margin-top: 6px;
+  padding: 9px 11px;
+
+  border: 1px solid rgba(66, 230, 149, 0.32);
+  border-radius: 10px;
+
+  background: rgba(66, 230, 149, 0.09);
+  color: #42e695;
+
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .dq-save-modal-backdrop {
+    align-items: end;
+
+    padding:
+      10px
+      10px
+      calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .dq-save-modal {
+    max-height: 88vh;
+
+    padding: 14px;
+    border-radius: 18px;
+  }
+}
+
 /* HEADER */
 
 .dq-header {
@@ -58,6 +260,22 @@
 
 .dq-logo span {
   font-size: 27px;
+}
+
+.dq-logo img {
+  width: min(100%, 230px);
+  height: 58px;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(
+      0 0 12px rgba(66, 230, 149, 0.18)
+    );
+}
+
+.dq-header-save {
+  color: #42e695;
 }
 
 /* STATUS */
@@ -190,6 +408,17 @@
   color: #91a59d;
 
   font-size: 12px;
+}
+
+.dq-title-world-only {
+  display: flex;
+  justify-content: center;
+}
+
+.dq-title-world-only .dq-world-switcher {
+  width: 100%;
+
+  justify-content: center !important;
 }
 
 .dq-world-select {
@@ -1727,4 +1956,98 @@
     cursor: pointer;
   }
 
+}
+
+/* Smartphone typography */
+@media (max-width: 560px) {
+  .dq-logo img {
+    width: clamp(150px, 52vw, 210px);
+    height: 48px;
+  }
+
+  .dq-title-world-only {
+    margin-bottom: 8px;
+  }
+
+  .dq-save-game-button,
+  .dq-tabs button,
+  .dq-boss-card > button,
+  .dq-save-slot > button {
+    min-height: 42px;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  .dq-logo strong,
+  .dq-title h1 {
+    font-size: clamp(24px, 6.5vw, 29px);
+    line-height: 1.15;
+  }
+
+  .dq-title p,
+  .dq-overview-label,
+  .dq-world-current small,
+  .dq-progress-info span,
+  .dq-progress-row b,
+  .dq-progress-info small,
+  .dq-level-description span,
+  .dq-level-best,
+  .dq-save-slot > small,
+  .dq-save-slot > p {
+    color: #adc0b8;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .dq-level small,
+  .dq-coins span,
+  .dq-save-modal-header span,
+  .dq-save-slot-label {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .dq-xp > div:first-child,
+  .dq-coins,
+  .dq-progress-info strong,
+  .dq-boss-rewards > span,
+  .dq-boss-rewards small,
+  .dq-node-stars,
+  .dq-level-rewards span,
+  .dq-boss-info strong,
+  .dq-boss-info span,
+  .dq-reward-item strong {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .dq-level-description small,
+  .dq-level-name {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .dq-level-task {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .dq-level-card {
+    min-height: 0;
+    height: auto;
+  }
+
+  .dq-level-description,
+  .dq-level-action-area {
+    min-width: 0;
+  }
+
+  .dq-save-modal-header h2 {
+    font-size: clamp(22px, 6vw, 26px);
+  }
+
+  .dq-save-slot > strong {
+    font-size: 17px;
+    line-height: 1.3;
+  }
 }

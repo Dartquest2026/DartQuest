@@ -130,7 +130,479 @@ button.multiplayer-back {
 
 
 /* =========================================================
-   SPIELERANZAHL
+   EINSTIEG
+   ========================================================= */
+
+.multiplayer-entry,
+.multiplayer-saves {
+  animation: dqMultiplayerFade 0.2s ease;
+}
+
+.multiplayer-entry-grid,
+.multiplayer-save-list {
+  display: grid;
+
+  gap: 9px;
+}
+
+button.multiplayer-entry-card {
+  display: grid;
+  grid-template-columns: 48px 1fr 24px;
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+  min-height: 76px;
+
+  padding: 13px;
+
+  border: 1px solid rgba(66, 230, 149, 0.24);
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #071f18,
+      #03130f
+    );
+
+  color: #ffffff;
+  text-align: left;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  cursor: pointer;
+
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+button.multiplayer-entry-card.saved {
+  background:
+    radial-gradient(
+      circle at 88% 45%,
+      rgba(66, 230, 149, 0.1),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      #071f18,
+      #03130f
+    );
+}
+
+button.multiplayer-entry-card:active {
+  transform: scale(0.985);
+}
+
+.multiplayer-entry-icon,
+.multiplayer-save-icon {
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  height: 46px;
+
+  border: 1px solid rgba(66, 230, 149, 0.24);
+  border-radius: 13px;
+
+  background: rgba(66, 230, 149, 0.07);
+
+  font-size: 20px;
+}
+
+.multiplayer-entry-content {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 4px;
+}
+
+.multiplayer-entry-content strong {
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.multiplayer-entry-content small {
+  color: #80958d;
+
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.multiplayer-entry-arrow {
+  color: #42e695;
+
+  font-size: 25px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.multiplayer-saves-heading {
+  margin-bottom: 12px;
+}
+
+.multiplayer-saves-heading > span,
+.multiplayer-save-title > span {
+  color: #42e695;
+
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.9px;
+}
+
+.multiplayer-saves-heading h2 {
+  margin: 3px 0 4px;
+
+  color: #ffffff;
+
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.multiplayer-saves-heading p {
+  margin: 0;
+
+  color: #849991;
+
+  font-size: 9px;
+}
+
+.multiplayer-save-card {
+  border: 1px solid rgba(66, 230, 149, 0.2);
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #071f18,
+      #03130f
+    );
+}
+
+.multiplayer-save-card.empty {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  align-items: center;
+
+  gap: 11px;
+
+  min-height: 70px;
+
+  padding: 11px;
+
+  opacity: 0.65;
+}
+
+.multiplayer-save-card.empty > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.multiplayer-save-card.empty strong {
+  color: #dce8e3;
+
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.multiplayer-save-card.empty small {
+  color: #71877f;
+
+  font-size: 8px;
+}
+
+.multiplayer-save-card.occupied {
+  padding: 14px;
+
+  border-color: rgba(66, 230, 149, 0.36);
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+}
+
+.multiplayer-save-title {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.multiplayer-save-title strong {
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.multiplayer-save-title small {
+  color: #91a69f;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.multiplayer-save-progress,
+.multiplayer-save-rewards {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px 12px;
+}
+
+.multiplayer-save-progress {
+  margin-top: 12px;
+
+  color: #dce8e3;
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.multiplayer-save-rewards {
+  margin-top: 9px;
+
+  color: #a8bbb4;
+
+  font-size: 8px;
+}
+
+.multiplayer-save-date {
+  margin: 10px 0;
+
+  color: #71877f;
+
+  font-size: 8px;
+}
+
+button.multiplayer-save-continue {
+  width: 100%;
+
+  padding: 9px 12px;
+
+  border: 1px solid rgba(66, 230, 149, 0.3);
+  border-radius: 11px;
+
+  background: rgba(66, 230, 149, 0.09);
+  color: #42e695;
+
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+
+/* =========================================================
+   SPIELERAUSWAHL
+   ========================================================= */
+
+.multiplayer-player-select {
+  animation: dqMultiplayerFade 0.2s ease;
+}
+
+.multiplayer-player-list {
+  display: grid;
+
+  gap: 8px;
+}
+
+.multiplayer-player-card {
+  display: grid;
+  grid-template-columns: 42px 1fr 36px;
+  align-items: center;
+
+  gap: 10px;
+
+  min-height: 64px;
+
+  padding: 10px;
+
+  border: 1px solid rgba(66, 230, 149, 0.14);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #071f18,
+      #03130f
+    );
+
+  opacity: 0.72;
+
+  transition:
+    border-color 0.15s ease,
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.multiplayer-player-card.active {
+  border-color: rgba(66, 230, 149, 0.38);
+
+  opacity: 1;
+
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.multiplayer-player-number {
+  display: grid;
+  place-items: center;
+
+  width: 40px;
+  height: 40px;
+
+  border: 1px solid rgba(66, 230, 149, 0.25);
+  border-radius: 11px;
+
+  background: rgba(66, 230, 149, 0.07);
+  color: #42e695;
+
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.multiplayer-player-field {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 3px;
+}
+
+.multiplayer-player-field small {
+  color: #42e695;
+
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+}
+
+.multiplayer-player-field strong {
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.multiplayer-player-field input {
+  width: 100%;
+
+  padding: 5px 0;
+
+  border: 0;
+  border-bottom: 1px solid rgba(66, 230, 149, 0.18);
+  border-radius: 0;
+
+  outline: none;
+
+  background: transparent;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.multiplayer-player-field input:focus {
+  border-color: #42e695;
+
+  box-shadow: none;
+}
+
+button.multiplayer-player-toggle,
+.multiplayer-player-fixed {
+  display: grid;
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+
+  padding: 0;
+
+  border: 1px solid rgba(66, 230, 149, 0.28);
+  border-radius: 10px;
+
+  background: rgba(66, 230, 149, 0.08);
+  color: #42e695;
+
+  font-size: 19px;
+  font-weight: 900;
+
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.multiplayer-player-toggle {
+  cursor: pointer;
+}
+
+.multiplayer-player-card.active button.multiplayer-player-toggle {
+  border-color: rgba(255, 141, 151, 0.28);
+
+  background: rgba(255, 141, 151, 0.07);
+  color: #ff8d97;
+}
+
+.multiplayer-player-summary {
+  margin: 11px 0 8px;
+
+  color: #91a69f;
+
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+}
+
+button.multiplayer-continue {
+  width: 100%;
+
+  padding: 12px 16px;
+
+  border: 0;
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #42e695,
+      #21c7a8
+    );
+
+  color: #03100d;
+
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  cursor: pointer;
+
+  box-shadow: 0 10px 24px rgba(33, 199, 168, 0.16);
+}
+
+button.multiplayer-continue:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+button.multiplayer-continue:disabled {
+  background: #10241e;
+  color: #536b62;
+}
+
+
+/* =========================================================
+   ALTE SPIELERANZAHL-KARTEN
    ========================================================= */
 
 .player-count-grid {
@@ -712,5 +1184,85 @@ button.difficulty-card:active {
   .campaign-type-grid,
   .difficulty-grid {
     gap: 7px;
+  }
+}
+
+/* Smartphone typography */
+@media (max-width: 560px) {
+  .multiplayer-eyebrow,
+  .multiplayer-save-title > span,
+  .multiplayer-player-field small,
+  .multiplayer-mode-heading > span,
+  .multiplayer-campaign-heading > span,
+  .campaign-type-content > span,
+  .difficulty-content small {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .multiplayer-header h1 {
+    font-size: clamp(24px, 6.5vw, 28px);
+  }
+
+  .multiplayer-intro h2,
+  .multiplayer-saves-heading h2,
+  .multiplayer-campaign-heading h2 {
+    font-size: clamp(21px, 5.8vw, 25px);
+    line-height: 1.2;
+  }
+
+  .multiplayer-intro p,
+  .multiplayer-saves-heading p,
+  .multiplayer-campaign-heading p,
+  .multiplayer-entry-content small,
+  .multiplayer-save-card.empty small,
+  .multiplayer-save-title small,
+  .multiplayer-save-date,
+  .multiplayer-mode-card small,
+  .campaign-type-content p,
+  .difficulty-content p {
+    color: #a7b9b2;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  button.multiplayer-entry-card,
+  .multiplayer-save-card.empty,
+  .multiplayer-player-card,
+  button.multiplayer-mode-card,
+  button.campaign-type-card,
+  button.difficulty-card {
+    min-height: 82px;
+  }
+
+  .multiplayer-entry-content strong,
+  .multiplayer-save-title strong,
+  .multiplayer-player-field strong,
+  .multiplayer-mode-card strong,
+  .campaign-type-content strong,
+  .difficulty-content strong {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+
+  .multiplayer-player-field input {
+    min-height: 38px;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .multiplayer-player-summary,
+  .multiplayer-save-progress,
+  .multiplayer-save-rewards {
+    color: #b4c4be;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  button.multiplayer-continue,
+  button.multiplayer-save-continue {
+    min-height: 44px;
+    font-size: 15px;
+    line-height: 1.25;
   }
 }

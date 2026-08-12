@@ -8,7 +8,13 @@ import {
   getWorldPosition,
 } from './data/worldMaps'
 
+import {
+  getMultiplayerSaves,
+  saveMultiplayerGame,
+} from '../multiplayer/multiplayerSaves'
+
 import LevelModal from './LevelModal'
+import logo from '../../assets/dartquest-logo.png'
 
 import './Campaign.css'
 
@@ -17,6 +23,14 @@ const CAMPAIGN_STORAGE_BASE_KEY =
   'dartquest-campaign-progress'
 
 const XP_PER_PLAYER_LEVEL = 500
+
+const difficultyNames = {
+  1: 'ANFÄNGER',
+  2: 'LEICHT',
+  3: 'MITTEL',
+  4: 'SCHWER',
+  5: 'PROFI',
+}
 
 
 const worldNames = [
@@ -48,8 +62,14 @@ function Campaign({
     )
 
 
+  const campaignStorageScope =
+    settings.multiplayer
+      ? `multiplayer-${settings.campaignType}-${settings.playerCount}-players`
+      : 'singleplayer'
+
+
   const CAMPAIGN_STORAGE_KEY =
-    `${CAMPAIGN_STORAGE_BASE_KEY}-difficulty-${settings.difficulty}`
+    `${CAMPAIGN_STORAGE_BASE_KEY}-${campaignStorageScope}-difficulty-${settings.difficulty}`
 
 
   /* =======================================================
@@ -98,6 +118,12 @@ function Campaign({
     xp: 0,
     coins: 0,
   })
+
+  const [saveModalOpen, setSaveModalOpen] =
+    useState(false)
+
+  const [multiplayerSaves, setMultiplayerSaves] =
+    useState([])
 
 
   /* =======================================================
@@ -203,6 +229,56 @@ function Campaign({
     )
 
 
+  function openSaveModal() {
+    setMultiplayerSaves(
+      getMultiplayerSaves(),
+    )
+    setSaveModalOpen(true)
+  }
+
+
+  function saveToSlot(slotIndex) {
+    const existingSave =
+      multiplayerSaves[slotIndex]
+
+    if (
+      existingSave &&
+      !window.confirm(
+        'Diesen Spielstand wirklich überschreiben?',
+      )
+    ) {
+      return
+    }
+
+    const savedAt = new Date().toISOString()
+
+    saveMultiplayerGame(slotIndex, {
+      players: (settings.players ?? []).map(
+        (player) => ({
+          id: player.id,
+          name: player.name,
+        }),
+      ),
+      playerCount: settings.playerCount,
+      campaignType: settings.campaignType,
+      difficulty: settings.difficulty,
+      unlockedLevel: progress.unlockedLevel,
+      results: progress.results,
+      xp: progress.xp,
+      coins: progress.coins,
+      selectedWorld,
+      previewLevelId,
+      savedAt,
+      lastPlayed: savedAt,
+    })
+
+    setMultiplayerSaves(
+      getMultiplayerSaves(),
+    )
+    setSaveModalOpen(false)
+  }
+
+
   /* =======================================================
      SPEICHER LADEN
      ======================================================= */
@@ -219,6 +295,56 @@ function Campaign({
     setSelectedWorld(1)
     setPreviewLevelId(1)
     setSelectedLevel(null)
+
+
+    const savedMultiplayerGame =
+      settings.multiplayer
+        ? settings.savedGame
+        : null
+
+
+    if (savedMultiplayerGame) {
+      const unlockedLevel = Math.min(
+        Math.max(
+          savedMultiplayerGame.unlockedLevel ?? 1,
+          1,
+        ),
+        levels.length,
+      )
+
+      const restoredWorld = Math.min(
+        Math.max(
+          savedMultiplayerGame.selectedWorld ??
+            Math.ceil(unlockedLevel / 10),
+          1,
+        ),
+        worldNames.length,
+      )
+
+      const restoredPreviewLevel = Math.min(
+        Math.max(
+          savedMultiplayerGame.previewLevelId ??
+            unlockedLevel,
+          1,
+        ),
+        levels.length,
+      )
+
+      setProgress({
+        unlockedLevel,
+        results:
+          savedMultiplayerGame.results ?? {},
+        xp:
+          savedMultiplayerGame.xp ?? 0,
+        coins:
+          savedMultiplayerGame.coins ?? 0,
+      })
+
+      setSelectedWorld(restoredWorld)
+      setPreviewLevelId(restoredPreviewLevel)
+
+      return
+    }
 
 
     const savedProgress =
@@ -296,7 +422,10 @@ function Campaign({
 
   }, [
     settings.difficulty,
+    settings.multiplayer,
+    settings.savedGame,
     CAMPAIGN_STORAGE_KEY,
+    levels.length,
   ])
 
 
@@ -684,25 +813,31 @@ function Campaign({
 
       <header className="dq-header">
 
-        <button
-          type="button"
-          className="dq-header-button"
-          aria-label="Menü"
-        >
-          ☰
-        </button>
+        {settings.multiplayer ? (
+          <button
+            type="button"
+            className="dq-header-button dq-header-save"
+            aria-label="Spiel speichern"
+            onClick={openSaveModal}
+          >
+            💾
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="dq-header-button"
+            aria-label="Menü"
+          >
+            ☰
+          </button>
+        )}
 
 
         <div className="dq-logo">
-
-          <span>
-            🎯
-          </span>
-
-          <strong>
-            DART QUEST
-          </strong>
-
+          <img
+            src={logo}
+            alt="DartQuest"
+          />
         </div>
 
 
@@ -784,20 +919,7 @@ function Campaign({
 
       {/* KAMPAGNE */}
 
-      <section className="dq-title">
-
-        <div>
-
-          <h1>
-            KAMPAGNE
-          </h1>
-
-          <p>
-            Werde zur Dart-Legende
-          </p>
-
-        </div>
-
+      <section className="dq-title dq-title-world-only">
 
         <div
           className="dq-world-switcher"
@@ -1169,26 +1291,6 @@ function Campaign({
       </section>
 
 
-      {/* TABS */}
-
-      <nav className="dq-tabs">
-
-        <button
-          type="button"
-          className="active"
-        >
-          KARTE
-        </button>
-
-        <button
-          type="button"
-        >
-          LISTE
-        </button>
-
-      </nav>
-
-
       {/* MAP */}
 
       <section className="dq-map">
@@ -1531,6 +1633,120 @@ function Campaign({
         </button>
 
       </section>
+
+
+      {settings.multiplayer && saveModalOpen && (
+        <div
+          className="dq-save-modal-backdrop"
+          onClick={() => setSaveModalOpen(false)}
+        >
+          <section
+            className="dq-save-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dq-save-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="dq-save-modal-header">
+              <div>
+                <span>DARTQUEST</span>
+                <h2 id="dq-save-modal-title">
+                  Spiel speichern
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSaveModalOpen(false)}
+                aria-label="Speichern schließen"
+              >
+                ×
+              </button>
+            </header>
+
+            <div className="dq-save-slot-list">
+              {[0, 1, 2].map((slotIndex) => {
+                const save =
+                  multiplayerSaves[slotIndex]
+
+                const stars = Object.values(
+                  save?.results ?? {},
+                ).reduce(
+                  (total, result) =>
+                    total + (result?.stars ?? 0),
+                  0,
+                )
+
+                const playerNames = (
+                  save?.players ?? []
+                )
+                  .map((player) => player.name)
+                  .filter(Boolean)
+                  .join(' & ')
+
+                return (
+                  <article
+                    key={slotIndex}
+                    className={[
+                      'dq-save-slot',
+                      save ? 'occupied' : 'empty',
+                    ].join(' ')}
+                  >
+                    <span className="dq-save-slot-label">
+                      Speicherplatz {slotIndex + 1}
+                    </span>
+
+                    {save ? (
+                      <>
+                        <strong>
+                          {playerNames || 'Mehrspieler-Kampagne'}
+                        </strong>
+
+                        <small>
+                          {(save.campaignType ?? 'coop').toUpperCase()}
+                          {' · '}
+                          {difficultyNames[save.difficulty] ?? 'ANFÄNGER'}
+                        </small>
+
+                        <p>
+                          Welt {save.selectedWorld ?? 1}
+                          {' · '}
+                          Level {save.unlockedLevel ?? 1}
+                        </p>
+
+                        <p>
+                          ⭐ {stars} Sterne
+                          {' · '}XP {save.xp ?? 0}
+                        </p>
+
+                        <small>
+                          Zuletzt gespeichert:{' '}
+                          {save.savedAt
+                            ? new Date(
+                                save.savedAt,
+                              ).toLocaleDateString('de-DE')
+                            : '–'}
+                        </small>
+                      </>
+                    ) : (
+                      <strong>Noch kein Spielstand</strong>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        saveToSlot(slotIndex)
+                      }
+                    >
+                      {save ? 'ÜBERSCHREIBEN' : 'SPEICHERN'}
+                    </button>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        </div>
+      )}
 
 
       {/* LEVEL MODAL */}

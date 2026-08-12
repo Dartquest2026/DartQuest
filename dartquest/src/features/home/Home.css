@@ -658,3 +658,48 @@
     font-size: 14px;
   }
 }
+
+/* Smartphone typography */
+@media (max-width: 560px) {
+  .home-level-badge span,
+  .home-xp-row,
+  .home-coins,
+  .home-eyebrow,
+  .home-card-content > span {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .home-welcome h1 {
+    font-size: clamp(26px, 7vw, 30px);
+    line-height: 1.12;
+  }
+
+  .home-welcome p,
+  .home-card-content small,
+  .home-mode-card span {
+    color: #a7b9b2;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .home-card-content strong {
+    font-size: clamp(18px, 5vw, 20px);
+    line-height: 1.25;
+  }
+
+  .home-mode-card {
+    min-height: 170px;
+  }
+
+  .home-mode-card strong {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+
+  .dev-reset-button {
+    min-height: 44px;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+}

@@ -3,7 +3,7 @@ import logo from '../../assets/dartquest-logo.png'
 import './Home.css'
 
 function Home({
-  onStartCampaign,
+  onContinueCampaign,
   onOpenSingleplayer,
   onOpenMultiplayer,
 }) {
@@ -16,8 +16,15 @@ function Home({
       return
     }
 
-    localStorage.removeItem(
-      'dartquest-campaign-progress',
+    const dartQuestStorageKeys =
+      Object.keys(localStorage).filter(
+        (key) =>
+          key.startsWith('dartquest-'),
+      )
+
+    dartQuestStorageKeys.forEach(
+      (key) =>
+        localStorage.removeItem(key),
     )
 
     window.location.reload()
@@ -102,12 +109,12 @@ function Home({
         </section>
 
 
-        {/* KAMPAGNE */}
+        {/* EINZELSPIELER-KAMPAGNE */}
 
         <button
           className="home-campaign-card"
           type="button"
-          onClick={onStartCampaign}
+          onClick={onContinueCampaign}
         >
 
           <div className="home-card-icon">
@@ -117,11 +124,11 @@ function Home({
           <div className="home-card-content">
 
             <span>
-              KAMPAGNE
+              EINZELSPIELER
             </span>
 
             <strong>
-              Kampagne fortsetzen
+              Zur Kampagne
             </strong>
 
             <small>
