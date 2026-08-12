@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import Home from '../features/home/Home'
 import Singleplayer from '../features/singleplayer/Singleplayer'
@@ -7,7 +7,11 @@ import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
 import Profile from '../features/profile/Profile'
 import Leaderboard from '../features/leaderboard/Leaderboard'
-import { getActiveProfile, logoutProfile } from '../features/auth/profileStorage'
+import {
+  getSessionProfile,
+  logoutProfile,
+  subscribeToAuthChanges,
+} from '../features/auth/profileStorage'
 import BottomNav from '../shared/components/BottomNav'
 
 import './App.css'
@@ -57,7 +61,13 @@ const soloDifficulties = [
 
 function App() {
   const [activeProfile, setActiveProfile] =
-    useState(getActiveProfile)
+    useState(null)
+
+  const [authLoading, setAuthLoading] =
+    useState(true)
+
+  const [authError, setAuthError] =
+    useState('')
 
   const [activePage, setActivePage] =
     useState('home')
@@ -184,15 +194,42 @@ function App() {
     )
   }
 
-  function logout() {
-    logoutProfile()
-    setActiveProfile(null)
-    setActivePage('home')
-  }
+  useEffect(() => {
+    let mounted = true
 
-  function profileDeleted() {
-    setActiveProfile(null)
-    setActivePage('home')
+    getSessionProfile()
+      .then((profile) => {
+        if (mounted) setActiveProfile(profile)
+      })
+      .catch((error) => {
+        if (mounted) setAuthError(error.message)
+      })
+      .finally(() => {
+        if (mounted) setAuthLoading(false)
+      })
+
+    const unsubscribe = subscribeToAuthChanges((profile, error) => {
+      if (!mounted) return
+      setActiveProfile(profile)
+      setAuthError(error?.message ?? '')
+      setAuthLoading(false)
+      if (!profile) setActivePage('home')
+    })
+
+    return () => {
+      mounted = false
+      unsubscribe()
+    }
+  }, [])
+
+  async function logout() {
+    try {
+      await logoutProfile()
+      setActiveProfile(null)
+      setActivePage('home')
+    } catch (error) {
+      setAuthError(error.message)
+    }
   }
 
   function changePage(nextPage) {
@@ -227,8 +264,17 @@ function App() {
     setActivePage(nextPage)
   }
 
+  if (authLoading) {
+    return <main className="auth-screen"><p>Profil wird geladen …</p></main>
+  }
+
   if (!activeProfile) {
-    return <AuthScreen onAuthenticated={setActiveProfile} />
+    return (
+      <>
+        <AuthScreen onAuthenticated={(profile) => { setActiveProfile(profile); setAuthError('') }} />
+        {authError && <p className="app-auth-error">{authError}</p>}
+      </>
+    )
   }
 
   return (
@@ -432,9 +478,7 @@ function App() {
       {activePage === 'profile' && (
         <Profile
           activeProfile={activeProfile}
-          onProfileChanged={setActiveProfile}
           onLogout={logout}
-          onProfileDeleted={profileDeleted}
         />
       )}
 

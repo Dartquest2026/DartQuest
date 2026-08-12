@@ -7,6 +7,7 @@ import {
   getRankedMembers,
   joinGroup,
   leaveGroup,
+  normalizeInviteCode,
 } from './groupStorage'
 import './Leaderboard.css'
 
@@ -28,7 +29,7 @@ function Leaderboard({ activeProfile, onBack }) {
     try {
       const group = mode === 'create'
         ? createGroup(value, activeProfile.id)
-        : joinGroup(value, activeProfile.id)
+        : joinGroup(joinCode, activeProfile.id)
       setGroups(getGroupsForProfile(activeProfile.id))
       setSelectedGroup(group)
       setMode('detail')
@@ -112,15 +113,16 @@ function Leaderboard({ activeProfile, onBack }) {
                 key={mode}
                 type="text"
                 name="groupValue"
-                defaultValue=""
+                value={mode === 'join' ? joinCode : undefined}
+                defaultValue={mode === 'create' ? '' : undefined}
                 placeholder={mode === 'create' ? 'Dart-Abend' : '381742'}
                 inputMode={mode === 'join' ? 'numeric' : 'text'}
                 pattern={mode === 'join' ? '[0-9]{6}' : undefined}
                 maxLength={mode === 'join' ? 6 : 60}
-                onInput={mode === 'join' ? (event) => {
-                  const normalized = event.currentTarget.value.replace(/\D/g, '').slice(0, 6)
-                  event.currentTarget.value = normalized
-                  setJoinCode(normalized)
+                onChange={mode === 'join' ? (event) => {
+                  setJoinCode(
+                    normalizeInviteCode(event.currentTarget.value).slice(0, 6),
+                  )
                 } : undefined}
                 autoComplete="off"
                 enterKeyHint="done"

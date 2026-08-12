@@ -8,6 +8,8 @@ function readGroups() {
       ? parsed
       : Array.isArray(parsed?.groups)
         ? parsed.groups
+        : Array.isArray(parsed?.data?.groups)
+          ? parsed.data.groups
         : []
     const usedCodes = new Set()
     let migrated = false
@@ -62,7 +64,11 @@ export function getAllGroups() {
 }
 
 export function normalizeInviteCode(inviteCode) {
-  return String(inviteCode ?? '').trim().replace(/\D/g, '')
+  return String(inviteCode ?? '')
+    .trim()
+    .replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+    .replace(/[０-９]/g, (digit) => String('０１２３４５６７８９'.indexOf(digit)))
+    .replace(/\D/g, '')
 }
 
 export function findGroupByInviteCode(inviteCode) {

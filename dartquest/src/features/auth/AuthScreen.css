@@ -8,9 +8,14 @@
 .auth-panel label { display: grid; gap: 7px; color: #dce9e4; font-size: 14px; font-weight: 750; }
 .auth-panel input { width: 100%; min-height: 52px; padding: 0 15px; border: 1px solid rgba(66,230,149,.28); border-radius: 13px; outline: 0; background: #03130f; color: #fff; font-size: 16px; }
 .auth-panel input:focus { border-color: #42e695; box-shadow: 0 0 0 3px rgba(66,230,149,.12); }
+.auth-email-input { position: relative; display: block; }
+.auth-email-input input { padding-right: 58px; text-transform: none; }
+.auth-email-input > button { position: absolute; top: 6px; right: 6px; display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid rgba(66,230,149,.38); border-radius: 10px; background: #0a2a20; color: #42e695; font-size: 21px; font-weight: 900; line-height: 1; cursor: pointer; touch-action: manipulation; }
+.auth-email-input > button:active { transform: scale(.94); box-shadow: 0 0 13px rgba(66,230,149,.2); }
 .auth-primary,.auth-secondary { width: 100%; min-height: 52px; border-radius: 14px; font-size: 15px; font-weight: 900; cursor: pointer; }
 .auth-primary { margin-top: 4px; border: 1px solid #42e695; background: linear-gradient(135deg,#42e695,#20cdae); color: #03110d; }
 .auth-primary:disabled { opacity: .55; }
 .auth-secondary { margin-top: 12px; border: 1px solid rgba(66,230,149,.34); background: #071f18; color: #42e695; }
 .auth-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(255,90,100,.12); color: #ffabb1; font-size: 14px; line-height: 1.4; }
+.auth-success { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(66,230,149,.1); color: #8ff0bd; font-size: 14px; line-height: 1.4; }
 .auth-note { display: block; margin-top: 16px; color: #89a098; font-size: 12px; line-height: 1.4; text-align: center; }

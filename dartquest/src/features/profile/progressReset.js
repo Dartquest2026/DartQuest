@@ -16,9 +16,9 @@ export function getPersonalProgressKeys() {
   )
 }
 
-export function resetCurrentProfileProgress(profileId) {
+export async function resetCurrentProfileProgress(profileId) {
   const removedKeys = getPersonalProgressKeys()
   removedKeys.forEach((key) => localStorage.removeItem(key))
-  resetProfileProgressFields(profileId)
+  await resetProfileProgressFields(profileId)
   return removedKeys
 }

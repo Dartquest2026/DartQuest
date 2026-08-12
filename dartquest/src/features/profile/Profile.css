@@ -7,6 +7,7 @@
 .profile-card > p { color: #9db2aa; font-size: 14px; line-height: 1.45; }
 .profile-card h2 { margin: 5px 0 18px; color: white; font-size: 24px; }
 .profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
+.profile-stats { grid-template-columns: repeat(3, 1fr); }
 .profile-stats span { padding: 13px; border: 1px solid rgba(66,230,149,.16); border-radius: 13px; color: #9db2aa; }
 .profile-stats strong { display: block; margin-top: 3px; color: white; font-size: 18px; }
 .profile-primary,.profile-secondary,.profile-logout { width: 100%; min-height: 50px; margin-top: 10px; border-radius: 13px; font-size: 15px; font-weight: 900; }
@@ -41,6 +42,9 @@
 .profile-account-card { width: min(100%,430px); margin: 14px auto 0; padding: 16px; border: 1px solid rgba(255,75,88,.4); border-radius: 18px; background: linear-gradient(180deg,rgba(63,14,20,.43),#041510); }
 .profile-account-card > p { margin: 0 0 10px; color: #ff7e88; font-size: 12px; font-weight: 900; letter-spacing: 1.1px; }
 .profile-account-card > button { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 68px; padding: 12px 13px; border: 1px solid rgba(255,75,88,.48); border-radius: 13px; background: rgba(91,18,25,.34); color: white; text-align: left; }
+.profile-account-notice { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 68px; padding: 12px 13px; border: 1px solid rgba(255,255,255,.12); border-radius: 13px; background: rgba(255,255,255,.035); color: white; text-align: left; }
+.profile-account-notice > span:first-child { display: grid; flex: 0 0 40px; height: 40px; place-items: center; border-radius: 11px; background: rgba(255,255,255,.06); font-size: 20px; }
+.profile-account-notice strong,.profile-account-notice small { display: block; }.profile-account-notice strong { font-size: 14px; }.profile-account-notice small { margin-top: 4px; color: #9dafaa; font-size: 13px; line-height: 1.35; }
 .profile-account-card > button > span:first-child { display: grid; flex: 0 0 40px; height: 40px; place-items: center; border-radius: 11px; background: rgba(255,75,88,.14); color: #ff7a85; font-size: 21px; }
 .profile-account-card strong,.profile-account-card small { display: block; }.profile-account-card strong { font-size: 15px; }.profile-account-card small { margin-top: 4px; color: #d7959a; font-size: 13px; line-height: 1.35; }
 .profile-delete-backdrop { position: fixed; z-index: 3700; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(0,7,5,.88); backdrop-filter: blur(7px); }

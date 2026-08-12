@@ -1,144 +1,163 @@
+import { supabase } from '../../lib/supabase'
+
 export const PROFILE_STORAGE_KEY = 'dartquest-profiles'
+export const PROFILE_CACHE_KEY = 'dartquest-supabase-profile-cache'
 
-const HASH_ITERATIONS = 120000
-
-function emptyStore() {
-  return { profiles: [], activeProfileId: null }
-}
-
-function readStore() {
+function readProfileCache() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY))
-    return {
-      profiles: Array.isArray(parsed?.profiles) ? parsed.profiles : [],
-      activeProfileId: parsed?.activeProfileId ?? null,
-    }
+    const profiles = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY))
+    return Array.isArray(profiles) ? profiles : []
   } catch {
-    return emptyStore()
+    return []
   }
 }
 
-function writeStore(store) {
-  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(store))
+function cacheProfile(profile) {
+  const profiles = readProfileCache().filter((item) => item.id !== profile.id)
+  localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify([...profiles, profile]))
 }
 
-function bytesToBase64(bytes) {
-  return btoa(String.fromCharCode(...bytes))
+function mapProfile(row, user) {
+  return {
+    id: row.id,
+    name: row.profile_name,
+    email: user?.email ?? null,
+    createdAt: row.created_at,
+    xp: Number(row.xp) || 0,
+    coins: Number(row.coins) || 0,
+    playerLevel: Number(row.player_level) || 1,
+  }
 }
 
-function base64ToBytes(value) {
-  return Uint8Array.from(atob(value), (character) => character.charCodeAt(0))
+function authErrorMessage(error, context = 'login') {
+  const message = String(error?.message ?? '').toLowerCase()
+  if (message.includes('already registered') || message.includes('already been registered')) {
+    return 'Diese E-Mail-Adresse ist bereits registriert.'
+  }
+  if (message.includes('invalid login credentials')) {
+    return 'E-Mail oder Passwort ist falsch.'
+  }
+  if (message.includes('invalid') && message.includes('email')) {
+    return 'Bitte gib eine gültige E-Mail-Adresse ein.'
+  }
+  if (message.includes('password') && (message.includes('short') || message.includes('least'))) {
+    return 'Das Passwort ist zu kurz.'
+  }
+  if (message.includes('fetch') || message.includes('network')) {
+    return 'Netzwerkfehler. Bitte prüfe deine Internetverbindung.'
+  }
+  return context === 'profile'
+    ? 'Das Profil konnte nicht geladen werden.'
+    : 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.'
 }
 
-async function hashPassword(password, salt) {
-  // Lokales MVP: PBKDF2 schützt vor Klartextspeicherung, ersetzt aber kein Backend-Login.
-  const material = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits'],
+async function createMissingProfile(user, profileName) {
+  const cleanName = String(profileName ?? '').trim()
+  if (!cleanName) throw new Error('Das Profil konnte nicht geladen werden.')
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      id: user.id,
+      profile_name: cleanName,
+      xp: 0,
+      coins: 0,
+      player_level: 1,
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(authErrorMessage(error, 'profile'))
+  return data
+}
+
+export async function loadSupabaseProfile(user, fallbackName) {
+  if (!user) return null
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, created_at, profile_name, xp, coins, player_level')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (error) throw new Error(authErrorMessage(error, 'profile'))
+
+  const row = data ?? await createMissingProfile(
+    user,
+    fallbackName ?? user.user_metadata?.profile_name,
   )
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: HASH_ITERATIONS },
-    material,
-    256,
-  )
-  return bytesToBase64(new Uint8Array(bits))
+  const profile = mapProfile(row, user)
+  cacheProfile(profile)
+  return profile
 }
 
+export async function registerProfile(name, email, password) {
+  const profileName = name.trim()
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: { data: { profile_name: profileName } },
+  })
+
+  if (error) throw new Error(authErrorMessage(error, 'register'))
+
+  if (!data.session) {
+    return { profile: null, confirmationRequired: true }
+  }
+
+  return {
+    profile: await loadSupabaseProfile(data.user, profileName),
+    confirmationRequired: false,
+  }
+}
+
+export async function loginProfile(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  })
+  if (error) throw new Error(authErrorMessage(error))
+  return loadSupabaseProfile(data.user)
+}
+
+export async function getSessionProfile() {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw new Error(authErrorMessage(error))
+  return data.session ? loadSupabaseProfile(data.session.user) : null
+}
+
+export function subscribeToAuthChanges(callback) {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    window.setTimeout(async () => {
+      try {
+        callback(session ? await loadSupabaseProfile(session.user) : null)
+      } catch (error) {
+        callback(null, error)
+      }
+    }, 0)
+  })
+  return () => data.subscription.unsubscribe()
+}
+
+export async function logoutProfile() {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw new Error(authErrorMessage(error))
+}
+
+export async function resetProfileProgressFields(profileId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ xp: 0, coins: 0, player_level: 1 })
+    .eq('id', profileId)
+    .select()
+    .single()
+  if (error) throw new Error(authErrorMessage(error, 'profile'))
+  cacheProfile(mapProfile(data))
+}
+
+// Nur für die noch lokale Rangliste; enthält niemals Passwortdaten oder Sessions.
 export function getProfiles() {
-  return readStore().profiles
-}
-
-export function getActiveProfile() {
-  const store = readStore()
-  return store.profiles.find((profile) => profile.id === store.activeProfileId) ?? null
-}
-
-export async function createProfile(name, password) {
-  const cleanName = name.trim()
-  const store = readStore()
-  const duplicate = store.profiles.some(
-    (profile) => profile.name.toLocaleLowerCase() === cleanName.toLocaleLowerCase(),
-  )
-
-  if (duplicate) throw new Error('Dieser Profilname existiert bereits.')
-
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  const profile = {
-    id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name: cleanName,
-    passwordHash: await hashPassword(password, salt),
-    passwordSalt: bytesToBase64(salt),
-    createdAt: new Date().toISOString(),
-    xp: 0,
-    coins: 0,
-  }
-
-  writeStore({
-    profiles: [...store.profiles, profile],
-    activeProfileId: profile.id,
-  })
-  return profile
-}
-
-export async function authenticateProfile(nameOrId, password) {
-  const store = readStore()
-  const lookup = String(nameOrId).trim().toLocaleLowerCase()
-  const profile = store.profiles.find(
-    (item) => item.id === nameOrId || item.name.toLocaleLowerCase() === lookup,
-  )
-
-  if (!profile) return null
-
-  const hash = await hashPassword(password, base64ToBytes(profile.passwordSalt))
-  if (hash !== profile.passwordHash) return null
-
-  writeStore({ ...store, activeProfileId: profile.id })
-  return profile
-}
-
-export async function verifyProfilePassword(profileId, password) {
-  const profile = readStore().profiles.find((item) => item.id === profileId)
-  if (!profile) return false
-  const hash = await hashPassword(password, base64ToBytes(profile.passwordSalt))
-  return hash === profile.passwordHash
-}
-
-export function deleteProfile(profileId) {
-  const store = readStore()
-  if (!store.profiles.some((profile) => profile.id === profileId)) return false
-
-  writeStore({
-    profiles: store.profiles.filter((profile) => profile.id !== profileId),
-    activeProfileId: store.activeProfileId === profileId ? null : store.activeProfileId,
-  })
-
-  // Nur ausdrücklich profilgebundene Erweiterungsdaten entfernen.
-  const profileDataPrefix = `dartquest-profile-${profileId}-`
-  Object.keys(localStorage)
-    .filter((key) => key.startsWith(profileDataPrefix))
-    .forEach((key) => localStorage.removeItem(key))
-
-  return true
-}
-
-export function logoutProfile() {
-  const store = readStore()
-  writeStore({ ...store, activeProfileId: null })
-}
-
-export function resetProfileProgressFields(profileId) {
-  const store = readStore()
-  writeStore({
-    ...store,
-    profiles: store.profiles.map((profile) =>
-      profile.id === profileId
-        ? { ...profile, xp: 0, coins: 0 }
-        : profile,
-    ),
-  })
+  return readProfileCache()
 }
 
 export function getProfileStorageScope(profileId) {
