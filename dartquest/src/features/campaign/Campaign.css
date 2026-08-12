@@ -809,6 +809,10 @@
   );
 }
 
+.dq-overview {
+  display: none !important;
+}
+
 .dq-overview-left {
   display: grid;
 
@@ -2621,6 +2625,8 @@
   .dq-logo img {
     width: clamp(258px, 79vw, 346px);
     height: 121px;
+
+    transform: translateY(5%);
   }
 
   .dq-header-button {
@@ -2691,8 +2697,8 @@
   .dq-map {
     flex: none;
 
-    min-height: 230px;
-    height: clamp(230px, 29dvh, 250px);
+    min-height: 255px;
+    height: clamp(255px, 33dvh, 285px);
 
     margin: 0;
 
