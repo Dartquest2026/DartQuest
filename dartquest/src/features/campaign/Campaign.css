@@ -71,15 +71,16 @@
   .dq-title-world-only .dq-world-switcher {
     grid-template-columns:
       48px
-      minmax(130px, 1fr)
+      minmax(0, 1fr)
       48px !important;
 
-    width: min(100%, 310px) !important;
-    max-width: 310px;
+    width: 100% !important;
+    max-width: none;
 
     gap: 8px !important;
 
-    margin-inline: auto;
+    margin-inline: 0;
+    padding-inline: clamp(14px, 5vw, 22px);
   }
 
   .dq-title-world-only .dq-world-arrow {
@@ -87,15 +88,27 @@
     height: 42px !important;
   }
 
+  .dq-title-world-only .dq-world-arrow:first-child {
+    justify-self: start;
+    transform: translateX(5vw);
+  }
+
+  .dq-title-world-only .dq-world-arrow:last-child {
+    justify-self: end;
+    transform: translateX(-5vw);
+  }
+
   .dq-title-world-only .dq-world-current {
-    width: auto !important;
+    width: clamp(138px, 45vw, 170px) !important;
     min-width: 0;
     height: 42px !important;
+
+    justify-self: center;
   }
 
   .dq-map {
-    min-height: 210px;
-    height: clamp(210px, 28dvh, 255px);
+    min-height: 250px;
+    height: clamp(250px, 32dvh, 275px);
 
     margin: 0;
 
@@ -103,8 +116,8 @@
   }
 
   .dq-node {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
 
   .dq-node.selected {
@@ -114,8 +127,8 @@
   }
 
   .dq-node.boss {
-    width: 50px;
-    height: 50px;
+    width: 44px;
+    height: 44px;
   }
 
   .dq-crown {
@@ -125,8 +138,26 @@
   .dq-node-stars {
     top: calc(100% + 3px);
 
-    font-size: 12px;
+    width: 58px;
+
+    font-size: 11px;
     line-height: 1;
+  }
+
+  .dq-map > .dq-node:nth-of-type(3) {
+    left: 62% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(4) {
+    left: 80% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(6) {
+    left: 14% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(7) {
+    left: 33% !important;
   }
 
   .dq-level-card {
@@ -164,9 +195,9 @@
   .dq-reward-item {
     min-height: 34px;
 
-    gap: 3px;
+    gap: 2px;
 
-    padding: 4px;
+    padding: 4px 2px;
   }
 
   .dq-play-button {
@@ -182,6 +213,154 @@
     margin-bottom: 0;
 
     padding: 7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dq-title-world-only .dq-world-switcher {
+    grid-template-columns: 48px minmax(0, 1fr) 48px !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+  }
+
+  .dq-title-world-only .dq-world-current {
+    width: 100% !important;
+  }
+
+  .dq-map {
+    min-height: 250px;
+    height: clamp(250px, 32dvh, 275px);
+  }
+
+  .dq-node {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dq-node.boss {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dq-node-stars {
+    width: 58px;
+    font-size: 11px;
+  }
+
+  .dq-level-card {
+    grid-template-columns: minmax(0, 42%) minmax(0, 58%);
+  }
+
+  .dq-level-action-area,
+  .dq-level-rewards {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dq-level-rewards {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .dq-reward-item {
+    min-width: 0;
+    gap: 2px;
+    padding: 4px 2px;
+  }
+
+  .dq-reward-icon {
+    flex: 0 0 auto;
+    font-size: 12px;
+  }
+
+  .dq-reward-item strong {
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+}
+
+/* Final phone alignment refinements */
+@media (max-width: 480px) {
+  .dq-header {
+    height: 76px;
+
+    margin-bottom: 0;
+  }
+
+  .dq-logo {
+    height: 76px;
+
+    overflow: visible;
+  }
+
+  .dq-logo img {
+    width: clamp(220px, 68vw, 300px);
+    height: 100px;
+  }
+
+  .dq-status {
+    margin-top: -2px;
+    margin-bottom: 5px;
+  }
+
+  .dq-title-world-only .dq-world-switcher {
+    grid-template-columns:
+      48px
+      minmax(0, 1fr)
+      48px !important;
+
+    width: 100% !important;
+    max-width: none;
+  }
+
+  .dq-level-card {
+    grid-template-columns:
+      minmax(0, 44%)
+      minmax(0, 56%);
+  }
+
+  .dq-level-description {
+    padding: 7px;
+  }
+
+  .dq-level-action-area {
+    width: 100%;
+
+    padding: 6px;
+  }
+
+  .dq-level-rewards {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    width: 100%;
+  }
+
+  .dq-reward-item {
+    min-width: 0;
+
+    padding: 4px 3px;
+  }
+
+  .dq-reward-icon {
+    flex: 0 0 auto;
+
+    font-size: 13px;
+  }
+
+  .dq-reward-item strong {
+    min-width: 0;
+
+    font-size: 12px;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
+  .dq-play-button {
+    width: 100%;
   }
 }
 
@@ -2282,6 +2461,136 @@
   }
 }
 
+/* Definitive campaign phone layout */
+@media (max-width: 480px) {
+  .dq-title-world-only,
+  .dq-title-world-only .dq-world-switcher {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .dq-title-world-only .dq-world-switcher {
+    grid-template-columns:
+      48px
+      minmax(0, 1fr)
+      48px !important;
+
+    gap: 8px !important;
+
+    margin-inline: 0 !important;
+  }
+
+  .dq-title-world-only .dq-world-arrow {
+    width: 48px !important;
+    height: 42px !important;
+  }
+
+  .dq-title-world-only .dq-world-current {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 42px !important;
+  }
+
+  .dq-map {
+    min-height: 250px;
+    height: clamp(250px, 32dvh, 275px);
+  }
+
+  .dq-node {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dq-node.boss {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dq-node-stars {
+    top: calc(100% + 3px);
+
+    width: 58px;
+
+    font-size: 11px;
+  }
+
+  .dq-map > .dq-node:nth-of-type(3) {
+    left: 62% !important;
+    top: 20% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(4) {
+    left: 82% !important;
+    top: 34% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(5) {
+    left: 50% !important;
+    top: 47% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(6) {
+    left: 15% !important;
+    top: 58% !important;
+  }
+
+  .dq-map > .dq-node:nth-of-type(7) {
+    left: 34% !important;
+    top: 70% !important;
+  }
+
+  .dq-level-card {
+    grid-template-columns:
+      minmax(0, 42%)
+      minmax(0, 58%);
+  }
+
+  .dq-level-action-area {
+    width: 100%;
+    min-width: 0;
+
+    padding: 6px;
+  }
+
+  .dq-level-rewards {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    width: 100%;
+    min-width: 0;
+
+    gap: 4px;
+  }
+
+  .dq-reward-item {
+    min-width: 0;
+
+    gap: 2px;
+
+    padding: 4px 2px;
+  }
+
+  .dq-reward-icon {
+    flex: 0 0 auto;
+
+    font-size: 12px;
+  }
+
+  .dq-reward-item strong {
+    min-width: 0;
+
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .dq-play-button {
+    width: 100%;
+  }
+}
+
 /* Final compact campaign layout for 360-430px phones */
 @media (max-width: 480px) {
   .app-shell:has(.dq-campaign) {
@@ -2331,7 +2640,10 @@
     padding: 7px;
   }
 
-  .dq-title-world-only {
+  .dq-title.dq-title-world-only {
+    display: block !important;
+    grid-template-columns: none !important;
+
     width: 100%;
 
     margin: 0 0 6px;
@@ -2339,34 +2651,47 @@
 
   .dq-title-world-only .dq-world-switcher {
     grid-template-columns:
-      48px
-      minmax(130px, 1fr)
-      48px !important;
+      60px
+      minmax(0, 1fr)
+      60px !important;
 
-    width: min(100%, 310px) !important;
-    max-width: 310px;
+    width: 100% !important;
+    max-width: none;
 
     gap: 8px !important;
 
-    margin-inline: auto;
+    margin-inline: 0;
+    padding-inline: clamp(12px, 4vw, 18px);
   }
 
   .dq-title-world-only .dq-world-arrow {
-    width: 48px !important;
-    height: 42px !important;
+    width: 60px !important;
+    height: 46px !important;
+
+    font-size: 30px !important;
+  }
+
+  .dq-title-world-only .dq-world-arrow:first-child {
+    justify-self: start;
+  }
+
+  .dq-title-world-only .dq-world-arrow:last-child {
+    justify-self: end;
   }
 
   .dq-title-world-only .dq-world-current {
-    width: auto !important;
+    width: clamp(138px, 45vw, 170px) !important;
     min-width: 0;
-    height: 42px !important;
+    height: 46px !important;
+
+    justify-self: center;
   }
 
   .dq-map {
     flex: none;
 
-    min-height: 210px;
-    height: clamp(210px, 28dvh, 255px);
+    min-height: 250px;
+    height: clamp(250px, 32dvh, 275px);
 
     margin: 0;
 
@@ -2374,8 +2699,8 @@
   }
 
   .dq-node {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
 
   .dq-node.selected {
@@ -2385,8 +2710,8 @@
   }
 
   .dq-node.boss {
-    width: 50px;
-    height: 50px;
+    width: 44px;
+    height: 44px;
   }
 
   .dq-crown {
@@ -2396,7 +2721,9 @@
   .dq-node-stars {
     top: calc(100% + 3px);
 
-    font-size: 12px;
+    width: 58px;
+
+    font-size: 11px;
     line-height: 1;
   }
 
