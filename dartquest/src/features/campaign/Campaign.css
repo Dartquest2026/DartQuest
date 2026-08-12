@@ -2619,7 +2619,8 @@
   }
 
   .dq-logo img {
-    height: 100px;
+    width: clamp(258px, 79vw, 346px);
+    height: 121px;
   }
 
   .dq-header-button {
@@ -2690,8 +2691,8 @@
   .dq-map {
     flex: none;
 
-    min-height: 250px;
-    height: clamp(250px, 32dvh, 275px);
+    min-height: 230px;
+    height: clamp(230px, 29dvh, 250px);
 
     margin: 0;
 
