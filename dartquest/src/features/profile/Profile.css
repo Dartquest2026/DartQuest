@@ -9,10 +9,11 @@
 .profile-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
 .profile-stats span { padding: 13px; border: 1px solid rgba(66,230,149,.16); border-radius: 13px; color: #9db2aa; }
 .profile-stats strong { display: block; margin-top: 3px; color: white; font-size: 18px; }
-.profile-primary,.profile-secondary,.profile-logout { width: 100%; min-height: 50px; margin-top: 10px; border-radius: 13px; font-size: 15px; font-weight: 900; }
+.profile-primary,.profile-secondary,.profile-logout,.profile-leaderboard { width: 100%; min-height: 50px; margin-top: 10px; border-radius: 13px; font-size: 15px; font-weight: 900; }
 .profile-primary { border: 1px solid #42e695; background: #42e695; color: #03110d; }
 .profile-secondary { border: 1px solid rgba(66,230,149,.32); background: #071f18; color: #42e695; }
 .profile-logout { border: 1px solid rgba(255,112,122,.3); background: rgba(70,20,24,.25); color: #ff9ca4; }
+.profile-leaderboard { border: 1px solid rgba(244,197,66,.4); background: rgba(244,197,66,.07); color: #f4c542; }
 .profile-card form { display: grid; gap: 13px; text-align: left; }
 .profile-card label { display: grid; gap: 7px; color: #dce9e4; font-size: 14px; font-weight: 750; }
 .profile-card input { min-height: 50px; padding: 0 14px; border: 1px solid rgba(66,230,149,.25); border-radius: 12px; outline: none; background: #03130f; color: white; font-size: 16px; }
@@ -21,3 +22,20 @@
 .profile-list button.selected { border-color: #42e695; box-shadow: 0 0 0 2px rgba(66,230,149,.1); }
 .profile-list b { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: rgba(66,230,149,.12); color: #42e695; }
 .profile-error { margin: 0; padding: 10px; border-radius: 9px; background: rgba(255,90,100,.12); color: #ffabb1 !important; font-size: 14px !important; }
+.profile-data-card { width: min(100%,430px); margin: 18px auto 0; padding: 16px; border: 1px solid rgba(255,100,110,.24); border-radius: 18px; background: linear-gradient(180deg,rgba(49,18,21,.34),#041510); }
+.profile-data-card > p { margin: 0 0 10px; color: #ff929b; font-size: 12px; font-weight: 900; letter-spacing: 1.1px; }
+.profile-data-card > button { display: flex; align-items: center; gap: 13px; width: 100%; min-height: 66px; padding: 12px 13px; border: 1px solid rgba(255,100,110,.34); border-radius: 13px; background: rgba(77,22,27,.26); color: white; text-align: left; }
+.profile-data-card > button > span:first-child { display: grid; flex: 0 0 39px; height: 39px; place-items: center; border-radius: 11px; background: rgba(255,90,100,.12); color: #ff858f; font-size: 21px; }
+.profile-data-card strong,.profile-data-card small { display: block; }
+.profile-data-card strong { font-size: 15px; }
+.profile-data-card small { margin-top: 4px; color: #d48f94; font-size: 13px; line-height: 1.35; }
+.profile-reset-backdrop { position: fixed; z-index: 3500; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(0,7,5,.86); backdrop-filter: blur(7px); }
+.profile-reset-modal { width: min(100%,410px); padding: 25px 19px 19px; border: 1px solid rgba(255,100,110,.48); border-radius: 21px; background: radial-gradient(circle at 50% 0,rgba(255,90,100,.1),transparent 38%),#071612; box-shadow: 0 25px 70px rgba(0,0,0,.65); text-align: center; }
+.profile-reset-icon { margin-bottom: 8px; color: #ff808a; font-size: 34px; }
+.profile-reset-modal h2 { margin: 0 0 9px; color: white; font-size: 24px; }
+.profile-reset-modal > p { margin: 0 0 15px; color: #d2dfda; font-size: 15px; line-height: 1.45; }
+.profile-reset-modal ul { margin: 0 0 18px; padding: 13px 13px 13px 31px; border-radius: 12px; background: rgba(2,15,11,.72); color: #b7c8c2; font-size: 14px; line-height: 1.6; text-align: left; }
+.profile-reset-modal > button { width: 100%; min-height: 49px; margin-top: 9px; border-radius: 12px; font-size: 14px; font-weight: 900; }
+.profile-reset-cancel { border: 1px solid rgba(255,255,255,.13); background: #0a211a; color: #dce7e3; }
+.profile-reset-confirm { border: 1px solid #ff6873; background: linear-gradient(135deg,#e94f5b,#b92f3a); color: white; box-shadow: 0 0 18px rgba(233,79,91,.16); }
+@media (max-width:430px) { .profile-reset-backdrop { align-items: end; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); } }

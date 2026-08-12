@@ -104,6 +104,18 @@ export function logoutProfile() {
   writeStore({ ...store, activeProfileId: null })
 }
 
+export function resetProfileProgressFields(profileId) {
+  const store = readStore()
+  writeStore({
+    ...store,
+    profiles: store.profiles.map((profile) =>
+      profile.id === profileId
+        ? { ...profile, xp: 0, coins: 0 }
+        : profile,
+    ),
+  })
+}
+
 export function getProfileStorageScope(profileId) {
   return profileId ? `profile-${profileId}` : 'legacy'
 }

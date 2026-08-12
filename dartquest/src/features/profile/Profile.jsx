@@ -4,9 +4,10 @@ import {
   createProfile,
   getProfiles,
 } from '../auth/profileStorage'
+import { resetCurrentProfileProgress } from './progressReset'
 import './Profile.css'
 
-function Profile({ activeProfile, onProfileChanged, onLogout }) {
+function Profile({ activeProfile, onProfileChanged, onLogout, onOpenLeaderboard }) {
   const [view, setView] = useState('main')
   const [profiles, setProfiles] = useState(getProfiles)
   const [selectedId, setSelectedId] = useState('')
@@ -15,6 +16,13 @@ function Profile({ activeProfile, onProfileChanged, onLogout }) {
   const [repeatPassword, setRepeatPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [resetModalOpen, setResetModalOpen] = useState(false)
+
+  function confirmProgressReset() {
+    resetCurrentProfileProgress(activeProfile.id)
+    setResetModalOpen(false)
+    window.location.reload()
+  }
 
   async function switchProfile(event) {
     event.preventDefault()
@@ -53,14 +61,43 @@ function Profile({ activeProfile, onProfileChanged, onLogout }) {
       <header><span>DARTQUEST</span><h1>Profil</h1></header>
 
       {view === 'main' && (
+        <>
         <section className="profile-card">
           <div className="profile-avatar">{activeProfile.name.slice(0, 1).toUpperCase()}</div>
           <p>AKTIVES PROFIL</p><h2>{activeProfile.name}</h2>
           <div className="profile-stats"><span>XP <strong>{activeProfile.xp ?? 0}</strong></span><span>Coins <strong>{activeProfile.coins ?? 0}</strong></span></div>
           <button className="profile-primary" type="button" onClick={() => { setView('switch'); setError('') }}>PROFIL WECHSELN</button>
+          <button className="profile-leaderboard" type="button" onClick={onOpenLeaderboard}>🏆 RANGLISTE</button>
           <button className="profile-secondary" type="button" onClick={() => { setView('create'); setError('') }}>NEUES PROFIL</button>
           <button className="profile-logout" type="button" onClick={onLogout}>ABMELDEN</button>
         </section>
+
+        <section className="profile-data-card">
+          <p>DATEN &amp; FORTSCHRITT</p>
+          <button type="button" onClick={() => setResetModalOpen(true)}>
+            <span>⚠</span>
+            <span><strong>Fortschritt zurücksetzen</strong><small>Kampagnenfortschritt, Sterne, XP und Coins zurücksetzen</small></span>
+          </button>
+        </section>
+        </>
+      )}
+
+      {resetModalOpen && (
+        <div className="profile-reset-backdrop" onClick={() => setResetModalOpen(false)}>
+          <section className="profile-reset-modal" role="dialog" aria-modal="true" aria-labelledby="profile-reset-title" onClick={(event) => event.stopPropagation()}>
+            <div className="profile-reset-icon">⚠</div>
+            <h2 id="profile-reset-title">Fortschritt wirklich zurücksetzen?</h2>
+            <p>Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <ul>
+              <li>Singleplayer-Kampagnenfortschritt und Sterne</li>
+              <li>Singleplayer-Schwierigkeitsauswahl</li>
+              <li>Tagesaufgaben-Fortschritt</li>
+              <li>XP und Coins des aktiven Profils</li>
+            </ul>
+            <button className="profile-reset-cancel" type="button" onClick={() => setResetModalOpen(false)}>ABBRECHEN</button>
+            <button className="profile-reset-confirm" type="button" onClick={confirmProgressReset}>FORTSCHRITT ZURÜCKSETZEN</button>
+          </section>
+        </div>
       )}
 
       {view === 'switch' && (
