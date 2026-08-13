@@ -2,6 +2,11 @@ import { supabase } from '../../lib/supabase'
 
 export const PROFILE_STORAGE_KEY = 'dartquest-profiles'
 export const PROFILE_CACHE_KEY = 'dartquest-supabase-profile-cache'
+export const XP_PER_PLAYER_LEVEL = 500
+
+export function calculatePlayerLevel(xp) {
+  return Math.floor(Math.max(0, Number(xp) || 0) / XP_PER_PLAYER_LEVEL) + 1
+}
 
 function readProfileCache() {
   try {
@@ -124,6 +129,47 @@ export async function getSessionProfile() {
   const { data, error } = await supabase.auth.getSession()
   if (error) throw new Error(authErrorMessage(error))
   return data.session ? loadSupabaseProfile(data.session.user) : null
+}
+
+export async function addProfileRewards({ userId, xp = 0, coins = 0 }) {
+  const earnedXP = Math.max(0, Math.trunc(Number(xp) || 0))
+  const earnedCoins = Math.max(0, Math.trunc(Number(coins) || 0))
+  if (!userId) throw new Error('Das Profil konnte nicht aktualisiert werden.')
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data: current, error: loadError } = await supabase
+      .from('profiles')
+      .select('id, created_at, profile_name, xp, coins, player_level')
+      .eq('id', userId)
+      .single()
+    if (loadError) throw new Error(authErrorMessage(loadError, 'profile'))
+
+    const currentXP = Number(current.xp) || 0
+    const currentCoins = Number(current.coins) || 0
+    const nextXP = currentXP + earnedXP
+    const nextCoins = currentCoins + earnedCoins
+    const { data: updated, error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        xp: nextXP,
+        coins: nextCoins,
+        player_level: calculatePlayerLevel(nextXP),
+      })
+      .eq('id', userId)
+      .eq('xp', currentXP)
+      .eq('coins', currentCoins)
+      .select('id, created_at, profile_name, xp, coins, player_level')
+      .maybeSingle()
+    if (updateError) throw new Error(authErrorMessage(updateError, 'profile'))
+    if (!updated) continue
+
+    const { data: authData } = await supabase.auth.getUser()
+    const profile = mapProfile(updated, authData.user)
+    cacheProfile(profile)
+    return profile
+  }
+
+  throw new Error('Das Profil wurde gleichzeitig geändert. Bitte versuche es erneut.')
 }
 
 export function subscribeToAuthChanges(callback) {

@@ -8,6 +8,7 @@ import AuthScreen from '../features/auth/AuthScreen'
 import Profile from '../features/profile/Profile'
 import Leaderboard from '../features/leaderboard/Leaderboard'
 import {
+  addProfileRewards,
   getSessionProfile,
   logoutProfile,
   subscribeToAuthChanges,
@@ -232,6 +233,21 @@ function App() {
     }
   }
 
+  async function refreshActiveProfile() {
+    const profile = await getSessionProfile()
+    if (profile) setActiveProfile(profile)
+    return profile
+  }
+
+  async function applyProfileRewards(rewards) {
+    const profile = await addProfileRewards({
+      userId: activeProfile.id,
+      ...rewards,
+    })
+    setActiveProfile(profile)
+    return profile
+  }
+
   function changePage(nextPage) {
     const campaignIsOpen =
       activePage === 'singleplayerCampaign' ||
@@ -248,6 +264,9 @@ function App() {
       return
     }
 
+    if (nextPage === 'home' || nextPage === 'profile') {
+      refreshActiveProfile().catch((error) => setAuthError(error.message))
+    }
     setActivePage(nextPage)
   }
 
@@ -428,6 +447,7 @@ function App() {
         'multiplayer' && (
 
         <Multiplayer
+          activeProfile={activeProfile}
           onBack={() =>
             setActivePage('home')
           }
@@ -454,6 +474,8 @@ function App() {
           }
           exitRequest={campaignExitRequest}
           onExit={finishCampaignExit}
+          activeProfile={activeProfile}
+          onProfileRewards={applyProfileRewards}
         />
       )}
 
@@ -469,6 +491,8 @@ function App() {
           }
           exitRequest={campaignExitRequest}
           onExit={finishCampaignExit}
+          activeProfile={activeProfile}
+          onProfileRewards={applyProfileRewards}
         />
       )}
 

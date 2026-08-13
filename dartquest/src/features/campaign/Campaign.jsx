@@ -24,14 +24,13 @@ import {
   isNormalLevelUnlocked,
 } from './campaignUnlocking'
 import logo from '../../assets/dartquest-logo.png'
+import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
 
 import './Campaign.css'
 
 
 const CAMPAIGN_STORAGE_BASE_KEY =
   'dartquest-campaign-progress'
-
-const XP_PER_PLAYER_LEVEL = 500
 
 const difficultyNames = {
   1: 'ANFÄNGER',
@@ -66,6 +65,8 @@ function Campaign({
   },
   exitRequest = 0,
   onExit = () => {},
+  activeProfile = null,
+  onProfileRewards = async () => {},
 }) {
 
   const baseLevels =
@@ -217,17 +218,14 @@ function Campaign({
 
 
   const totalXP =
-    progress.xp ?? 0
+    Number(activeProfile?.xp) || 0
 
   const totalCoins =
-    progress.coins ?? 0
+    Number(activeProfile?.coins) || 0
 
 
   const playerLevel =
-    Math.floor(
-      totalXP /
-      XP_PER_PLAYER_LEVEL,
-    ) + 1
+    Number(activeProfile?.playerLevel) || 1
 
 
   const xpInsideCurrentLevel =
@@ -278,6 +276,7 @@ function Campaign({
         (player) => ({
           id: player.id,
           name: player.name,
+          userId: player.userId ?? null,
         }),
       ),
       playerCount: settings.playerCount,
@@ -734,144 +733,60 @@ function Campaign({
     level,
     result,
   ) {
-
-    setProgress(
-      (
-        currentProgress,
-      ) => {
-
-        const previousResult =
-          currentProgress.results[
-            level.id
-          ]
-
-
-        const previousStars =
-          previousResult?.stars ?? 0
-
-
-        const bestStars =
-          Math.max(
-            previousStars,
-            result.stars ?? 0,
+    const previousResult = progress.results[level.id]
+    const previousStars = previousResult?.stars ?? 0
+    const bestStars = Math.max(previousStars, result.stars ?? 0)
+    const bestDarts = previousResult?.darts == null
+      ? result.darts
+      : result.darts == null
+        ? previousResult.darts
+        : Math.min(previousResult.darts, result.darts)
+    const successfulAttempt =
+      result.success !== false && (result.stars ?? 0) >= 1
+    const completedSuccessfully = bestStars >= 1
+    const isFirstCompletion = !previousResult
+    const isBetterResult = bestStars > previousStars
+    const coinRewardAllowed = isFirstCompletion || isBetterResult
+    const earnedXP = successfulAttempt ? level.rewardXP ?? 0 : 0
+    const earnedCoins = successfulAttempt && coinRewardAllowed
+      ? level.rewardCoins ?? 0
+      : 0
+    const updatedProgress = {
+      unlockedLevel: completedSuccessfully
+        ? Math.max(
+            progress.unlockedLevel,
+            Math.min(level.id + 1, levels.length),
           )
-
-
-        const bestDarts =
-          previousResult?.darts == null
-            ? result.darts
-
-            : result.darts == null
-              ? previousResult.darts
-
-              : Math.min(
-                  previousResult.darts,
-                  result.darts,
-                )
-
-
-        const updatedResults = {
-          ...currentProgress.results,
-
-          [level.id]: {
-            ...previousResult,
-            ...result,
-
-            stars:
-              bestStars,
-
-            darts:
-              bestDarts,
-          },
-        }
-
-
-        const completedSuccessfully =
-          bestStars >= 1
-
-        const nextUnlockedLevel =
-          completedSuccessfully
-            ? Math.max(
-                currentProgress.unlockedLevel,
-                Math.min(level.id + 1, levels.length),
-              )
-            : currentProgress.unlockedLevel
-
-
-        const isFirstCompletion =
-          !previousResult
-
-
-        const isBetterResult =
-          bestStars >
-          previousStars
-
-
-        const rewardAllowed =
-          isFirstCompletion ||
-          isBetterResult
-
-
-        const earnedXP =
-          rewardAllowed
-            ? level.rewardXP ?? 0
-            : 0
-
-
-        const earnedCoins =
-          rewardAllowed
-            ? level.rewardCoins ?? 0
-            : 0
-
-
-        const updatedProgress = {
-
-          unlockedLevel:
-            nextUnlockedLevel,
-
-          results:
-            updatedResults,
-
-          xp:
-            (
-              currentProgress.xp ?? 0
-            ) +
-            earnedXP,
-
-          coins:
-            (
-              currentProgress.coins ?? 0
-            ) +
-            earnedCoins,
-        }
-
-
-        if (!settings.multiplayer) {
-          localStorage.setItem(
-            CAMPAIGN_STORAGE_KEY,
-
-            JSON.stringify(
-              updatedProgress,
-            ),
-          )
-        }
-
-
-        const nextPreviewLevel =
-          Math.min(
-            level.id + 1,
-            levels.length,
-          )
-
-
-        setPreviewLevelId(
-          nextPreviewLevel,
-        )
-
-
-        return updatedProgress
+        : progress.unlockedLevel,
+      results: {
+        ...progress.results,
+        [level.id]: {
+          ...previousResult,
+          ...result,
+          stars: bestStars,
+          darts: bestDarts,
+        },
       },
-    )
+      // Vorhandene lokale Werte bleiben erhalten, erhalten aber keine neuen
+      // globalen Rewards mehr. public.profiles ist ab jetzt maßgeblich.
+      xp: progress.xp ?? 0,
+      coins: progress.coins ?? 0,
+    }
+
+    setProgress(updatedProgress)
+
+    if (!settings.multiplayer) {
+      localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(updatedProgress))
+    }
+
+    setPreviewLevelId(Math.min(level.id + 1, levels.length))
+
+    if (successfulAttempt && (earnedXP > 0 || earnedCoins > 0)) {
+      onProfileRewards({ xp: earnedXP, coins: earnedCoins })
+        .catch((rewardError) => {
+          console.error('Profil-Rewards konnten nicht gespeichert werden.', rewardError)
+        })
+    }
 
 
     setSelectedLevel(null)
@@ -989,9 +904,9 @@ function Campaign({
             </strong>
 
             <span>
-              {xpInsideCurrentLevel}
+              {totalXP.toLocaleString('de-DE')}
               {' / '}
-              {XP_PER_PLAYER_LEVEL}
+              {(playerLevel * XP_PER_PLAYER_LEVEL).toLocaleString('de-DE')}
             </span>
 
           </div>

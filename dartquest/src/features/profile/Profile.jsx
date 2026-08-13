@@ -32,8 +32,8 @@ function Profile({ activeProfile, onLogout }) {
         {activeProfile.email && <p>{activeProfile.email}</p>}
         <div className="profile-stats">
           <span>LVL <strong>{activeProfile.playerLevel ?? 1}</strong></span>
-          <span>XP <strong>{activeProfile.xp ?? 0}</strong></span>
-          <span>Coins <strong>{activeProfile.coins ?? 0}</strong></span>
+          <span>XP <strong>{(activeProfile.xp ?? 0).toLocaleString('de-DE')}</strong></span>
+          <span>Coins <strong>{(activeProfile.coins ?? 0).toLocaleString('de-DE')}</strong></span>
         </div>
         <button className="profile-logout" type="button" onClick={onLogout}>ABMELDEN</button>
       </section>

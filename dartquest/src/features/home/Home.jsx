@@ -1,4 +1,5 @@
 import logo from '../../assets/dartquest-logo.png'
+import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
 
 import './Home.css'
 
@@ -10,10 +11,10 @@ function Home({
 }) {
   const xp = Number(activeProfile?.xp) || 0
   const coins = Number(activeProfile?.coins) || 0
-  const xpPerLevel = 500
-  const playerLevel = Math.floor(xp / xpPerLevel) + 1
-  const levelXP = xp % xpPerLevel
-  const xpPercent = Math.min((levelXP / xpPerLevel) * 100, 100)
+  const playerLevel = Number(activeProfile?.playerLevel) || 1
+  const levelXP = xp % XP_PER_PLAYER_LEVEL
+  const nextLevelXP = playerLevel * XP_PER_PLAYER_LEVEL
+  const xpPercent = Math.min((levelXP / XP_PER_PLAYER_LEVEL) * 100, 100)
 
   return (
     <section className="home-screen">
@@ -46,7 +47,7 @@ function Home({
           </div>
           <div className="home-level-badge"><span>LVL</span><strong>{playerLevel}</strong></div>
           <div className="home-player-progress">
-            <div className="home-xp-row"><span>XP</span><strong>{levelXP} / {xpPerLevel}</strong></div>
+            <div className="home-xp-row"><span>XP</span><strong>{xp.toLocaleString('de-DE')} / {nextLevelXP.toLocaleString('de-DE')}</strong></div>
             <div className="home-xp-bar"><div className="home-xp-fill" style={{ width: `${xpPercent}%` }} /></div>
           </div>
           <div className="home-coins">🪙 <strong>{coins}</strong> Coins</div>

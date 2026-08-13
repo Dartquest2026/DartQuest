@@ -54,6 +54,7 @@ const difficulties = [
 ]
 
 function Multiplayer({
+  activeProfile,
   onBack,
   onStartCampaign,
   onContinueCampaign,
@@ -61,7 +62,8 @@ function Multiplayer({
   const [players, setPlayers] = useState([
     {
       id: 1,
-      name: 'Spieler 1',
+      name: activeProfile?.name || 'Spieler 1',
+      userId: activeProfile?.id ?? null,
       active: true,
     },
     {
