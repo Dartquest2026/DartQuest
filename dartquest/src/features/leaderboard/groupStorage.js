@@ -1,66 +1,22 @@
-export const GROUP_STORAGE_KEY = 'dartquest-groups'
+import { supabase } from '../../lib/supabase'
+
 export const MAX_GROUPS_PER_PROFILE = 5
 
-function readGroups() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(GROUP_STORAGE_KEY))
-    const groups = Array.isArray(parsed)
-      ? parsed
-      : Array.isArray(parsed?.groups)
-        ? parsed.groups
-        : Array.isArray(parsed?.data?.groups)
-          ? parsed.data.groups
-        : []
-    const usedCodes = new Set()
-    let migrated = false
-
-    const migratedGroups = groups.map((group) => {
-      const currentCode = String(group.inviteCode ?? '')
-      if (/^\d{6}$/.test(currentCode) && !usedCodes.has(currentCode)) {
-        usedCodes.add(currentCode)
-        if (group.inviteCode === currentCode) return group
-        migrated = true
-        return { ...group, inviteCode: currentCode }
-      }
-
-      const inviteCode = createInviteCode([], usedCodes)
-      usedCodes.add(inviteCode)
-      migrated = true
-      return { ...group, inviteCode }
-    })
-
-    if (migrated) writeGroups(migratedGroups)
-    return migratedGroups
-  } catch {
-    return []
+function databaseError(error, fallback) {
+  const message = String(error?.message ?? '').toLowerCase()
+  if (error?.code === '23505' && message.includes('group_members')) {
+    return new Error('Du bist bereits Mitglied dieser Gruppe.')
   }
+  if (message.includes('fetch') || message.includes('network')) {
+    return new Error('Netzwerkfehler. Bitte prüfe deine Internetverbindung.')
+  }
+  return new Error(fallback)
 }
 
-function writeGroups(groups) {
-  // Lokaler Adapter: kann später durch dieselbe Schnittstelle eines Backends ersetzt werden.
-  localStorage.setItem(GROUP_STORAGE_KEY, JSON.stringify({ groups }))
-}
-
-export function createInviteCode(groups, additionalCodes = new Set()) {
-  let code
-  do {
-    const random = crypto.getRandomValues(new Uint32Array(1))[0]
-    code = String(random % 1000000).padStart(6, '0')
-  } while (
-    additionalCodes.has(code) ||
-    groups.some((group) => String(group.inviteCode) === code)
-  )
-  return code
-}
-
-export function getGroupsForProfile(profileId) {
-  return readGroups().filter((group) =>
-    group.members.some((member) => member.profileId === profileId),
-  )
-}
-
-export function getAllGroups() {
-  return readGroups()
+async function getAuthenticatedUser() {
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data.user) throw new Error('Bitte melde dich erneut an.')
+  return data.user
 }
 
 export function normalizeInviteCode(inviteCode) {
@@ -71,111 +27,130 @@ export function normalizeInviteCode(inviteCode) {
     .replace(/\D/g, '')
 }
 
-export function findGroupByInviteCode(inviteCode) {
-  const normalizedCode = normalizeInviteCode(inviteCode)
-  if (!/^\d{6}$/.test(normalizedCode)) return null
-
-  return readGroups().find(
-    (group) => String(group.inviteCode) === normalizedCode,
-  ) ?? null
+function mapProfile(row) {
+  return {
+    profileId: row.id,
+    name: row.profile_name,
+    xp: Number(row.xp) || 0,
+    coins: Number(row.coins) || 0,
+    playerLevel: Number(row.player_level) || 1,
+  }
 }
 
-export function createGroup(name, ownerProfileId) {
-  const cleanName = name.trim()
-  if (cleanName.length < 2) throw new Error('Der Gruppenname muss mindestens 2 Zeichen haben.')
-  const groups = readGroups()
-  if (getGroupsForProfile(ownerProfileId).length >= MAX_GROUPS_PER_PROFILE) {
-    throw new Error('Du kannst maximal 5 Gruppen haben.')
+function mapGroup(row, members = []) {
+  return {
+    id: row.id,
+    name: row.name,
+    inviteCode: row.invite_code,
+    ownerProfileId: row.owner_id,
+    createdAt: row.created_at,
+    members,
   }
-  const now = new Date().toISOString()
-  const group = {
-    id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name: cleanName,
-    inviteCode: createInviteCode(groups),
-    ownerProfileId,
-    members: [{ profileId: ownerProfileId, joinedAt: now }],
-    createdAt: now,
-  }
-  writeGroups([...groups, group])
-  return group
 }
 
-export function joinGroup(inviteCode, profileId) {
-  const groups = readGroups()
-  const normalizedCode = normalizeInviteCode(inviteCode)
-  if (!/^\d{6}$/.test(normalizedCode)) {
-    throw new Error('Keine Gruppe mit diesem Code gefunden.')
-  }
-  const groupIndex = groups.findIndex(
-    (group) => String(group.inviteCode) === normalizedCode,
-  )
-  if (groupIndex < 0) throw new Error('Keine Gruppe mit diesem Code gefunden.')
-  if (groups[groupIndex].members.some((member) => member.profileId === profileId)) {
-    throw new Error('Du bist bereits Mitglied dieser Gruppe.')
-  }
-  if (getGroupsForProfile(profileId).length >= MAX_GROUPS_PER_PROFILE) {
-    throw new Error('Du kannst maximal 5 Gruppen haben.')
-  }
-  groups[groupIndex] = {
-    ...groups[groupIndex],
-    members: [...groups[groupIndex].members, { profileId, joinedAt: new Date().toISOString() }],
-  }
-  writeGroups(groups)
-  return groups[groupIndex]
-}
+async function loadMembers(groupIds) {
+  if (!groupIds.length) return new Map()
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('group_id, joined_at, profiles!group_members_user_id_fkey(id, profile_name, xp, coins, player_level)')
+    .in('group_id', groupIds)
+  if (error) throw databaseError(error, 'Die Rangliste konnte nicht geladen werden.')
 
-export function deleteGroup(groupId, ownerProfileId) {
-  const groups = readGroups()
-  const group = groups.find((item) => item.id === groupId)
-  if (!group || group.ownerProfileId !== ownerProfileId) return false
-  writeGroups(groups.filter((item) => item.id !== groupId))
-  return true
-}
-
-export function leaveGroup(groupId, profileId) {
-  const groups = readGroups()
-  const index = groups.findIndex((item) => item.id === groupId)
-  if (index < 0 || groups[index].ownerProfileId === profileId) return false
-  groups[index] = {
-    ...groups[index],
-    members: groups[index].members.filter((member) => member.profileId !== profileId),
-  }
-  writeGroups(groups)
-  return true
-}
-
-export function getOwnedGroups(profileId) {
-  return readGroups().filter((group) => group.ownerProfileId === profileId)
-}
-
-export function removeProfileFromGroups(profileId) {
-  const groups = readGroups()
-  if (groups.some((group) => group.ownerProfileId === profileId)) return false
-
-  writeGroups(groups.map((group) => ({
-    ...group,
-    members: group.members.filter((member) => member.profileId !== profileId),
-  })))
-  return true
-}
-
-export function getRankedMembers(group, profiles) {
-  return group.members
-    .map((member) => {
-      const profile = profiles.find((item) => item.id === member.profileId)
-      if (!profile) return null
-      const xp = Number(profile.xp) || 0
-      return {
-        profileId: profile.id,
-        name: profile.name,
-        xp,
-        coins: Number(profile.coins) || 0,
-        stars: Number(profile.stars) || 0,
-        completedLevels: Number(profile.completedLevels) || 0,
-        defeatedBosses: Number(profile.defeatedBosses) || 0,
-        playerLevel: Math.floor(xp / 500) + 1,
-      }
+  const byGroup = new Map(groupIds.map((id) => [id, []]))
+  for (const membership of data ?? []) {
+    if (!membership.profiles) continue
+    byGroup.get(membership.group_id)?.push({
+      ...mapProfile(membership.profiles),
+      joinedAt: membership.joined_at,
     })
-    .filter(Boolean)
-    .sort((first, second) => second.xp - first.xp || first.name.localeCompare(second.name, 'de'))
+  }
+  return byGroup
+}
+
+export async function getGroupsForProfile() {
+  const user = await getAuthenticatedUser()
+  const { data, error } = await supabase
+    .from('groups')
+    .select('id, name, invite_code, owner_id, created_at')
+    .order('created_at', { ascending: false })
+  if (error) throw databaseError(error, 'Deine Gruppen konnten nicht geladen werden.')
+
+  const rows = data ?? []
+  const members = await loadMembers(rows.map((group) => group.id))
+  return rows
+    .map((group) => mapGroup(group, members.get(group.id) ?? []))
+    .filter((group) => group.ownerProfileId === user.id || group.members.some((member) => member.profileId === user.id))
+}
+
+export async function loadGroup(groupId) {
+  const { data, error } = await supabase
+    .from('groups')
+    .select('id, name, invite_code, owner_id, created_at')
+    .eq('id', groupId)
+    .single()
+  if (error) throw databaseError(error, 'Die Gruppe konnte nicht geladen werden.')
+  const members = await loadMembers([groupId])
+  return mapGroup(data, members.get(groupId) ?? [])
+}
+
+export async function createGroup(name) {
+  const cleanName = String(name ?? '').trim()
+  if (cleanName.length < 2) throw new Error('Der Gruppenname muss mindestens 2 Zeichen haben.')
+  await getAuthenticatedUser()
+  if ((await getGroupsForProfile()).length >= MAX_GROUPS_PER_PROFILE) {
+    throw new Error('Du kannst maximal 5 Gruppen haben.')
+  }
+
+  const { data, error } = await supabase.rpc('create_group', {
+    group_name: cleanName,
+  })
+  if (error) throw databaseError(error, error.message || 'Die Gruppe konnte nicht erstellt werden.')
+  const group = data?.[0]
+  if (!group) throw new Error('Die Gruppe konnte nicht erstellt werden.')
+  return loadGroup(group.id)
+}
+
+export async function joinGroup(inviteCode) {
+  const code = normalizeInviteCode(inviteCode)
+  if (!/^\d{6}$/.test(code)) throw new Error('Keine Gruppe mit diesem Code gefunden.')
+  await getAuthenticatedUser()
+  if ((await getGroupsForProfile()).length >= MAX_GROUPS_PER_PROFILE) {
+    throw new Error('Du kannst maximal 5 Gruppen haben.')
+  }
+
+  const { data, error } = await supabase.rpc('join_group_by_invite_code', { code })
+  if (error) throw databaseError(error, error.message || 'Der Gruppe konnte nicht beigetreten werden.')
+  const group = data?.[0]
+  if (!group) throw new Error('Keine Gruppe mit diesem Code gefunden.')
+  return loadGroup(group.id)
+}
+
+export async function deleteGroup(groupId) {
+  const user = await getAuthenticatedUser()
+  const { data, error } = await supabase
+    .from('groups')
+    .delete()
+    .eq('id', groupId)
+    .eq('owner_id', user.id)
+    .select('id')
+    .maybeSingle()
+  if (error) throw databaseError(error, 'Die Gruppe konnte nicht gelöscht werden.')
+  if (!data) throw new Error('Nur der Owner darf diese Gruppe löschen.')
+}
+
+export async function leaveGroup(groupId, ownerProfileId) {
+  const user = await getAuthenticatedUser()
+  if (ownerProfileId === user.id) throw new Error('Als Owner musst du die Gruppe löschen.')
+  const { error } = await supabase
+    .from('group_members')
+    .delete()
+    .eq('group_id', groupId)
+    .eq('user_id', user.id)
+  if (error) throw databaseError(error, 'Die Gruppe konnte nicht verlassen werden.')
+}
+
+export function getRankedMembers(group) {
+  return [...group.members].sort(
+    (first, second) => second.xp - first.xp || first.name.localeCompare(second.name, 'de'),
+  )
 }

@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { getProfiles } from '../auth/profileStorage'
+import { useCallback, useEffect, useState } from 'react'
 import {
   createGroup,
   deleteGroup,
@@ -7,34 +6,56 @@ import {
   getRankedMembers,
   joinGroup,
   leaveGroup,
+  loadGroup,
   normalizeInviteCode,
 } from './groupStorage'
 import './Leaderboard.css'
 
 function Leaderboard({ activeProfile, onBack }) {
-  const [groups, setGroups] = useState(() => getGroupsForProfile(activeProfile.id))
+  const [groups, setGroups] = useState([])
   const [selectedGroup, setSelectedGroup] = useState(null)
   const [mode, setMode] = useState('list')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
 
-  function submit(event) {
+  const refreshGroups = useCallback(async () => {
+    setLoading(true)
+    try {
+      setGroups(await getGroupsForProfile())
+      setError('')
+    } catch (loadError) {
+      setError(loadError.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const refreshTimer = window.setTimeout(refreshGroups, 0)
+    return () => window.clearTimeout(refreshTimer)
+  }, [refreshGroups])
+
+  async function submit(event) {
     event.preventDefault()
     setError('')
     const value = new FormData(event.currentTarget)
       .get('groupValue')
       ?.toString() ?? ''
     try {
+      setLoading(true)
       const group = mode === 'create'
-        ? createGroup(value, activeProfile.id)
-        : joinGroup(joinCode, activeProfile.id)
-      setGroups(getGroupsForProfile(activeProfile.id))
+        ? await createGroup(value)
+        : await joinGroup(joinCode)
+      await refreshGroups()
       setSelectedGroup(group)
       setMode('detail')
     } catch (submitError) {
       setError(submitError.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -50,26 +71,35 @@ function Leaderboard({ activeProfile, onBack }) {
   }
 
   function returnToGroupList() {
-    setGroups(getGroupsForProfile(activeProfile.id))
+    refreshGroups()
     setSelectedGroup(null)
     setMode('list')
   }
 
-  function confirmDeleteGroup() {
-    if (selectedGroup && deleteGroup(selectedGroup.id, activeProfile.id)) {
+  async function confirmDeleteGroup() {
+    if (!selectedGroup) return
+    try {
+      await deleteGroup(selectedGroup.id)
       setDeleteModalOpen(false)
       returnToGroupList()
+    } catch (deleteError) {
+      setDeleteModalOpen(false)
+      setError(deleteError.message)
     }
   }
 
-  function leaveSelectedGroup() {
-    if (selectedGroup && leaveGroup(selectedGroup.id, activeProfile.id)) {
+  async function leaveSelectedGroup() {
+    if (!selectedGroup) return
+    try {
+      await leaveGroup(selectedGroup.id, selectedGroup.ownerProfileId)
       returnToGroupList()
+    } catch (leaveError) {
+      setError(leaveError.message)
     }
   }
 
   const ranking = selectedGroup
-    ? getRankedMembers(selectedGroup, getProfiles())
+    ? getRankedMembers(selectedGroup)
     : []
 
   return (
@@ -88,13 +118,23 @@ function Leaderboard({ activeProfile, onBack }) {
           </div>
           <section className="leaderboard-groups">
             <h3>MEINE GRUPPEN <span>{groups.length} / 5</span></h3>
-            {groups.length === 0 && <p className="leaderboard-empty">Noch keine Freundesgruppe vorhanden.</p>}
+            {loading && <p className="leaderboard-empty">Gruppen werden geladen …</p>}
+            {error && <p className="leaderboard-error">{error}</p>}
+            {!loading && groups.length === 0 && <p className="leaderboard-empty">Noch keine Freundesgruppe vorhanden.</p>}
             {groups.map((group) => {
-              const ownRank = getRankedMembers(group, getProfiles())
+              const ownRank = getRankedMembers(group)
                 .findIndex((member) => member.profileId === activeProfile.id) + 1
 
               return (
-                <button key={group.id} type="button" onClick={() => { setSelectedGroup(group); setMode('detail') }}>
+                <button key={group.id} type="button" onClick={async () => {
+                  setError('')
+                  try {
+                    setSelectedGroup(await loadGroup(group.id))
+                    setMode('detail')
+                  } catch (loadError) {
+                    setError(loadError.message)
+                  }
+                }}>
                   <span>👥</span><span><strong>{group.name}</strong><small>{group.members.length} Mitglieder · Dein Rang: #{ownRank}</small></span><b>ÖFFNEN</b>
                 </button>
               )
@@ -130,7 +170,7 @@ function Leaderboard({ activeProfile, onBack }) {
               />
             </label>
             {error && <p className="leaderboard-error">{error}</p>}
-            <button className="leaderboard-primary" type="submit" disabled={mode === 'join' && !/^\d{6}$/.test(joinCode)}>{mode === 'create' ? 'GRUPPE ERSTELLEN' : 'BEITRETEN'}</button>
+            <button className="leaderboard-primary" type="submit" disabled={loading || (mode === 'join' && !/^\d{6}$/.test(joinCode))}>{loading ? 'BITTE WARTEN …' : mode === 'create' ? 'GRUPPE ERSTELLEN' : 'BEITRETEN'}</button>
           </form>
           <button className="leaderboard-cancel" type="button" onClick={() => setMode('list')}>ABBRECHEN</button>
         </section>
@@ -142,7 +182,7 @@ function Leaderboard({ activeProfile, onBack }) {
             <span>FREUNDESGRUPPE</span><h2>{selectedGroup.name}</h2><p>👥 {selectedGroup.members.length} Mitglieder</p>
             <label className="leaderboard-code-label">GRUPPENCODE</label>
             <div><code>{selectedGroup.inviteCode}</code><button type="button" onClick={copyCode}>{copied ? 'KOPIERT ✓' : 'CODE KOPIEREN'}</button></div>
-            <small>Lokale Testgruppe · keine Geräte-Synchronisierung</small>
+            <small>Online synchronisiert · auf allen Geräten verfügbar</small>
             {selectedGroup.ownerProfileId === activeProfile.id ? (
               <button className="leaderboard-delete" type="button" onClick={() => setDeleteModalOpen(true)}>GRUPPE LÖSCHEN</button>
             ) : (
@@ -155,7 +195,7 @@ function Leaderboard({ activeProfile, onBack }) {
               <article key={member.profileId} className={`rank-${index + 1} ${member.profileId === activeProfile.id ? 'is-me' : ''}`}>
                 <b className="rank-number">{index + 1}</b>
                 <div className="rank-avatar">{member.name.slice(0, 1).toUpperCase()}</div>
-                <div className="rank-player"><strong>{member.name} {member.profileId === activeProfile.id && <em>DU</em>}</strong><span>LVL {member.playerLevel} · ⭐ {member.stars} · 🎯 {member.completedLevels} · 👑 {member.defeatedBosses}</span></div>
+                <div className="rank-player"><strong>{member.name} {member.profileId === activeProfile.id && <em>DU</em>}</strong><span>LVL {member.playerLevel}</span></div>
                 <div className="rank-xp"><strong>{member.xp.toLocaleString('de-DE')}</strong><span>XP</span></div>
               </article>
             ))}
