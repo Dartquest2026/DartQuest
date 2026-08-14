@@ -31,6 +31,7 @@ function mapProfile(row, user) {
     xp: Number(row.xp) || 0,
     coins: Number(row.coins) || 0,
     playerLevel: Number(row.player_level) || 1,
+    avatarPath: row.avatar_path ?? null,
   }
 }
 
@@ -81,7 +82,7 @@ export async function loadSupabaseProfile(user, fallbackName) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, created_at, profile_name, xp, coins, player_level')
+    .select('id, created_at, profile_name, xp, coins, player_level, avatar_path')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -139,7 +140,7 @@ export async function addProfileRewards({ userId, xp = 0, coins = 0 }) {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const { data: current, error: loadError } = await supabase
       .from('profiles')
-      .select('id, created_at, profile_name, xp, coins, player_level')
+      .select('id, created_at, profile_name, xp, coins, player_level, avatar_path')
       .eq('id', userId)
       .single()
     if (loadError) throw new Error(authErrorMessage(loadError, 'profile'))
@@ -158,7 +159,7 @@ export async function addProfileRewards({ userId, xp = 0, coins = 0 }) {
       .eq('id', userId)
       .eq('xp', currentXP)
       .eq('coins', currentCoins)
-      .select('id, created_at, profile_name, xp, coins, player_level')
+      .select('id, created_at, profile_name, xp, coins, player_level, avatar_path')
       .maybeSingle()
     if (updateError) throw new Error(authErrorMessage(updateError, 'profile'))
     if (!updated) continue

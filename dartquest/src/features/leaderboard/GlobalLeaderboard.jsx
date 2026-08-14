@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { loadGlobalLeaderboardPage } from './globalLeaderboardStorage'
 import PublicPlayerProfile from '../community/PublicPlayerProfile'
+import PlayerAvatar from '../../shared/components/PlayerAvatar'
 import './GlobalLeaderboard.css'
 
 const rankMedals = ['🥇', '🥈', '🥉']
@@ -90,7 +91,7 @@ function GlobalLeaderboard({ activeProfile, onBack, onRequestsChanged }) {
           return (
             <button type="button" key={player.profileId} className={`global-player rank-${rank} ${isMe ? 'is-me' : ''}`} onClick={() => setSelectedProfileId(player.profileId)} aria-label={`Spielerprofil von ${player.name} öffnen`}>
               <b className="global-player-rank">{rankMedals[rank - 1] ?? rank}</b>
-              <div className="global-player-avatar">{player.name.slice(0, 1).toUpperCase()}</div>
+              <PlayerAvatar className="global-player-avatar" name={player.name} avatarPath={player.avatarPath} />
               <div className="global-player-name"><strong>{player.name}</strong>{isMe && <em>DU</em>}</div>
               <span className="global-player-level">LVL {player.playerLevel}</span>
               <span className="global-player-xp"><strong>{player.xp.toLocaleString('de-DE')}</strong> XP</span>

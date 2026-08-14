@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
+import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
 import './Home.css'
 
@@ -8,13 +10,31 @@ function Home({
   onContinueCampaign,
   onOpenSingleplayer,
   onOpenMultiplayer,
+  onOpenProfile,
 }) {
+  const [homeView, setHomeView] = useState('home')
   const xp = Number(activeProfile?.xp) || 0
   const coins = Number(activeProfile?.coins) || 0
   const playerLevel = Number(activeProfile?.playerLevel) || 1
   const levelXP = xp % XP_PER_PLAYER_LEVEL
   const nextLevelXP = playerLevel * XP_PER_PLAYER_LEVEL
   const xpPercent = Math.min((levelXP / XP_PER_PLAYER_LEVEL) * 100, 100)
+
+  if (homeView === 'season') {
+    return (
+      <section className="home-screen home-season-screen">
+        <header className="home-season-header">
+          <button type="button" onClick={() => setHomeView('home')} aria-label="Zurück zur Home-Seite">‹</button>
+          <div><span>DARTQUEST</span><h1>SAISONALE AUFGABEN</h1></div>
+        </header>
+        <section className="home-season-placeholder">
+          <span aria-hidden="true">🎯</span>
+          <h2>Saisonale Herausforderungen kommen bald.</h2>
+          <p>Spiele DartQuest und erfülle zusätzliche Herausforderungen, um besondere Belohnungen freizuschalten.</p>
+        </section>
+      </section>
+    )
+  }
 
   return (
     <section className="home-screen">
@@ -36,10 +56,8 @@ function Home({
       </header>
       <main className="home-main">
 
-        <section className="home-player-card">
-          <div className="home-avatar">
-            {activeProfile?.name?.slice(0, 1).toUpperCase() || '👤'}
-          </div>
+        <button type="button" className="home-player-card" onClick={onOpenProfile} aria-label="Spielerprofil öffnen">
+          <PlayerAvatar className="home-avatar" name={activeProfile?.name} avatarPath={activeProfile?.avatarPath} />
           <div className="home-player-copy">
             <span>WILLKOMMEN ZURÜCK</span>
             <h1>{activeProfile?.name || 'Spieler'}</h1>
@@ -51,7 +69,7 @@ function Home({
             <div className="home-xp-bar"><div className="home-xp-fill" style={{ width: `${xpPercent}%` }} /></div>
           </div>
           <div className="home-coins">🪙 <strong>{coins}</strong> Coins</div>
-        </section>
+        </button>
 
         <button
           className="home-campaign-card"
@@ -92,6 +110,12 @@ function Home({
             <div className="home-mode-arrow">›</div>
           </button>
         </div>
+
+        <button className="home-season-card" type="button" onClick={() => setHomeView('season')}>
+          <span className="home-season-icon" aria-hidden="true">🎯</span>
+          <span className="home-season-copy"><small>SAISONALE AUFGABEN</small><strong>Aktuelle Saison</strong><em>Schließe Aufgaben ab und sichere dir Belohnungen.</em></span>
+          <span className="home-season-arrow" aria-hidden="true">›</span>
+        </button>
       </main>
     </section>
   )

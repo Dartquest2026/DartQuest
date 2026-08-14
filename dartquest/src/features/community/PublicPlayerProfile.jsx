@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getPublicPlayerProfile, respondToFriendRequest, sendFriendRequest } from './communityStorage'
 import './PublicPlayerProfile.css'
+import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
 const actionLabels = {
   none: '🤝 FREUNDSCHAFTSANFRAGE SENDEN',
@@ -48,7 +49,7 @@ function PublicPlayerProfile({ profileId, onBack, onRequestsChanged }) {
     {message && <p className="public-profile-message">{message}</p>}
     {player && <>
       <section className="public-profile-card">
-        <div className="public-profile-avatar" aria-label={`Avatar von ${player.name}`}>{player.name.slice(0, 1).toUpperCase()}</div>
+        <PlayerAvatar className="public-profile-avatar" name={player.name} avatarPath={player.avatarPath} />
         <h2>{player.name}</h2><span className="public-profile-level">LVL {player.playerLevel}</span>
         <strong>{player.xp.toLocaleString('de-DE')} <small>XP</small></strong>
       </section>

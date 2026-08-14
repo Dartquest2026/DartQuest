@@ -337,6 +337,7 @@ function App() {
               'multiplayer',
             )
           }
+          onOpenProfile={() => setActivePage('profile')}
         />
       )}
 
@@ -521,6 +522,8 @@ function App() {
         <Profile
           activeProfile={activeProfile}
           onLogout={logout}
+          onProfileUpdated={refreshActiveProfile}
+          onAccountDeleted={() => { setActiveProfile(null); setActivePage('home') }}
         />
       )}
 

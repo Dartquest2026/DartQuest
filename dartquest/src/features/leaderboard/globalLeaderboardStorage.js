@@ -25,6 +25,7 @@ export async function loadGlobalLeaderboardPage(cursor = null) {
     name: row.profile_name,
     xp: Number(row.xp) || 0,
     playerLevel: Number(row.player_level) || 1,
+    avatarPath: row.avatar_path ?? null,
   }))
   const lastPlayer = players.at(-1)
 

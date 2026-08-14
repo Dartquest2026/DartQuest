@@ -3,6 +3,7 @@ import Leaderboard from '../leaderboard/Leaderboard'
 import GlobalLeaderboard from '../leaderboard/GlobalLeaderboard'
 import { getFriends, getPendingRequests, respondToFriendRequest, respondToGroupInvite, searchProfiles, sendFriendRequest } from './communityStorage'
 import './Community.css'
+import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
 const communityItems = [
   { id: 'leaderboard', icon: '🏆', title: 'RANGLISTE', description: 'Vergleiche dich mit anderen Spielern' },
@@ -17,7 +18,7 @@ function Header({ title, onBack }) {
 }
 
 function PlayerRow({ player, action }) {
-  return <article className="community-player-row"><div className="community-player-avatar">{player.name.slice(0, 1).toUpperCase()}</div><div><strong>{player.name}</strong><small>LVL {player.playerLevel} · {player.xp.toLocaleString('de-DE')} XP</small></div>{action && <button type="button" onClick={() => action.onClick(player)}>{action.label}</button>}</article>
+  return <article className="community-player-row"><PlayerAvatar className="community-player-avatar" name={player.name} avatarPath={player.avatarPath} /><div><strong>{player.name}</strong><small>LVL {player.playerLevel} · {player.xp.toLocaleString('de-DE')} XP</small></div>{action && <button type="button" onClick={() => action.onClick(player)}>{action.label}</button>}</article>
 }
 
 function FriendsPage({ onBack }) {

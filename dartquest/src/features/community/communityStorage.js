@@ -7,7 +7,7 @@ function rpcError(error, fallback) {
 }
 
 function mapPlayer(row) {
-  return { profileId: row.id, name: row.profile_name, xp: Number(row.xp) || 0, playerLevel: Number(row.player_level) || 1 }
+  return { profileId: row.id, name: row.profile_name, xp: Number(row.xp) || 0, playerLevel: Number(row.player_level) || 1, avatarPath: row.avatar_path ?? null }
 }
 
 export async function getPendingRequestCount() {

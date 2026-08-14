@@ -34,6 +34,7 @@ function mapProfile(row) {
     xp: Number(row.xp) || 0,
     coins: Number(row.coins) || 0,
     playerLevel: Number(row.player_level) || 1,
+    avatarPath: row.avatar_path ?? null,
   }
 }
 
@@ -52,7 +53,7 @@ async function loadMembers(groupIds) {
   if (!groupIds.length) return new Map()
   const { data, error } = await supabase
     .from('group_members')
-    .select('group_id, joined_at, profiles!group_members_user_id_fkey(id, profile_name, xp, coins, player_level)')
+    .select('group_id, joined_at, profiles!group_members_user_id_fkey(id, profile_name, xp, coins, player_level, avatar_path)')
     .in('group_id', groupIds)
   if (error) throw databaseError(error, 'Die Rangliste konnte nicht geladen werden.')
 

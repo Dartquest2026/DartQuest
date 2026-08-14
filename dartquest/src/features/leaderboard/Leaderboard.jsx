@@ -11,6 +11,7 @@ import {
 } from './groupStorage'
 import { getFriends, searchProfiles, sendGroupInvite } from '../community/communityStorage'
 import './Leaderboard.css'
+import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
 function Leaderboard({ activeProfile, onBack }) {
   const [groups, setGroups] = useState([])
@@ -216,7 +217,7 @@ function Leaderboard({ activeProfile, onBack }) {
             {ranking.map((member, index) => (
               <article key={member.profileId} className={`rank-${index + 1} ${member.profileId === activeProfile.id ? 'is-me' : ''}`}>
                 <b className="rank-number">{index + 1}</b>
-                <div className="rank-avatar">{member.name.slice(0, 1).toUpperCase()}</div>
+                <PlayerAvatar className="rank-avatar" name={member.name} avatarPath={member.avatarPath} />
                 <div className="rank-player"><strong>{member.name} {member.profileId === activeProfile.id && <em>DU</em>}</strong><span>LVL {member.playerLevel}</span></div>
                 <div className="rank-xp"><strong>{member.xp.toLocaleString('de-DE')}</strong><span>XP</span></div>
               </article>
