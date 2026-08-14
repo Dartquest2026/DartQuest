@@ -65,7 +65,6 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     const savedMode = localStorage.getItem(INPUT_MODE_STORAGE_KEY)
     return savedMode === 'quick' ? 'quick' : 'counter'
   })
-  const [quickDarts, setQuickDarts] = useState(minimumDarts)
   const [pendingInputMode, setPendingInputMode] = useState(null)
   const [result, setResult] = useState(null)
   const [introReady, setIntroReady] = useState(false)
@@ -115,15 +114,14 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
   }
 
-  function finishQuickAttempt() {
+  function finishQuickAttempt(totalDarts) {
     if (!introReady || completionStarted.current) return
     completionStarted.current = true
-    setResult(createQuickAttemptResult(level, quickDarts, attempt.startedAt))
+    setResult(createQuickAttemptResult(level, totalDarts, attempt.startedAt))
   }
 
   function applyInputMode(nextMode) {
     setAttempt(createLevelAttempt(level))
-    setQuickDarts(minimumDarts)
     setInputMode(nextMode)
     setPendingInputMode(null)
     localStorage.setItem(INPUT_MODE_STORAGE_KEY, nextMode)
@@ -132,8 +130,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
   function requestInputMode(nextMode) {
     if (nextMode === inputMode) return
     const counterHasInput = attempt.hitHistory.length > 0 || attempt.visits > 1
-    const quickHasInput = quickDarts !== minimumDarts
-    if ((inputMode === 'counter' && counterHasInput) || (inputMode === 'quick' && quickHasInput)) {
+    if (inputMode === 'counter' && counterHasInput) {
       setPendingInputMode(nextMode)
       return
     }
@@ -163,10 +160,17 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
           <>
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
             <h2 className="level-modal-title">{displayedTask}</h2>
-            <div className="level-input-mode-switch" role="group" aria-label="Eingabemodus">
-              <button type="button" className={inputMode === 'counter' ? 'is-active' : ''} onClick={() => requestInputMode('counter')} disabled={!introReady}>Treffer zählen</button>
-              <button type="button" className={inputMode === 'quick' ? 'is-active' : ''} onClick={() => requestInputMode('quick')} disabled={!introReady}>Schnelleingabe</button>
-            </div>
+            <button
+              type="button"
+              className={`level-input-mode-switch is-${inputMode}`}
+              onClick={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
+              disabled={!introReady}
+              aria-label={inputMode === 'counter' ? 'Zur Schnelleingabe wechseln' : 'Zum Trefferzähler wechseln'}
+              title={inputMode === 'counter' ? 'Treffer zählen' : 'Schnelleingabe'}
+            >
+              <span aria-hidden="true"><i /></span>
+              <small>{inputMode === 'counter' ? 'Zähler' : 'Schnell'}</small>
+            </button>
             {multiplayer && (
               <div className="level-modal-multiplayer">
                 <strong>👥 {playerCount} Spieler</strong>
@@ -189,9 +193,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
             ) : (
               <QuickDartInput
                 attempt={attempt}
-                value={quickDarts}
                 minimumDarts={minimumDarts}
-                onChange={setQuickDarts}
                 onComplete={finishQuickAttempt}
                 disabled={!introReady}
               />

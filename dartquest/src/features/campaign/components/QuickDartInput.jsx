@@ -1,32 +1,30 @@
 import Dartboard from './Dartboard'
 import './QuickDartInput.css'
 
-const QUICK_VALUES = [3, 6, 9, 12, 15]
-
-function QuickDartInput({ attempt, value, minimumDarts, onChange, onComplete, disabled = false }) {
-  const setSafeValue = (nextValue) => onChange(Math.max(minimumDarts, nextValue))
+function QuickDartInput({ attempt, minimumDarts, onComplete, disabled = false }) {
+  const options = [
+    { stars: 4, darts: minimumDarts, text: `${minimumDarts} ${minimumDarts === 1 ? 'Pfeil' : 'Pfeile'} · Perfekt` },
+    { stars: 3, darts: minimumDarts + 1, text: `${minimumDarts + 1}–${minimumDarts * 3} Pfeile` },
+    { stars: 2, darts: minimumDarts * 3 + 1, text: `${minimumDarts * 3 + 1}–${minimumDarts * 6} Pfeile` },
+    { stars: 1, darts: minimumDarts * 6 + 1, text: `${minimumDarts * 6 + 1} oder mehr Pfeile` },
+  ]
 
   return (
     <section className="quick-dart-input" aria-label="Schnelleingabe">
       <Dartboard targets={attempt.targets} hitCounters={attempt.hitCounters} />
 
       <div className="quick-dart-input__panel">
-        <span>Darts benötigt</span>
-        <div className="quick-dart-input__stepper">
-          <button type="button" onClick={() => setSafeValue(value - 1)} disabled={disabled || value <= minimumDarts} aria-label="Einen Dart weniger">−</button>
-          <strong>{value}<small>{value === 1 ? ' Dart' : ' Darts'}</small></strong>
-          <button type="button" onClick={() => setSafeValue(value + 1)} disabled={disabled} aria-label="Einen Dart mehr">+</button>
-        </div>
-
-        <div className="quick-dart-input__presets" aria-label="Schnellauswahl">
-          {QUICK_VALUES.filter((quickValue) => quickValue >= minimumDarts).map((quickValue) => (
-            <button key={quickValue} className={value === quickValue ? 'is-active' : ''} type="button" onClick={() => setSafeValue(quickValue)} disabled={disabled}>{quickValue}</button>
+        <span>Wie hast du die Aufgabe geschafft?</span>
+        <div className="quick-dart-input__ratings">
+          {options.map((option) => (
+            <button key={option.stars} type="button" onClick={() => onComplete(option.darts)} disabled={disabled}>
+              <b>{'★'.repeat(option.stars)}</b>
+              <strong>{option.text}</strong>
+              <i aria-hidden="true">›</i>
+            </button>
           ))}
-          <button type="button" onClick={() => setSafeValue(value + 3)} disabled={disabled}>+3</button>
         </div>
       </div>
-
-      <button className="quick-dart-input__complete" type="button" onClick={onComplete} disabled={disabled}>Aufgabe geschafft</button>
     </section>
   )
 }

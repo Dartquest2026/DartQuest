@@ -615,6 +615,59 @@
   .level-input-mode-switch button { min-height: 30px; font-size: 10px; }
 }
 
+/* Kompakter Eingabemodus-Schalter in der linken oberen Ecke */
+button.level-input-mode-switch {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 11px;
+  display: flex;
+  width: auto;
+  min-width: 70px;
+  min-height: 30px;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 4px 7px;
+  border: 1px solid rgba(0,255,127,.3);
+  border-radius: 999px;
+  background: rgba(2,20,15,.92);
+  color: #91a69e;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 7px rgba(0,255,127,.08);
+}
+
+button.level-input-mode-switch > span {
+  position: relative;
+  width: 27px;
+  height: 15px;
+  border: 1px solid rgba(0,255,127,.45);
+  border-radius: 999px;
+  background: #071a14;
+}
+
+button.level-input-mode-switch i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #42e695;
+  box-shadow: 0 0 6px rgba(0,255,127,.65);
+  transition: transform .18s ease;
+}
+
+button.level-input-mode-switch.is-quick i { transform: translateX(12px); }
+button.level-input-mode-switch small { font-size: 8px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+button.level-input-mode-switch.is-quick { border-color: rgba(0,255,127,.62); color: #66f5af; }
+button.level-input-mode-switch:disabled { cursor: default; opacity: .45; }
+
+@media (max-width: 560px) {
+  button.level-input-mode-switch { top: 7px; left: 8px; min-width: 64px; min-height: 27px; padding: 3px 6px; }
+}
+
 .level-giveup-button {
   width: 100%;
   margin-top: 16px;
