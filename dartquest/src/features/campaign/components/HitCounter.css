@@ -167,7 +167,7 @@
 .hit-target-check { position: absolute; top: 2px; right: 4px; color: #00c653; font-size: 10px; }
 
 @media (max-width: 560px) {
-  .attempt-dartboard { width: min(98vw, 58.5dvh, 550px); }
+  .attempt-dartboard { width: min(83.3vw, 49.7dvh, 468px); }
   .hit-counter-targets:has(.hit-target:nth-child(2)),
   .hit-counter-targets:has(.hit-target:nth-child(4)) {
     grid-template-columns: 1fr;
@@ -197,7 +197,7 @@
 }
 
 @media (max-width: 560px) and (max-height: 680px) {
-  .attempt-dartboard { width: min(98vw, 61.75dvh, 420px); }
+  .attempt-dartboard { width: min(83.3vw, 52.5dvh, 357px); }
   .hit-counter-targets { gap: 4px; }
   .hit-target,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target {
@@ -213,7 +213,7 @@
 }
 
 @media (max-width: 560px) and (max-height: 610px) {
-  .attempt-dartboard { width: min(96vw, 56.8dvh, 358px); }
+  .attempt-dartboard { width: min(81.6vw, 48.3dvh, 304px); }
   .hit-target,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target { min-height: 36px; }
 }
