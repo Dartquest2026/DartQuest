@@ -127,16 +127,19 @@
 /* Neue flache Zielzeilen */
 .hit-counter-targets {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
 }
 
 .hit-target {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(48px, 1fr) 42px minmax(76px, .85fr) 58px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label label progress"
+    "undo add add";
   align-items: center;
-  min-height: 52px;
+  min-height: 86px;
   gap: 8px;
   padding: 6px 12px;
   border: 1px solid #1e332c;
@@ -147,12 +150,13 @@
 
 .hit-target.is-active { border-color: rgba(0,255,127,.55); box-shadow: 0 0 8px rgba(0,255,127,.08); }
 .hit-target.is-complete { border-color: rgba(0,198,83,.5); background: #0d2119; }
-.hit-target-label { color: #fff; font-size: 21px; line-height: 1; }
-.hit-target-progress { color: #fff; font-size: 18px; text-align: right; white-space: nowrap; }
+.hit-target-label { grid-area: label; color: #fff; font-size: 21px; line-height: 1; }
+.hit-target-progress { grid-area: progress; color: #fff; font-size: 18px; text-align: right; white-space: nowrap; }
 .hit-target > button { min-height: 38px; border-radius: 10px; font: inherit; font-weight: 900; cursor: pointer; }
 .hit-target > button:disabled { cursor: default; opacity: .3; }
-.hit-target .hit-target-undo { border: 1px solid #31463f; background: transparent; color: #a7b3ad; font-size: 18px; }
+.hit-target .hit-target-undo { grid-area: undo; border: 1px solid #31463f; background: transparent; color: #a7b3ad; font-size: 18px; }
 .hit-target .hit-target-add {
+  grid-area: add;
   border: 1.5px solid rgba(0,255,127,.9);
   background: rgba(0,255,127,.035);
   color: #00ff7f;
@@ -170,12 +174,15 @@
   .attempt-dartboard { width: min(83.3vw, 49.7dvh, 468px); }
   .hit-counter-targets:has(.hit-target:nth-child(2)),
   .hit-counter-targets:has(.hit-target:nth-child(4)) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .hit-target,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target {
-    grid-template-columns: minmax(40px, 1fr) 36px minmax(64px, .8fr) 50px;
-    min-height: 46px;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "label label progress"
+      "undo add add";
+    min-height: 84px;
     gap: 5px;
     padding: 4px 9px;
     border-radius: 11px;
@@ -187,7 +194,7 @@
   .hit-target-progress { font-size: 15px; }
   .hit-target > button,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target-controls button {
-    min-height: 34px;
+    min-height: 41px;
   }
   .hit-target .hit-target-add,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target-add {
@@ -201,12 +208,12 @@
   .hit-counter-targets { gap: 4px; }
   .hit-target,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target {
-    min-height: 36px;
-    padding-block: 2px;
+    min-height: 72px;
+    padding-block: 4px;
   }
   .hit-target > button,
   .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target-controls button {
-    min-height: 28px;
+    min-height: 34px;
   }
   .hit-counter-next-visit,
   .hit-counter-previous-visit { min-height: 32px; }
@@ -215,5 +222,5 @@
 @media (max-width: 560px) and (max-height: 610px) {
   .attempt-dartboard { width: min(81.6vw, 48.3dvh, 304px); }
   .hit-target,
-  .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target { min-height: 36px; }
+  .hit-counter-targets:has(.hit-target:nth-child(4)) .hit-target { min-height: 68px; }
 }
