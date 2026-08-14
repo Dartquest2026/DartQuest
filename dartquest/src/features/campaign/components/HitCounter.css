@@ -26,3 +26,38 @@
 .finishing-dart > div { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .finishing-dart button { min-height: 47px; border: 1px solid rgba(66,230,149,.35); border-radius: 11px; background: #102e25; color: #fff; font: inherit; font-size: 20px; font-weight: 900; cursor: pointer; }
 .finishing-dart button small { display: block; color: #92aaa1; font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+
+@media (max-width: 560px) {
+  .hit-counter { gap: 6px; }
+  .attempt-dartboard { width: min(42vw, 23dvh, 164px); margin-top: -2px; }
+  .hit-counter-visit { gap: 6px; }
+  .hit-counter-visit div { padding: 5px 7px; border-radius: 10px; }
+  .hit-counter-visit span { font-size: 9px; }
+  .hit-counter-visit strong { font-size: 18px; }
+  .hit-counter-next-visit,
+  .hit-target-controls button { min-height: 38px; }
+  .hit-counter-targets { gap: 5px; }
+  .hit-counter-targets:has(.hit-target:nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hit-target { padding: 7px 9px; border-radius: 11px; }
+  .hit-target-heading { margin-bottom: 4px; }
+  .hit-target-heading strong,
+  .hit-target-heading b { font-size: 15px; }
+  .hit-target-controls { grid-template-columns: 40px 1fr; gap: 6px; }
+  .hit-counter-targets:has(.hit-target:nth-child(2)) .hit-target-controls {
+    grid-template-columns: 34px 1fr;
+  }
+  .hit-counter-targets:has(.hit-target:nth-child(2)) .hit-target-add {
+    padding-inline: 5px;
+    font-size: 12px;
+  }
+  .finishing-dart { gap: 5px; padding: 8px; }
+  .finishing-dart button { min-height: 39px; }
+}
+
+@media (max-width: 560px) and (max-height: 680px) {
+  .attempt-dartboard { width: min(37vw, 20dvh, 138px); }
+  .hit-counter-next-visit,
+  .hit-target-controls button { min-height: 35px; }
+}

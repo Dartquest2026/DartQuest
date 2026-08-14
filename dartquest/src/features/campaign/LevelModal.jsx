@@ -17,6 +17,40 @@ function formatTaskForDisplay(task) {
   return String(task ?? '').replace(/\s+mit maximal\s+\d+\s+Darts?$/i, '')
 }
 
+function joinTargetLabels(labels) {
+  if (labels.length < 2) return labels[0] ?? ''
+  return labels.slice(0, -1).join(', ') + ' und ' + labels.at(-1)
+}
+
+function formatAttemptTitle(level, attempt) {
+  const targets = attempt.targets
+  if (!targets.length || targets.some((target) => target.targetType === 'task')) {
+    return formatTaskForDisplay(level.task)
+  }
+
+  const labels = targets.map((target) => target.label)
+  const requiredHits = targets.map((target) => target.requiredHits)
+  const equalRequirements = requiredHits.every((hits) => hits === requiredHits[0])
+  const numberTargets = targets.every((target) => target.targetType === 'number')
+
+  if (targets.length === 1) {
+    const targetName = numberTargets ? 'das ' + labels[0] + 'er-Feld' : labels[0]
+    if (requiredHits[0] === 1) return 'Triff ' + targetName
+    if (requiredHits[0] === 2) return 'Triff ' + targetName + ' zweimal'
+    return 'Triff ' + targetName + ' · ' + requiredHits[0] + ' Treffer'
+  }
+
+  if (equalRequirements && requiredHits[0] === 1) {
+    return 'Triff ' + joinTargetLabels(labels)
+  }
+
+  if (equalRequirements) {
+    return joinTargetLabels(labels) + ' · je ' + requiredHits[0] + ' Treffer'
+  }
+
+  return 'Ziele: ' + targets.map((target) => target.label + ' (' + target.requiredHits + ')').join(' · ')
+}
+
 function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
   const [result, setResult] = useState(null)
@@ -34,7 +68,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     return () => clearTimeout(timer)
   }, [result, level, onComplete, onClose])
 
-  const displayedTask = formatTaskForDisplay(level.task)
+  const displayedTask = formatAttemptTitle(level, attempt)
   const playerNames = Array.isArray(players)
     ? players.filter((player) => player?.active !== false).map((player) => player?.name).filter(Boolean)
     : []

@@ -58,11 +58,12 @@ function Dartboard({ targets, hitCounters }) {
           <path
             key={`${number}:${ring}`}
             d={ringPath(index, inner, outer)}
-            className={`dartboard-field ring-${ring} segment-${index % 2 ? 'dark' : 'light'}${highlighted.has(`${number}:${ring}`) ? ' dartboard-segment--target' : ''}`}
+            pathLength="1"
+            className={`dartboard-field ring-${ring} segment-${index % 2 ? 'light' : 'dark'}${highlighted.has(`${number}:${ring}`) ? ' dartboard-segment--target' : ''}`}
           />
         )))}
-        <circle className={`dartboard-bull-outer${highlightedBulls.has('outer') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="17" />
-        <circle className={`dartboard-bull-inner${highlightedBulls.has('inner') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="7" />
+        <circle className={`dartboard-bull-outer${highlightedBulls.has('outer') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="17" pathLength="1" />
+        <circle className={`dartboard-bull-inner${highlightedBulls.has('inner') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="7" pathLength="1" />
         <circle className="dartboard-texture" cx="120" cy="120" r="119" />
         {NUMBERS.map((number, index) => {
           const [x, y] = point(130, index * 18)
