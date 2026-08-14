@@ -88,6 +88,7 @@
 
 .level-modal.is-intro-entering .level-modal-eyebrow,
 .level-modal.is-intro-entering .level-modal-title,
+.level-modal.is-intro-entering .level-input-mode-switch,
 .level-modal.is-intro-entering .attempt-dartboard,
 .level-modal.is-intro-entering .hit-counter-visit,
 .level-modal.is-intro-entering .hit-counter-visit-actions,
@@ -96,7 +97,8 @@
 
 .level-modal .level-modal-eyebrow { animation: levelContentReveal .22s .04s both; }
 .level-modal .level-modal-title { animation: levelContentReveal .22s .11s both; }
-.level-modal .attempt-dartboard { animation: levelBoardReveal .3s .18s cubic-bezier(.2,.8,.2,1) both; }
+.level-modal .level-input-mode-switch { animation: levelContentReveal .2s .16s both; }
+.level-modal .attempt-dartboard { animation: levelBoardReveal .3s .22s cubic-bezier(.2,.8,.2,1) both; }
 .level-modal .hit-counter-visit { animation: levelContentReveal .2s .32s both; }
 .level-modal .hit-counter-visit-actions { animation: levelContentReveal .2s .38s both; }
 .level-modal .hit-counter-targets { animation: levelContentReveal .2s .44s both; }
@@ -535,11 +537,82 @@
   .level-modal,
   .level-modal .level-modal-eyebrow,
   .level-modal .level-modal-title,
+  .level-modal .level-input-mode-switch,
   .level-modal .attempt-dartboard,
   .level-modal .hit-counter-visit,
   .level-modal .hit-counter-visit-actions,
   .level-modal .hit-counter-targets,
   .level-modal .level-giveup-button { animation: none; opacity: 1; transform: none; }
+}
+
+.level-input-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 3px;
+  border: 1px solid rgba(0,255,127,.16);
+  border-radius: 11px;
+  background: rgba(1,15,11,.8);
+}
+
+.level-input-mode-switch button {
+  min-height: 34px;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #71877f;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.level-input-mode-switch button.is-active {
+  border-color: rgba(0,255,127,.76);
+  background: rgba(0,255,127,.07);
+  color: #70ffba;
+  box-shadow: 0 0 8px rgba(0,255,127,.2), inset 0 0 7px rgba(0,255,127,.05);
+}
+
+.level-input-mode-switch button:disabled { cursor: default; opacity: .5; }
+
+.level-input-mode-confirm {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border-radius: inherit;
+  background: rgba(0,8,6,.86);
+  backdrop-filter: blur(5px);
+}
+
+.level-input-mode-confirm > div {
+  width: 100%;
+  padding: 18px;
+  border: 1px solid rgba(0,255,127,.4);
+  border-radius: 15px;
+  background: #071c15;
+  text-align: center;
+  box-shadow: 0 0 22px rgba(0,255,127,.15);
+}
+
+.level-input-mode-confirm strong { color: #fff; font-size: 18px; }
+.level-input-mode-confirm p { margin: 8px 0 15px; color: #adc0b9; font-size: 13px; line-height: 1.4; }
+.level-input-mode-confirm span { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.level-input-mode-confirm button { min-height: 42px; border: 1px solid #31463f; border-radius: 10px; background: #0e2820; color: #fff; font: inherit; font-weight: 900; cursor: pointer; }
+.level-input-mode-confirm button:last-child { border-color: #00ff7f; color: #65ffb4; }
+
+@media (max-width: 560px) {
+  .level-modal { overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: none; }
+  .level-modal::-webkit-scrollbar { display: none; }
+  .level-input-mode-switch { margin-bottom: 5px; }
+  .level-input-mode-switch button { min-height: 30px; font-size: 10px; }
 }
 
 .level-giveup-button {

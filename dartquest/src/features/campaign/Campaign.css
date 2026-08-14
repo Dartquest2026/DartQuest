@@ -192,11 +192,56 @@
     font-size: 20px;
   }
 
-  .dq-boss-card {
+.dq-boss-card {
     margin-top: 6px;
     margin-bottom: 0;
 
     padding: 7px;
+  }
+}
+
+/* Muss nach den responsiven Legacy-Regeln stehen. */
+.dq-level-card .dq-play-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1.5px solid rgba(0,255,127,.95);
+  background: linear-gradient(180deg, rgba(7,34,26,.98), rgba(3,21,16,.99));
+  color: #effff7;
+  box-shadow:
+    inset 0 0 15px rgba(0,255,127,.08),
+    0 0 9px rgba(0,255,127,.48),
+    0 0 24px rgba(0,255,127,.2);
+  text-shadow: 0 0 9px rgba(0,255,127,.62);
+  animation: dqPlayButtonGlowStrong 2.15s ease-in-out infinite;
+}
+
+.dq-level-card .dq-play-button::before {
+  inset: 0;
+  padding: 2px;
+  background: conic-gradient(from 0deg, transparent 0 78%, rgba(185,255,220,.95) 86%, #00ff7f 90%, transparent 96%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+@keyframes dqPlayButtonGlowStrong {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 13px rgba(0,255,127,.07), 0 0 8px rgba(0,255,127,.4), 0 0 20px rgba(0,255,127,.14);
+  }
+  50% {
+    transform: scale(1.012);
+    box-shadow: inset 0 0 18px rgba(0,255,127,.12), 0 0 15px rgba(0,255,127,.72), 0 0 34px rgba(0,255,127,.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dq-level-card .dq-play-button {
+    animation: none;
+    transform: none;
+    box-shadow: inset 0 0 12px rgba(0,255,127,.06), 0 0 12px rgba(0,255,127,.4);
   }
 }
 
@@ -904,6 +949,126 @@
   color: #42e695;
 }
 
+/* Kampagnen-CTA: ruhiger Neon-Rahmen mit Aktivierungsimpuls */
+.dq-play-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: rgba(0,255,127,.82);
+  background: linear-gradient(180deg, rgba(7,34,26,.98), rgba(3,21,16,.99));
+  color: #effff7;
+  box-shadow: inset 0 0 13px rgba(0,255,127,.055), 0 0 8px rgba(0,255,127,.24), 0 0 19px rgba(0,255,127,.08);
+  animation: dqPlayButtonBreathe 2.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+.dq-play-button > span {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  margin-right: .28em;
+  color: #58f6aa;
+  text-shadow: 0 0 8px rgba(0,255,127,.62);
+}
+
+.dq-play-button::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: -70%;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, transparent 0 78%, rgba(185,255,220,.95) 86%, #00ff7f 90%, transparent 96%);
+  opacity: 0;
+  animation: dqPlayBorderOrbit 4.2s linear infinite;
+  pointer-events: none;
+}
+
+.dq-play-button::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: -80%;
+  bottom: -80%;
+  left: -28%;
+  width: 11%;
+  background: linear-gradient(90deg, transparent, rgba(210,255,233,.28), transparent);
+  opacity: 0;
+  transform: translate3d(-180%,0,0) rotate(18deg);
+  animation: dqPlayShine 4.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dq-play-button:hover:not(:disabled) {
+  animation-play-state: paused;
+  border-color: #7affbd;
+  background: linear-gradient(180deg, rgba(10,49,37,.99), rgba(4,27,20,.99));
+  box-shadow: inset 0 0 16px rgba(0,255,127,.08), 0 0 13px rgba(0,255,127,.48), 0 0 28px rgba(0,255,127,.16);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.dq-play-button:active:not(:disabled) {
+  animation: none;
+  transform: scale(.97);
+  transition: transform .1s ease-out;
+}
+
+.dq-play-button.is-activating {
+  animation: dqPlayActivation .12s ease-out both;
+  border-color: #c7ffe2;
+  pointer-events: none;
+}
+
+.dq-play-button:disabled { cursor: default; }
+
+.dq-node.is-starting {
+  animation: dqStartingNodeImpulse .22s ease-out both;
+  pointer-events: none;
+}
+
+@keyframes dqPlayButtonBreathe {
+  0%, 100% { transform: scale(1); box-shadow: inset 0 0 13px rgba(0,255,127,.055), 0 0 8px rgba(0,255,127,.22), 0 0 18px rgba(0,255,127,.07); }
+  50% { transform: scale(1.015); box-shadow: inset 0 0 15px rgba(0,255,127,.075), 0 0 13px rgba(0,255,127,.42), 0 0 25px rgba(0,255,127,.13); }
+}
+
+@keyframes dqPlayBorderOrbit {
+  0%, 68% { opacity: 0; transform: rotate(0deg); }
+  72% { opacity: .72; }
+  88% { opacity: .72; }
+  94%, 100% { opacity: 0; transform: rotate(360deg); }
+}
+
+@keyframes dqPlayShine {
+  0%, 72% { opacity: 0; transform: translate3d(-180%,0,0) rotate(18deg); }
+  76% { opacity: .4; }
+  88% { opacity: 0; transform: translate3d(1150%,0,0) rotate(18deg); }
+  100% { opacity: 0; }
+}
+
+@keyframes dqPlayActivation {
+  from { transform: scale(.97); box-shadow: 0 0 10px rgba(0,255,127,.45); }
+  to { transform: scale(1.015); box-shadow: 0 0 19px rgba(0,255,127,.95), 0 0 42px rgba(0,255,127,.42); }
+}
+
+@keyframes dqStartingNodeImpulse {
+  from { transform: translate(-50%,-50%) scale(1.12); }
+  to { transform: translate(-50%,-50%) scale(1.2); box-shadow: 0 0 0 5px rgba(0,255,127,.12), 0 0 36px rgba(0,255,127,.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dq-play-button,
+  .dq-play-button::before,
+  .dq-play-button::after,
+  .dq-play-button.is-activating,
+  .dq-node.is-starting {
+    animation: none;
+  }
+
+  .dq-play-button {
+    transform: none;
+    box-shadow: inset 0 0 12px rgba(0,255,127,.06), 0 0 12px rgba(0,255,127,.4);
+  }
+}
+
 .dq-difficulty-badge {
   --difficulty-rgb: 66, 230, 149;
 
@@ -1365,9 +1530,9 @@
 }
 
 .dq-path-shadow {
-  stroke: rgba(39, 217, 188, 0.18);
+  stroke: rgba(34, 74, 63, 0.62);
   stroke-width: 1.15;
-  stroke-dasharray: 2 2.5;
+  stroke-dasharray: none;
 
   filter: drop-shadow(
     0 0 2px rgba(39, 217, 188, 0.12)
@@ -1375,20 +1540,20 @@
 }
 
 .dq-path-main {
-  stroke: #42e695;
+  stroke: #16865d;
 
   stroke-width: 1.35;
-  stroke-dasharray: 3 2.5;
+  stroke-dasharray: none;
 
   filter:
     drop-shadow(
-      0 0 3px rgba(66, 230, 149, 0.62)
+      0 0 3px rgba(42, 205, 139, 0.48)
     )
     drop-shadow(
-      0 0 8px rgba(66, 230, 149, 0.28)
+      0 0 8px rgba(42, 205, 139, 0.18)
     )
     drop-shadow(
-      0 0 16px rgba(66, 230, 149, 0.1)
+      0 0 16px rgba(42, 205, 139, 0.06)
     );
 
   transition: stroke-dasharray 0.35s ease;
@@ -1402,7 +1567,7 @@
   stroke-dasharray: 0 100;
   stroke-dashoffset: var(--dq-unlock-offset);
   filter: drop-shadow(0 0 3px #00ff7f) drop-shadow(0 0 8px rgba(0,255,127,.82));
-  animation: dqUnlockPathTravel .76s cubic-bezier(.2,.72,.25,1) forwards;
+  animation: dqUnlockPathTravel 1.2s cubic-bezier(.22,.72,.2,1) forwards;
 }
 
 .dq-path-unlock.is-boss {
@@ -1411,13 +1576,36 @@
 }
 
 .dq-path-unlock-head {
-  fill: #d7ffe9;
-  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #00ff7f);
+  fill: #effff7;
+  stroke: #8affc6;
+  stroke-width: .35;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 7px #00ff7f) drop-shadow(0 0 13px rgba(0,255,127,.85));
+}
+
+.dq-path-unlock-aura {
+  fill: rgba(0,255,127,.18);
+  filter: drop-shadow(0 0 6px rgba(0,255,127,.9));
+}
+
+.dq-path-unlock-tail {
+  fill: none;
+  stroke: rgba(114,255,184,.88);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 6 94;
+  stroke-dashoffset: var(--dq-unlock-tail-from);
+  filter: drop-shadow(0 0 4px rgba(0,255,127,.95)) drop-shadow(0 0 9px rgba(0,255,127,.58));
+  animation: dqUnlockTailTravel 1.2s linear forwards;
 }
 
 @keyframes dqUnlockPathTravel {
   from { stroke-dasharray: 0 100; }
   to { stroke-dasharray: var(--dq-unlock-length) 100; }
+}
+
+@keyframes dqUnlockTailTravel {
+  from { stroke-dashoffset: var(--dq-unlock-tail-from); }
+  to { stroke-dashoffset: var(--dq-unlock-tail-to); }
 }
 
 /* LEVEL NODES */
@@ -1476,26 +1664,32 @@
 }
 
 .dq-node.just-completed {
-  animation: dqCompletedLevelGlow .4s ease-out both;
+  animation: dqCompletedLevelGlow .62s ease-out both;
 }
 
 .dq-node.unlocking {
   pointer-events: none;
 }
 
+.dq-node.unlocking.charging strong,
 .dq-node.unlocking.traveling strong {
   opacity: 0;
   transform: scale(.65);
 }
 
-.dq-node.unlocking.traveling::before {
-  content: '🔒';
+.dq-node-unlock-lock {
   position: absolute;
+  z-index: 5;
   font-size: 16px;
+  filter: drop-shadow(0 0 3px rgba(0,255,127,.35));
+}
+
+.dq-node.unlocking.arrived .dq-node-unlock-lock {
+  animation: dqUnlockLockOut .26s ease-out both;
 }
 
 .dq-node.unlocking.arrived {
-  animation: dqUnlockedNodePulse .56s cubic-bezier(.2,.8,.2,1) both;
+  animation: dqUnlockedNodePulse .9s cubic-bezier(.2,.8,.2,1) both;
 }
 
 .dq-node.unlocking.arrived::after {
@@ -1504,7 +1698,16 @@
   inset: -2px;
   border: 2px solid #63ffb2;
   border-radius: 50%;
-  animation: dqUnlockRing .56s ease-out both;
+  animation: dqUnlockRing .72s ease-out both;
+}
+
+.dq-node.unlocking.arrived::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 1.5px solid rgba(126,255,190,.82);
+  border-radius: 50%;
+  animation: dqUnlockRingSecondary .68s .14s ease-out both;
 }
 
 .dq-node.unlocking.arrived strong {
@@ -1522,20 +1725,36 @@
 }
 
 @keyframes dqUnlockedNodePulse {
-  0% { transform: translate(-50%,-50%) scale(.88); box-shadow: 0 0 4px rgba(0,255,127,.2); }
-  48% { transform: translate(-50%,-50%) scale(1.15); box-shadow: 0 0 30px rgba(0,255,127,.95); }
+  0% { transform: translate(-50%,-50%) scale(.9); background-color: #dffff0; box-shadow: 0 0 8px #fff, 0 0 28px rgba(0,255,127,1); }
+  22% { transform: translate(-50%,-50%) scale(1.22); box-shadow: 0 0 13px #dffff0, 0 0 42px rgba(0,255,127,1); }
+  48% { transform: translate(-50%,-50%) scale(1.07); box-shadow: 0 0 28px rgba(0,255,127,.82); }
+  68% { transform: translate(-50%,-50%) scale(1.14); box-shadow: 0 0 33px rgba(0,255,127,.72); }
+  84% { transform: translate(-50%,-50%) scale(1.04); }
   100% { transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 15px rgba(40,218,188,.3); }
 }
 
 @keyframes dqUnlockedBossPulse {
-  0% { transform: translate(-50%,-50%) scale(.86); box-shadow: 0 0 8px rgba(0,255,127,.3); }
-  48% { transform: translate(-50%,-50%) scale(1.2); box-shadow: 0 0 38px rgba(0,255,127,1); }
+  0% { transform: translate(-50%,-50%) scale(.86); box-shadow: 0 0 10px #fff1a8, 0 0 30px rgba(0,255,127,.8); }
+  24% { transform: translate(-50%,-50%) scale(1.25); box-shadow: 0 0 16px #fff1a8, 0 0 48px rgba(0,255,127,1); }
+  52% { transform: translate(-50%,-50%) scale(1.08); }
+  72% { transform: translate(-50%,-50%) scale(1.17); box-shadow: 0 0 36px rgba(233,185,67,.72); }
   100% { transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 20px rgba(233,185,67,.4); }
 }
 
 @keyframes dqUnlockRing {
   from { opacity: .95; transform: scale(.9); }
+  to { opacity: 0; transform: scale(1.78); }
+}
+
+@keyframes dqUnlockRingSecondary {
+  from { opacity: .8; transform: scale(.92); }
   to { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes dqUnlockLockOut {
+  0% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 3px rgba(0,255,127,.35)); }
+  45% { opacity: 1; transform: scale(1.22); filter: drop-shadow(0 0 8px #baffdc); }
+  100% { opacity: 0; transform: scale(.55); }
 }
 
 @keyframes dqUnlockNumberIn {
@@ -1545,13 +1764,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dq-path-unlock { animation: none; stroke-dasharray: var(--dq-unlock-length) 100; filter: none; }
-  .dq-path-unlock-head { display: none; }
+  .dq-path-unlock-head,
+  .dq-path-unlock-aura,
+  .dq-path-unlock-tail { display: none; }
   .dq-node.just-completed,
   .dq-node.unlocking.arrived,
   .dq-node.unlocking.boss-unlock.arrived,
   .dq-node.unlocking.arrived strong,
-  .dq-node.unlocking.arrived::after { animation: none; }
+  .dq-node.unlocking.arrived::before,
+  .dq-node.unlocking.arrived::after,
+  .dq-node.unlocking.arrived .dq-node-unlock-lock { animation: none; }
   .dq-node.unlocking.arrived { box-shadow: 0 0 18px rgba(0,255,127,.65); }
+  .dq-node.unlocking.arrived .dq-node-unlock-lock { display: none; }
 }
 
 .dq-node strong {

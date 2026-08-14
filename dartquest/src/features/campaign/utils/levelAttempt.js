@@ -215,6 +215,14 @@ export function getRequiredHitCount(attempt) {
   )
 }
 
+export function getMinimumDarts(level) {
+  const parsed = parseLevelTargets(level)
+  return parsed.targets.reduce(
+    (total, target) => total + positiveInteger(target.requiredHits, 1),
+    0,
+  )
+}
+
 export function isAutoPerfectAttempt(attempt) {
   return attempt.visits === 1 &&
     getRequiredHitCount(attempt) === 3 &&
@@ -257,6 +265,29 @@ export function createAttemptResult(level, attempt, completedAt = Date.now(), fi
     durationMs: Math.max(0, completedAt - attempt.startedAt),
     xp: level.rewardXP ?? 0,
     coins: level.rewardCoins ?? 0,
+  }
+}
+
+export function createQuickAttemptResult(level, totalDarts, startedAt = Date.now(), completedAt = Date.now()) {
+  const minimumDarts = getMinimumDarts(level)
+  const exactTotalDarts = Math.max(minimumDarts, positiveInteger(totalDarts, minimumDarts))
+  const visits = Math.ceil(exactTotalDarts / 3)
+  const finishingDart = ((exactTotalDarts - 1) % 3) + 1
+
+  return {
+    success: true,
+    stars: calculateLevelStars(level, exactTotalDarts),
+    darts: exactTotalDarts,
+    totalDarts: exactTotalDarts,
+    visits,
+    finishingDart,
+    hitCounters: {},
+    startedAt: new Date(startedAt).toISOString(),
+    completedAt: new Date(completedAt).toISOString(),
+    durationMs: Math.max(0, completedAt - startedAt),
+    xp: level.rewardXP ?? 0,
+    coins: level.rewardCoins ?? 0,
+    inputMode: 'quick',
   }
 }
 

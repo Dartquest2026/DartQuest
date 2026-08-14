@@ -1,0 +1,196 @@
+.level-complete-animation {
+  position: relative;
+  display: grid;
+  min-height: 370px;
+  align-content: center;
+  gap: 13px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.level-complete-animation::before {
+  content: '';
+  position: absolute;
+  inset: 8% 5% auto;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,255,127,.13), transparent 68%);
+  opacity: 0;
+  animation: levelCompleteAura .8s .58s ease-out both;
+  pointer-events: none;
+}
+
+.level-complete-animation.stars-4::before,
+.level-complete-animation.is-boss::before {
+  background: radial-gradient(circle, rgba(255,211,76,.18), rgba(0,255,127,.09) 38%, transparent 70%);
+}
+
+.level-complete-eyebrow {
+  position: relative;
+  margin: 0;
+  color: #49edaa;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.7px;
+  opacity: 0;
+  animation: levelCompleteFadeUp .22s .05s ease-out both;
+}
+
+.level-complete-stars {
+  position: relative;
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.level-complete-stars span {
+  display: inline-block;
+  color: rgba(255,255,255,.18);
+  font-size: clamp(38px, 12vw, 52px);
+  line-height: 1;
+}
+
+.level-complete-stars .is-empty {
+  opacity: 0;
+  animation: levelEmptyStarIn .2s var(--empty-star-delay) ease both;
+}
+
+.level-complete-stars .is-earned {
+  color: #ffd34c;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(255,211,76,.75));
+  animation: levelEarnedStarIn .24s var(--earned-star-delay) cubic-bezier(.18,.82,.25,1.25) both;
+}
+
+.stars-4 .level-complete-stars .is-earned,
+.is-boss .level-complete-stars .is-earned {
+  filter: drop-shadow(0 0 7px #ffd34c) drop-shadow(0 0 16px rgba(255,190,50,.55));
+}
+
+.level-complete-message h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(27px, 8vw, 36px);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(0,255,127,.34);
+  opacity: 0;
+  animation: levelMessageIn .28s .78s cubic-bezier(.2,.8,.2,1.15) both;
+}
+
+.stars-4 .level-complete-message h2,
+.is-boss .level-complete-message h2 {
+  color: #fff8d5;
+  text-shadow: 0 0 10px rgba(255,211,76,.72), 0 0 25px rgba(0,255,127,.32);
+}
+
+.level-complete-message p,
+.level-complete-range {
+  margin: 7px 0 0;
+  color: #b9cec6;
+  font-size: 14px;
+  opacity: 0;
+  animation: levelCompleteFadeUp .22s .96s ease-out both;
+}
+
+.level-complete-range {
+  margin: 0;
+  color: #849c93;
+  animation-delay: 1.04s;
+}
+
+.level-complete-rewards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  opacity: 0;
+  animation: levelCompleteFadeUp .25s 1.13s ease-out both;
+}
+
+.level-complete-rewards > div {
+  padding: 13px;
+  border: 1px solid rgba(0,255,127,.22);
+  border-radius: 14px;
+  background: rgba(3,29,21,.82);
+  box-shadow: inset 0 1px rgba(255,255,255,.03);
+}
+
+.level-complete-rewards span {
+  display: block;
+  margin-bottom: 3px;
+  color: #91a9a0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.level-complete-rewards strong { color: #42e695; font-size: 21px; }
+
+.level-complete-animation > button {
+  min-height: 46px;
+  border: 1px solid rgba(0,255,127,.55);
+  border-radius: 14px;
+  background: #123b2f;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  animation: levelCompleteFadeUp .24s 1.4s ease-out both;
+}
+
+.level-complete-animation > button:disabled { pointer-events: none; }
+
+@keyframes levelEarnedStarIn {
+  0% { opacity: 0; transform: translate3d(0,12px,0) scale(.58) rotate(-8deg); }
+  70% { opacity: 1; transform: translate3d(0,-2px,0) scale(1.16) rotate(2deg); }
+  100% { opacity: 1; transform: translate3d(0,0,0) scale(1) rotate(0); }
+}
+
+@keyframes levelEmptyStarIn {
+  from { opacity: 0; transform: scale(.8); }
+  to { opacity: .6; transform: scale(1); }
+}
+
+@keyframes levelMessageIn {
+  from { opacity: 0; transform: translate3d(0,10px,0) scale(.9); }
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+
+@keyframes levelCompleteFadeUp {
+  from { opacity: 0; transform: translate3d(0,8px,0); }
+  to { opacity: 1; transform: translate3d(0,0,0); }
+}
+
+@keyframes levelCompleteAura {
+  0% { opacity: 0; transform: scale(.72); }
+  45% { opacity: 1; }
+  100% { opacity: .45; transform: scale(1.18); }
+}
+
+@media (max-width: 560px) {
+  .level-complete-animation { min-height: min(390px, 72dvh); gap: 10px; }
+  .level-complete-stars { min-height: 54px; }
+  .level-complete-rewards > div { padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-complete-animation::before,
+  .level-complete-eyebrow,
+  .level-complete-stars span,
+  .level-complete-message h2,
+  .level-complete-message p,
+  .level-complete-range,
+  .level-complete-rewards,
+  .level-complete-animation > button {
+    animation: levelCompleteSimpleFade .16s ease-out both;
+  }
+
+  @keyframes levelCompleteSimpleFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

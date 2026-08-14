@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 
 import HitCounter from './components/HitCounter'
+import LevelCompleteAnimation from './components/LevelCompleteAnimation'
+import QuickDartInput from './components/QuickDartInput'
 import {
   createAbandonedResult,
   createAttemptResult,
   createLevelAttempt,
+  createQuickAttemptResult,
+  getMinimumDarts,
   isAutoPerfectAttempt,
   isAttemptComplete,
   nextVisit,
@@ -13,6 +17,8 @@ import {
   undoTargetHit,
 } from './utils/levelAttempt'
 import './LevelModal.css'
+
+const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
 
 function formatTaskForDisplay(task) {
   return String(task ?? '').replace(/\s+mit maximal\s+\d+\s+Darts?$/i, '')
@@ -54,6 +60,13 @@ function formatAttemptTitle(level, attempt) {
 
 function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
+  const minimumDarts = getMinimumDarts(level)
+  const [inputMode, setInputMode] = useState(() => {
+    const savedMode = localStorage.getItem(INPUT_MODE_STORAGE_KEY)
+    return savedMode === 'quick' ? 'quick' : 'counter'
+  })
+  const [quickDarts, setQuickDarts] = useState(minimumDarts)
+  const [pendingInputMode, setPendingInputMode] = useState(null)
   const [result, setResult] = useState(null)
   const [introReady, setIntroReady] = useState(false)
   const completionStarted = useRef(false)
@@ -72,7 +85,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
       resultDelivered.current = true
       onComplete(level, result)
       onClose()
-    }, 2500)
+    }, 2000)
     return () => clearTimeout(timer)
   }, [result, level, onComplete, onClose])
 
@@ -102,6 +115,31 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
   }
 
+  function finishQuickAttempt() {
+    if (!introReady || completionStarted.current) return
+    completionStarted.current = true
+    setResult(createQuickAttemptResult(level, quickDarts, attempt.startedAt))
+  }
+
+  function applyInputMode(nextMode) {
+    setAttempt(createLevelAttempt(level))
+    setQuickDarts(minimumDarts)
+    setInputMode(nextMode)
+    setPendingInputMode(null)
+    localStorage.setItem(INPUT_MODE_STORAGE_KEY, nextMode)
+  }
+
+  function requestInputMode(nextMode) {
+    if (nextMode === inputMode) return
+    const counterHasInput = attempt.hitHistory.length > 0 || attempt.visits > 1
+    const quickHasInput = quickDarts !== minimumDarts
+    if ((inputMode === 'counter' && counterHasInput) || (inputMode === 'quick' && quickHasInput)) {
+      setPendingInputMode(nextMode)
+      return
+    }
+    applyInputMode(nextMode)
+  }
+
   function finishLevel() {
     if (!result || resultDelivered.current) return
     resultDelivered.current = true
@@ -125,6 +163,10 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
           <>
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
             <h2 className="level-modal-title">{displayedTask}</h2>
+            <div className="level-input-mode-switch" role="group" aria-label="Eingabemodus">
+              <button type="button" className={inputMode === 'counter' ? 'is-active' : ''} onClick={() => requestInputMode('counter')} disabled={!introReady}>Treffer zählen</button>
+              <button type="button" className={inputMode === 'quick' ? 'is-active' : ''} onClick={() => requestInputMode('quick')} disabled={!introReady}>Schnelleingabe</button>
+            </div>
             {multiplayer && (
               <div className="level-modal-multiplayer">
                 <strong>👥 {playerCount} Spieler</strong>
@@ -133,39 +175,56 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
               </div>
             )}
 
-            <HitCounter
-              attempt={attempt}
-              onHit={applyHit}
-              onNextVisit={() => setAttempt((current) => nextVisit(current))}
-              onPreviousVisit={() => setAttempt((current) => previousVisit(current))}
-              onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
-              completionPending={isAttemptComplete(attempt)}
-              onFinish={finishAttempt}
-              interactionDisabled={!introReady}
-            />
+            {inputMode === 'counter' ? (
+              <HitCounter
+                attempt={attempt}
+                onHit={applyHit}
+                onNextVisit={() => setAttempt((current) => nextVisit(current))}
+                onPreviousVisit={() => setAttempt((current) => previousVisit(current))}
+                onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
+                completionPending={isAttemptComplete(attempt)}
+                onFinish={finishAttempt}
+                interactionDisabled={!introReady}
+              />
+            ) : (
+              <QuickDartInput
+                attempt={attempt}
+                value={quickDarts}
+                minimumDarts={minimumDarts}
+                onChange={setQuickDarts}
+                onComplete={finishQuickAttempt}
+                disabled={!introReady}
+              />
+            )}
             <button type="button" className="level-giveup-button" onClick={giveUpLevel} disabled={!introReady}>Aufgeben</button>
+
+            {pendingInputMode && (
+              <div className="level-input-mode-confirm" role="alertdialog" aria-modal="true" aria-labelledby="input-mode-confirm-title">
+                <div>
+                  <strong id="input-mode-confirm-title">Eingaben zurücksetzen?</strong>
+                  <p>Deine bisherigen Eingaben dieses Versuchs werden beim Wechsel verworfen.</p>
+                  <span>
+                    <button type="button" onClick={() => setPendingInputMode(null)}>Abbrechen</button>
+                    <button type="button" onClick={() => applyInputMode(pendingInputMode)}>Wechseln</button>
+                  </span>
+                </div>
+              </div>
+            )}
           </>
         )}
 
         {result && (
-          <div className="level-result-screen">
-            <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
-            <div className="level-result-stars">{'⭐'.repeat(result.stars)}</div>
-            <h2>{result.autoPerfect ? 'Perfekt!' : 'Level geschafft!'}</h2>
-            {result.autoPerfect && (
-              <p className="level-result-perfect-copy">Alle Ziele in der ersten Aufnahme getroffen.</p>
-            )}
-            <p className="level-result-range">
-              {result.totalDarts} {result.totalDarts === 1 ? 'Pfeil' : 'Pfeile'} · {result.visits} {result.visits === 1 ? 'Aufnahme' : 'Aufnahmen'}
-            </p>
-            <div className="level-result-rewards">
-              <div><span>XP</span><strong>+{result.xp}</strong></div>
-              <div><span>Coins</span><strong>+{result.coins}</strong></div>
-            </div>
-            {!result.autoPerfect && (
-              <button className="level-result-continue" type="button" onClick={finishLevel}>Weiter</button>
-            )}
-          </div>
+          <LevelCompleteAnimation
+            stars={result.stars}
+            xp={result.xp}
+            coins={result.coins}
+            totalDarts={result.totalDarts}
+            visits={result.visits}
+            isBoss={level.boss === true}
+            levelId={level.id}
+            autoPerfect={result.autoPerfect === true}
+            onContinue={result.autoPerfect ? null : finishLevel}
+          />
         )}
       </article>
     </div>

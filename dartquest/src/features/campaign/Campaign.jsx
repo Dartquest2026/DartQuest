@@ -168,18 +168,28 @@ function Campaign({
 
   const [levelEnterTransition, setLevelEnterTransition] = useState(null)
   const levelEnterLocked = useRef(false)
+  const playActivationTimer = useRef(null)
+  const [activatingLevelId, setActivatingLevelId] = useState(null)
   const [unlockAnimation, setUnlockAnimation] = useState(null)
   const unlockFrom = unlockAnimation?.from
   const unlockTo = unlockAnimation?.to
   const unlockCrossWorld = unlockAnimation?.crossWorld
 
+  useEffect(() => () => {
+    if (playActivationTimer.current) window.clearTimeout(playActivationTimer.current)
+  }, [])
+
   useEffect(() => {
     if (!unlockFrom || !unlockTo) return undefined
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const arrivalDelay = reducedMotion ? 80 : 760
-    const finishDelay = reducedMotion ? 360 : 1360
-    const worldDelay = reducedMotion ? 20 : 620
+    const travelDelay = reducedMotion ? 20 : 220
+    const arrivalDelay = reducedMotion ? 80 : 1420
+    const finishDelay = reducedMotion ? 420 : 2320
+    const worldDelay = reducedMotion ? 20 : 1120
+    const travelTimer = window.setTimeout(() => {
+      setUnlockAnimation((current) => current ? { ...current, phase: 'traveling' } : null)
+    }, travelDelay)
     const arriveTimer = window.setTimeout(() => {
       setUnlockAnimation((current) => current ? { ...current, phase: 'arrived' } : null)
     }, arrivalDelay)
@@ -189,6 +199,7 @@ function Campaign({
     const finishTimer = window.setTimeout(() => setUnlockAnimation(null), finishDelay)
 
     return () => {
+      window.clearTimeout(travelTimer)
       window.clearTimeout(arriveTimer)
       if (worldTimer) window.clearTimeout(worldTimer)
       window.clearTimeout(finishTimer)
@@ -754,23 +765,27 @@ function Campaign({
       return
     }
 
+    const levelToStart = selectedPreviewLevel
     const sourceNode = document.querySelector(
-      `[data-campaign-level-id="${selectedPreviewLevel.id}"]`,
+      `[data-campaign-level-id="${levelToStart.id}"]`,
     )
     const sourceRect = sourceNode?.getBoundingClientRect()
 
     levelEnterLocked.current = true
-    setLevelEnterTransition({
-      level: selectedPreviewLevel,
-      sourceRect: sourceRect
-        ? {
-            x: sourceRect.x,
-            y: sourceRect.y,
-            width: sourceRect.width,
-            height: sourceRect.height,
-          }
-        : null,
-    })
+    setActivatingLevelId(levelToStart.id)
+    playActivationTimer.current = window.setTimeout(() => {
+      setLevelEnterTransition({
+        level: levelToStart,
+        sourceRect: sourceRect
+          ? {
+              x: sourceRect.x,
+              y: sourceRect.y,
+              width: sourceRect.width,
+              height: sourceRect.height,
+            }
+          : null,
+      })
+    }, 100)
   }
 
   function finishLevelEnter() {
@@ -778,6 +793,7 @@ function Campaign({
     if (!level) return
     setSelectedLevel(level)
     setLevelEnterTransition(null)
+    setActivatingLevelId(null)
     levelEnterLocked.current = false
   }
 
@@ -844,7 +860,7 @@ function Campaign({
         to: updatedProgress.unlockedLevel,
         boss: level.boss === true,
         crossWorld: Math.ceil(level.id / 10) !== Math.ceil(updatedProgress.unlockedLevel / 10),
-        phase: 'traveling',
+        phase: 'charging',
       })
     }
 
@@ -918,7 +934,7 @@ function Campaign({
   const unlockPathLength = Math.max(0, unlockPathEnd - unlockPathStart)
   const unlockVisible = unlockAnimation && !unlockAnimation.crossWorld &&
     Math.ceil(unlockAnimation.from / 10) === selectedWorld
-  const displayedMapPathProgress = unlockVisible && unlockAnimation.phase === 'traveling'
+  const displayedMapPathProgress = unlockVisible && unlockAnimation.phase !== 'arrived'
     ? unlockPathStart
     : mapPathProgress
 
@@ -1339,7 +1355,7 @@ function Campaign({
             "
           />
 
-          {unlockVisible && (
+          {unlockVisible && unlockAnimation.phase === 'traveling' && (
             <>
               <path
                 className={`dq-path-unlock${unlockAnimation.boss ? ' is-boss' : ''}`}
@@ -1347,12 +1363,26 @@ function Campaign({
                 style={{
                   '--dq-unlock-length': unlockPathLength,
                   '--dq-unlock-offset': -unlockPathStart,
+                  '--dq-unlock-tail-from': -unlockPathStart,
+                  '--dq-unlock-tail-to': -unlockPathEnd,
                 }}
                 d="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
               />
-              <circle className="dq-path-unlock-head" r="1.15">
+              <path
+                className="dq-path-unlock-tail"
+                pathLength="100"
+                style={{
+                  '--dq-unlock-tail-from': -unlockPathStart,
+                  '--dq-unlock-tail-to': -unlockPathEnd,
+                }}
+                d="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
+              />
+              <circle className="dq-path-unlock-aura" r="2.8">
+                <animateMotion dur="1200ms" fill="freeze" calcMode="linear" keyPoints={`${unlockPathStart / 100};${unlockPathEnd / 100}`} keyTimes="0;1" path="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88" />
+              </circle>
+              <circle className="dq-path-unlock-head" r="1.55">
                 <animateMotion
-                  dur="760ms"
+                  dur="1200ms"
                   fill="freeze"
                   calcMode="linear"
                   keyPoints={`${unlockPathStart / 100};${unlockPathEnd / 100}`}
@@ -1406,6 +1436,10 @@ function Campaign({
                     ? 'selected'
                     : '',
 
+                  activatingLevelId === level.id
+                    ? 'is-starting'
+                    : '',
+
                   level.boss
                     ? 'boss'
                     : '',
@@ -1452,6 +1486,10 @@ function Campaign({
                   <span className="dq-crown">
                     ♛
                   </span>
+                )}
+
+                {unlockAnimation?.to === level.id && (
+                  <span className="dq-node-unlock-lock" aria-hidden="true">🔒</span>
                 )}
 
 
@@ -1566,15 +1604,17 @@ function Campaign({
 
 
               <button
-                className="dq-play-button"
+                className={`dq-play-button${activatingLevelId === selectedPreviewLevel.id ? ' is-activating' : ''}`}
 
                 type="button"
+
+                disabled={Boolean(activatingLevelId || levelEnterTransition || unlockAnimation)}
 
                 onClick={
                   startSelectedLevel
                 }
               >
-                SPIELEN
+                <span aria-hidden="true">▶</span> SPIELEN
               </button>
 
             </div>
