@@ -40,6 +40,14 @@ const difficultyNames = {
   5: 'PROFI',
 }
 
+const difficultyShortNames = {
+  1: 'A',
+  2: 'L',
+  3: 'M',
+  4: 'S',
+  5: 'P',
+}
+
 
 const worldNames = [
   'Anfänger I',
@@ -867,13 +875,14 @@ function Campaign({
         </div>
 
 
-        <button
-          type="button"
-          className="dq-header-button"
-          aria-label="Benachrichtigungen"
+        <div
+          className={`dq-difficulty-badge dq-difficulty-${settings.difficulty}`}
+          aria-label={`Schwierigkeitsgrad ${difficultyNames[settings.difficulty] ?? difficultyNames[1]}`}
+          title={`Schwierigkeitsgrad: ${difficultyNames[settings.difficulty] ?? difficultyNames[1]}`}
         >
-          ♧
-        </button>
+          <strong>{difficultyShortNames[settings.difficulty] ?? difficultyShortNames[1]}</strong>
+          <small>{difficultyNames[settings.difficulty] ?? difficultyNames[1]}</small>
+        </div>
 
       </header>
 

@@ -6,7 +6,7 @@ import Campaign from '../features/campaign/Campaign'
 import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
 import Profile from '../features/profile/Profile'
-import Leaderboard from '../features/leaderboard/Leaderboard'
+import Community from '../features/community/Community'
 import {
   addProfileRewards,
   getSessionProfile,
@@ -506,11 +506,8 @@ function App() {
         />
       )}
 
-      {activePage === 'leaderboard' && (
-        <Leaderboard
-          activeProfile={activeProfile}
-          onBack={() => setActivePage('home')}
-        />
+      {activePage === 'community' && (
+        <Community activeProfile={activeProfile} />
       )}
 
       {/* NAVIGATION */}
@@ -523,6 +520,7 @@ function App() {
         onChangePage={
           changePage
         }
+        pendingRequestCount={0}
       />
 
     </div>

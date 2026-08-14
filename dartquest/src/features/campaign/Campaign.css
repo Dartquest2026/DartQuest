@@ -900,6 +900,68 @@
   color: #42e695;
 }
 
+.dq-difficulty-badge {
+  --difficulty-rgb: 66, 230, 149;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+
+  border: 1px solid rgba(var(--difficulty-rgb), 0.72);
+  border-radius: 14px;
+
+  background:
+    radial-gradient(circle at 50% 0, rgba(var(--difficulty-rgb), 0.18), transparent 70%),
+    #071a14;
+  color: rgb(var(--difficulty-rgb));
+
+  box-shadow:
+    inset 0 0 10px rgba(var(--difficulty-rgb), 0.08),
+    0 0 10px rgba(var(--difficulty-rgb), 0.2);
+}
+
+.dq-difficulty-badge strong {
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 0 7px rgba(var(--difficulty-rgb), 0.55);
+}
+
+.dq-difficulty-badge small {
+  width: 100%;
+  margin-top: 4px;
+  overflow: hidden;
+
+  font-size: 6px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.dq-difficulty-2 { --difficulty-rgb: 66, 170, 230; }
+.dq-difficulty-3 { --difficulty-rgb: 245, 200, 66; }
+.dq-difficulty-4 { --difficulty-rgb: 245, 135, 66; }
+.dq-difficulty-5 { --difficulty-rgb: 235, 75, 75; }
+
+@media (max-width: 480px) {
+  .dq-difficulty-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .dq-difficulty-badge strong { font-size: 14px; }
+  .dq-difficulty-badge small { margin-top: 3px; font-size: 5px; }
+}
+
 /* STATUS */
 
 .dq-status {
