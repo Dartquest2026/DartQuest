@@ -1,4 +1,5 @@
 .campaign-exit-backdrop { position: fixed; z-index: 3000; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(0,8,6,.84); backdrop-filter: blur(7px); }
+.campaign-exit-modal{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
 .campaign-exit-modal { position: relative; width: min(100%,410px); padding: 27px 20px 20px; border: 1px solid rgba(66,230,149,.48); border-radius: 22px; background: radial-gradient(circle at 50% 0,rgba(66,230,149,.12),transparent 38%),#051913; box-shadow: 0 25px 70px rgba(0,0,0,.62),0 0 25px rgba(66,230,149,.1); text-align: center; }
 .campaign-exit-close { position: absolute; top: 11px; right: 11px; display: grid; width: 38px; height: 38px; place-items: center; padding: 0; border: 1px solid rgba(66,230,149,.22); border-radius: 11px; background: #092019; color: #42e695; font-size: 24px; }
 .campaign-exit-icon { margin-bottom: 9px; font-size: 31px; filter: drop-shadow(0 0 9px rgba(66,230,149,.3)); }

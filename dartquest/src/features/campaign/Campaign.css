@@ -200,6 +200,10 @@
   }
 }
 
+/* Full-height app-shell campaign. The map absorbs the remaining phone height. */
+.app-shell > .dq-campaign{display:flex;flex-direction:column;height:100%;min-height:0;max-height:none;padding:0 8px;overflow:hidden}.app-shell > .dq-campaign .dq-map{flex:1 1 auto;min-height:150px;height:auto}.app-shell > .dq-campaign .dq-header,.app-shell > .dq-campaign .dq-status,.app-shell > .dq-campaign .dq-overview,.app-shell > .dq-campaign .dq-title-world-only,.app-shell > .dq-campaign .dq-level-card,.app-shell > .dq-campaign .dq-boss-card{flex:0 0 auto}
+@media (max-width:480px) and (max-height:700px){.app-shell > .dq-campaign .dq-header{height:50px;margin:0}.app-shell > .dq-campaign .dq-logo img{width:min(58vw,220px);height:52px;transform:none}.app-shell > .dq-campaign .dq-header-button{width:34px;height:34px}.app-shell > .dq-campaign .dq-status{margin-bottom:3px;gap:4px}.app-shell > .dq-campaign .dq-overview{margin-bottom:3px;padding:4px}.app-shell > .dq-campaign .dq-title-world-only{margin-bottom:3px}.app-shell > .dq-campaign .dq-title-world-only .dq-world-current,.app-shell > .dq-campaign .dq-title-world-only .dq-world-arrow{height:36px!important}.app-shell > .dq-campaign .dq-map{min-height:145px}.app-shell > .dq-campaign .dq-level-card{margin-top:3px}.app-shell > .dq-campaign .dq-level-description{padding:5px 7px}.app-shell > .dq-campaign .dq-level-task{font-size:13px;line-height:1.25}.app-shell > .dq-campaign .dq-level-best{display:none}.app-shell > .dq-campaign .dq-level-action-area{padding:4px}.app-shell > .dq-campaign .dq-reward-item{min-height:27px;padding:2px}.app-shell > .dq-campaign .dq-play-button{min-height:38px;font-size:16px}.app-shell > .dq-campaign .dq-boss-card{margin-top:3px;padding:4px}}
+
 @media (max-width: 480px) {
   .dq-boss-card {
     grid-template-columns: 58px minmax(0, 1fr) 52px;

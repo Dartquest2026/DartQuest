@@ -1,4 +1,4 @@
-.auth-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(circle at 50% 0, rgba(66,230,149,.12), transparent 38%), #03110d; }
+.auth-screen { width:100%; height:100vh; height:100dvh; display: grid; place-items: center; padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); overflow-y:auto; overscroll-behavior:contain; background: radial-gradient(circle at 50% 0, rgba(66,230,149,.12), transparent 38%), #03110d; }
 .auth-panel { width: min(100%, 430px); padding: 28px 22px; border: 1px solid rgba(66,230,149,.3); border-radius: 24px; background: linear-gradient(180deg,#08221a,#041510); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
 .auth-logo { width: 210px; margin: 0 auto 18px; }
 .auth-eyebrow { margin: 0 0 7px; color: #42e695; font-size: 13px; font-weight: 900; letter-spacing: 1.5px; text-align: center; }
@@ -19,3 +19,4 @@
 .auth-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(255,90,100,.12); color: #ffabb1; font-size: 14px; line-height: 1.4; }
 .auth-success { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(66,230,149,.1); color: #8ff0bd; font-size: 14px; line-height: 1.4; }
 .auth-note { display: block; margin-top: 16px; color: #89a098; font-size: 12px; line-height: 1.4; text-align: center; }
+@media (max-height:700px){.auth-screen{place-items:start center}.auth-panel{padding:18px}.auth-logo{width:150px;margin-bottom:9px}.auth-intro{margin-bottom:14px}.auth-panel form{gap:10px}}

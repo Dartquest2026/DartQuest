@@ -53,13 +53,15 @@
 }
 
 html {
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
   background: var(--dq-bg);
 }
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
 
   margin: 0;
 
@@ -105,24 +107,31 @@ a {
    ========================================================= */
 
 #root {
-  min-height: 100vh;
+  height: 100%;
 }
 
 .app-shell {
   position: relative;
-
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 520px;
-  min-height: 100vh;
-
+  height: 100vh;
+  height: 100dvh;
   margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+}
 
-  padding:
-    20px
-    18px
-    calc(110px + env(safe-area-inset-bottom));
-
+.app-shell > :not(.bottom-nav) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: max(12px, env(safe-area-inset-top)) 18px 10px;
   overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 /* =========================================================
@@ -352,13 +361,7 @@ select:focus {
 @supports (
   padding-bottom: env(safe-area-inset-bottom)
 ) {
-  .app-shell {
-    padding-bottom:
-      calc(
-        110px +
-        env(safe-area-inset-bottom)
-      );
-  }
+  .app-shell { height: 100dvh; }
 }
 
 /* =========================================================
@@ -367,11 +370,10 @@ select:focus {
 
 @media (max-width: 430px) {
   .app-shell {
-    padding:
-      16px
-      14px
-      calc(104px + env(safe-area-inset-bottom));
+    padding: 0;
   }
+
+  .app-shell > :not(.bottom-nav) { padding: max(9px, env(safe-area-inset-top)) 14px 8px; }
 
   .brand-logo {
     width: 56px;
@@ -381,9 +383,9 @@ select:focus {
 
 @media (max-width: 360px) {
   .app-shell {
-    padding-right: 11px;
-    padding-left: 11px;
+    padding: 0;
   }
+  .app-shell > :not(.bottom-nav) { padding-right: 11px; padding-left: 11px; }
 }
 
 .app-auth-error { position: fixed; right: 16px; bottom: 16px; left: 16px; z-index: 10; margin: 0 auto; max-width: 430px; padding: 10px 12px; border-radius: 10px; background: #3b171b; color: #ffabb1; font-size: 14px; text-align: center; }

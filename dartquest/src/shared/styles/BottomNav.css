@@ -1,12 +1,9 @@
 .bottom-nav {
-  position: fixed;
-  left: 50%;
-  bottom: 0;
-
-  transform: translateX(-50%);
+  position: relative;
+  flex: 0 0 auto;
 
   width: 100%;
-  max-width: 520px;
+  max-width: none;
 
   display: flex;
   justify-content: space-around;
