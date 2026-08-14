@@ -9,6 +9,7 @@ import {
   loadGroup,
   normalizeInviteCode,
 } from './groupStorage'
+import { getFriends, searchProfiles, sendGroupInvite } from '../community/communityStorage'
 import './Leaderboard.css'
 
 function Leaderboard({ activeProfile, onBack }) {
@@ -20,6 +21,24 @@ function Leaderboard({ activeProfile, onBack }) {
   const [joinCode, setJoinCode] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [invitePlayers, setInvitePlayers] = useState([])
+  const [inviteSearch, setInviteSearch] = useState('')
+  const [inviteMessage, setInviteMessage] = useState('')
+
+  useEffect(() => {
+    if (mode !== 'invite') return undefined
+    if (inviteSearch.trim().length < 2) {
+      getFriends().then(setInvitePlayers).catch((loadError) => setInviteMessage(loadError.message))
+      return undefined
+    }
+    const timer = window.setTimeout(() => searchProfiles(inviteSearch).then(setInvitePlayers).catch((loadError) => setInviteMessage(loadError.message)), 300)
+    return () => window.clearTimeout(timer)
+  }, [mode, inviteSearch])
+
+  async function invitePlayer(player) {
+    try { await sendGroupInvite(selectedGroup.id, player.profileId); setInviteMessage('Gruppeneinladung gesendet.') }
+    catch (inviteError) { setInviteMessage(inviteError.message) }
+  }
 
   const refreshGroups = useCallback(async () => {
     setLoading(true)
@@ -105,7 +124,7 @@ function Leaderboard({ activeProfile, onBack }) {
   return (
     <main className="leaderboard-screen">
       <header className="leaderboard-header">
-        <button type="button" onClick={mode === 'detail' ? returnToGroupList : onBack}>‹</button>
+        <button type="button" onClick={mode === 'detail' ? returnToGroupList : mode === 'invite' ? () => setMode('detail') : onBack}>‹</button>
         <div><span>DARTQUEST</span><h1>Gruppen</h1></div>
       </header>
 
@@ -187,7 +206,7 @@ function Leaderboard({ activeProfile, onBack }) {
             <div><code>{selectedGroup.inviteCode}</code><button type="button" onClick={copyCode}>{copied ? 'KOPIERT ✓' : 'CODE KOPIEREN'}</button></div>
             <small>Online synchronisiert · auf allen Geräten verfügbar</small>
             {selectedGroup.ownerProfileId === activeProfile.id ? (
-              <button className="leaderboard-delete" type="button" onClick={() => setDeleteModalOpen(true)}>GRUPPE LÖSCHEN</button>
+              <><button className="leaderboard-invite" type="button" onClick={() => { setInviteSearch(''); setInviteMessage(''); setMode('invite') }}>SPIELER EINLADEN</button><button className="leaderboard-delete" type="button" onClick={() => setDeleteModalOpen(true)}>GRUPPE LÖSCHEN</button></>
             ) : (
               <button className="leaderboard-leave" type="button" onClick={leaveSelectedGroup}>GRUPPE VERLASSEN</button>
             )}
@@ -204,6 +223,18 @@ function Leaderboard({ activeProfile, onBack }) {
             ))}
           </section>
         </>
+      )}
+
+      {mode === 'invite' && selectedGroup && (
+        <section className="leaderboard-form-card">
+          <p>GRUPPENEINLADUNG</p><h2>Spieler einladen</h2>
+          <label>Nach Profilname suchen<input type="search" value={inviteSearch} onChange={(event) => setInviteSearch(event.currentTarget.value)} placeholder="Profilname" /></label>
+          <small className="leaderboard-invite-hint">{inviteSearch.trim().length < 2 ? 'Deine Freunde' : 'Suchergebnisse'}</small>
+          {inviteMessage && <p className="leaderboard-error">{inviteMessage}</p>}
+          <div className="leaderboard-invite-list">{invitePlayers.map((player) => <article key={player.profileId}><span>{player.name.slice(0, 1).toUpperCase()}</span><div><strong>{player.name}</strong><small>LVL {player.playerLevel} · {player.xp.toLocaleString('de-DE')} XP</small></div><button type="button" onClick={() => invitePlayer(player)}>IN GRUPPE EINLADEN</button></article>)}</div>
+          {!invitePlayers.length && <p className="leaderboard-empty">Keine Spieler gefunden.</p>}
+          <button className="leaderboard-cancel" type="button" onClick={() => setMode('detail')}>ZURÜCK</button>
+        </section>
       )}
 
       {deleteModalOpen && (

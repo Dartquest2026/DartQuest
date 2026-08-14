@@ -1,5 +1,7 @@
 begin;
 
+create extension if not exists pg_trgm with schema extensions;
+
 create table public.community_requests (
   id uuid primary key default gen_random_uuid(),
   sender_id uuid not null references public.profiles(id) on delete cascade,
@@ -33,6 +35,7 @@ where status = 'pending';
 create index community_requests_sender_id_idx on public.community_requests (sender_id);
 create index community_requests_group_id_idx on public.community_requests (group_id) where group_id is not null;
 create index friendships_user_id_b_idx on public.friendships (user_id_b);
+create index profiles_profile_name_trgm_idx on public.profiles using gin (profile_name extensions.gin_trgm_ops);
 
 create unique index community_requests_unique_pending_friend_idx
 on public.community_requests (least(sender_id, receiver_id), greatest(sender_id, receiver_id))

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import Home from '../features/home/Home'
 import Singleplayer from '../features/singleplayer/Singleplayer'
@@ -7,6 +7,7 @@ import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
 import Profile from '../features/profile/Profile'
 import Community from '../features/community/Community'
+import { getPendingRequestCount } from '../features/community/communityStorage'
 import {
   addProfileRewards,
   getSessionProfile,
@@ -69,6 +70,8 @@ function App() {
 
   const [authError, setAuthError] =
     useState('')
+
+  const [pendingRequestCount, setPendingRequestCount] = useState(0)
 
   const [activePage, setActivePage] =
     useState('home')
@@ -222,6 +225,21 @@ function App() {
       unsubscribe()
     }
   }, [])
+
+  const refreshPendingRequestCount = useCallback(async () => {
+    if (!activeProfile) { setPendingRequestCount(0); return }
+    try { setPendingRequestCount(await getPendingRequestCount()) }
+    catch { setPendingRequestCount(0) }
+  }, [activeProfile])
+
+  useEffect(() => {
+    if (!activeProfile) return undefined
+    const initialTimer = window.setTimeout(refreshPendingRequestCount, 0)
+    const timer = window.setInterval(refreshPendingRequestCount, 30000)
+    const refreshOnFocus = () => refreshPendingRequestCount()
+    window.addEventListener('focus', refreshOnFocus)
+    return () => { window.clearTimeout(initialTimer); window.clearInterval(timer); window.removeEventListener('focus', refreshOnFocus) }
+  }, [activeProfile, refreshPendingRequestCount])
 
   async function logout() {
     try {
@@ -507,7 +525,7 @@ function App() {
       )}
 
       {activePage === 'community' && (
-        <Community activeProfile={activeProfile} />
+        <Community activeProfile={activeProfile} onRequestsChanged={refreshPendingRequestCount} />
       )}
 
       {/* NAVIGATION */}
@@ -520,7 +538,7 @@ function App() {
         onChangePage={
           changePage
         }
-        pendingRequestCount={0}
+        pendingRequestCount={pendingRequestCount}
       />
 
     </div>
