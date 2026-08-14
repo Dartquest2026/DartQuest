@@ -56,3 +56,15 @@ export async function searchProfiles(searchText) {
   if (error) throw rpcError(error, 'Spielersuche fehlgeschlagen.')
   return (data ?? []).map(mapPlayer)
 }
+
+export async function getPublicPlayerProfile(profileId) {
+  const { data, error } = await supabase.rpc('get_public_player_profile', { profile_id: profileId })
+  if (error) throw rpcError(error, 'Spielerprofil konnte nicht geladen werden.')
+  const row = data?.[0]
+  if (!row) throw new Error('Spielerprofil nicht gefunden.')
+  return {
+    ...mapPlayer(row),
+    friendshipStatus: row.friendship_status,
+    pendingRequestId: row.pending_request_id,
+  }
+}

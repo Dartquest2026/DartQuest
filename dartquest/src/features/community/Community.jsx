@@ -65,7 +65,7 @@ function RequestsPage({ onBack, onRequestsChanged }) {
 function Community({ activeProfile, onRequestsChanged }) {
   const [section, setSection] = useState('communityHome')
   const back = () => setSection('communityHome')
-  if (section === 'leaderboard') return <GlobalLeaderboard activeProfile={activeProfile} onBack={back} />
+  if (section === 'leaderboard') return <GlobalLeaderboard activeProfile={activeProfile} onBack={back} onRequestsChanged={onRequestsChanged} />
   if (section === 'groups') return <Leaderboard activeProfile={activeProfile} onBack={back} />
   if (section === 'friends') return <FriendsPage onBack={back} />
   if (section === 'requests') return <RequestsPage onBack={back} onRequestsChanged={onRequestsChanged} />

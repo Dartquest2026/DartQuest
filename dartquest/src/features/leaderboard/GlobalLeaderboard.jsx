@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { loadGlobalLeaderboardPage } from './globalLeaderboardStorage'
-import { sendFriendRequest } from '../community/communityStorage'
+import PublicPlayerProfile from '../community/PublicPlayerProfile'
 import './GlobalLeaderboard.css'
 
 const rankMedals = ['🥇', '🥈', '🥉']
 
-function GlobalLeaderboard({ activeProfile, onBack }) {
+function GlobalLeaderboard({ activeProfile, onBack, onRequestsChanged }) {
   const [players, setPlayers] = useState([])
   const [nextCursor, setNextCursor] = useState(null)
   const [hasMore, setHasMore] = useState(false)
@@ -13,15 +13,7 @@ function GlobalLeaderboard({ activeProfile, onBack }) {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [feedback, setFeedback] = useState('')
-  const [sendingTo, setSendingTo] = useState('')
-
-  async function addFriend(profileId) {
-    setSendingTo(profileId); setFeedback('')
-    try { await sendFriendRequest(profileId); setFeedback('Freundschaftsanfrage gesendet.') }
-    catch (sendError) { setFeedback(sendError.message) }
-    finally { setSendingTo('') }
-  }
+  const [selectedProfileId, setSelectedProfileId] = useState(null)
 
   const loadFirstPage = useCallback(async () => {
     setLoading(true)
@@ -70,6 +62,8 @@ function GlobalLeaderboard({ activeProfile, onBack }) {
     [players],
   )
 
+  if (selectedProfileId) return <PublicPlayerProfile profileId={selectedProfileId} onBack={() => setSelectedProfileId(null)} onRequestsChanged={onRequestsChanged} />
+
   return (
     <main className="global-leaderboard-screen">
       <header className="global-leaderboard-header">
@@ -82,7 +76,6 @@ function GlobalLeaderboard({ activeProfile, onBack }) {
         <input type="search" value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Spieler suchen" aria-label="Spieler suchen" />
       </label>
       <p className="global-leaderboard-search-note">Suche innerhalb der bereits geladenen Spieler</p>
-      {feedback && <p className="global-leaderboard-feedback">{feedback}</p>}
 
       <section className="global-leaderboard-list" aria-label="Globale Spielerrangliste">
         <div className="global-leaderboard-columns"><span>RANG</span><span aria-hidden="true" /><span>SPIELER</span><span>LEVEL</span><span>XP</span></div>
@@ -95,13 +88,13 @@ function GlobalLeaderboard({ activeProfile, onBack }) {
           const rank = ranksByProfileId.get(player.profileId)
           const isMe = player.profileId === activeProfile.id
           return (
-            <article key={player.profileId} className={`global-player rank-${rank} ${isMe ? 'is-me' : ''}`}>
+            <button type="button" key={player.profileId} className={`global-player rank-${rank} ${isMe ? 'is-me' : ''}`} onClick={() => setSelectedProfileId(player.profileId)} aria-label={`Spielerprofil von ${player.name} öffnen`}>
               <b className="global-player-rank">{rankMedals[rank - 1] ?? rank}</b>
               <div className="global-player-avatar">{player.name.slice(0, 1).toUpperCase()}</div>
-              <div className="global-player-name"><strong>{player.name}</strong>{isMe ? <em>DU</em> : <button type="button" disabled={sendingTo === player.profileId} onClick={() => addFriend(player.profileId)}>FREUND HINZUFÜGEN</button>}</div>
+              <div className="global-player-name"><strong>{player.name}</strong>{isMe && <em>DU</em>}</div>
               <span className="global-player-level">LVL {player.playerLevel}</span>
               <span className="global-player-xp"><strong>{player.xp.toLocaleString('de-DE')}</strong> XP</span>
-            </article>
+            </button>
           )
         })}
       </section>
