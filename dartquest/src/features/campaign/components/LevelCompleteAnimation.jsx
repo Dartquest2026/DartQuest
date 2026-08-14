@@ -27,9 +27,10 @@ function chooseMessage(messages) {
   return message
 }
 
-function LevelCompleteAnimation({ stars, xp, coins, totalDarts, visits, isBoss = false, levelId, autoPerfect = false, onContinue = null, onStarReveal, onPerfectReveal, onRewardsReveal }) {
+function LevelCompleteAnimation({ stars, xp, coins, totalDarts, visits, isBoss = false, levelId, autoPerfect = false, onStarReveal, onPerfectReveal, onRewardsReveal }) {
   const earnedStars = Math.max(1, Math.min(4, stars ?? 1))
-  const [navigationReady, setNavigationReady] = useState(false)
+  const [displayXP, setDisplayXP] = useState(0)
+  const [displayCoins, setDisplayCoins] = useState(0)
   const [message] = useState(() => chooseMessage(isBoss ? BOSS_MESSAGES : MESSAGE_GROUPS[earnedStars]))
   const [subtitle] = useState(() => {
     const options = SUBTITLE_GROUPS[earnedStars]
@@ -39,33 +40,40 @@ function LevelCompleteAnimation({ stars, xp, coins, totalDarts, visits, isBoss =
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const timers = []
-    timers.push(window.setTimeout(() => setNavigationReady(true), reducedMotion ? 80 : 1380))
+    const rewardStart = reducedMotion ? 80 : 2850
+    const rewardSteps = reducedMotion ? 1 : 12
+    for (let step = 1; step <= rewardSteps; step += 1) {
+      timers.push(window.setTimeout(() => {
+        setDisplayXP(Math.round((xp ?? 0) * step / rewardSteps))
+        setDisplayCoins(Math.round((coins ?? 0) * step / rewardSteps))
+      }, rewardStart + step * (reducedMotion ? 1 : 50)))
+    }
     if (onStarReveal) {
       for (let index = 0; index < earnedStars; index += 1) {
-        timers.push(window.setTimeout(() => onStarReveal(index + 1), reducedMotion ? 40 : 150 + index * 155))
+        timers.push(window.setTimeout(() => onStarReveal(index + 1), reducedMotion ? 40 : 700 + index * 300))
       }
     }
-    if (autoPerfect && onPerfectReveal) timers.push(window.setTimeout(onPerfectReveal, reducedMotion ? 60 : 820))
-    if (onRewardsReveal) timers.push(window.setTimeout(onRewardsReveal, reducedMotion ? 80 : 1120))
+    if (autoPerfect && onPerfectReveal) timers.push(window.setTimeout(onPerfectReveal, reducedMotion ? 60 : 2200))
+    if (onRewardsReveal) timers.push(window.setTimeout(onRewardsReveal, reducedMotion ? 80 : 2850))
     return () => timers.forEach((timer) => window.clearTimeout(timer))
-  }, [autoPerfect, earnedStars, onPerfectReveal, onRewardsReveal, onStarReveal])
+  }, [autoPerfect, coins, earnedStars, onPerfectReveal, onRewardsReveal, onStarReveal, xp])
 
   return (
     <section className={`level-complete-animation stars-${earnedStars}${isBoss ? ' is-boss' : ''}`} aria-live="polite">
       <p className="level-complete-eyebrow">{isBoss ? `BOSS-LEVEL ${levelId}` : `LEVEL ${levelId}`}</p>
 
       <div className="level-complete-stars" aria-label={`${earnedStars} von 4 Sternen`}>
-        {[1, 2, 3, 4].map((star) => (
+        {Array.from({ length: earnedStars }, (_, index) => index + 1).map((star) => (
           <span
             key={star}
-            className={star <= earnedStars ? 'is-earned' : 'is-empty'}
+            className="is-earned"
             style={{
-              '--empty-star-delay': `${120 + (star - 1) * 40}ms`,
-              '--earned-star-delay': `${150 + (star - 1) * 155}ms`,
+              '--empty-star-delay': `${620 + (star - 1) * 40}ms`,
+              '--earned-star-delay': `${700 + (star - 1) * 300}ms`,
             }}
             aria-hidden="true"
           >
-            {star <= earnedStars ? '★' : '☆'}
+            ★
           </span>
         ))}
       </div>
@@ -80,11 +88,11 @@ function LevelCompleteAnimation({ stars, xp, coins, totalDarts, visits, isBoss =
       </p>
 
       <div className="level-complete-rewards">
-        <div><span>XP</span><strong>+{xp}</strong></div>
-        <div><span>Coins</span><strong>+{coins}</strong></div>
+        <span><strong>+{displayXP}</strong> XP</span>
+        <i aria-hidden="true">•</i>
+        <span><b aria-hidden="true">🪙</b> <strong>+{displayCoins}</strong> Coins</span>
       </div>
 
-      {onContinue && <button type="button" onClick={onContinue} disabled={!navigationReady}>Weiter</button>}
     </section>
   )
 }

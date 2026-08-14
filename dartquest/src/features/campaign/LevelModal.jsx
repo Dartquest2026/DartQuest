@@ -73,7 +73,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const timer = window.setTimeout(() => setIntroReady(true), reducedMotion ? 40 : 560)
+    const timer = window.setTimeout(() => setIntroReady(true), reducedMotion ? 40 : 1200)
     return () => window.clearTimeout(timer)
   }, [])
 
@@ -84,7 +84,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
       resultDelivered.current = true
       onComplete(level, result)
       onClose()
-    }, 2000)
+    }, 6000)
     return () => clearTimeout(timer)
   }, [result, level, onComplete, onClose])
 
@@ -137,13 +137,6 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     applyInputMode(nextMode)
   }
 
-  function finishLevel() {
-    if (!result || resultDelivered.current) return
-    resultDelivered.current = true
-    onComplete(level, result)
-    onClose()
-  }
-
   function giveUpLevel() {
     if (resultDelivered.current) return
     resultDelivered.current = true
@@ -152,19 +145,18 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
   }
 
   return (
-    <div className="level-modal-backdrop" onClick={onClose}>
-      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}`} onClick={(event) => event.stopPropagation()}>
-        <button className="level-modal-close" type="button" onClick={onClose} aria-label="Level schließen">×</button>
+    <div className="level-modal-backdrop" onClick={result ? undefined : onClose}>
+      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${result ? ' is-completing' : ''}`} onClick={(event) => event.stopPropagation()}>
+        {!result && <button className="level-modal-close" type="button" onClick={onClose} aria-label="Level schließen">×</button>}
 
-        {!result && (
-          <>
+        <div className={`level-gameplay-layer${result ? ' is-finished' : ''}`} aria-hidden={result ? 'true' : undefined}>
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
             <h2 className="level-modal-title">{displayedTask}</h2>
             <button
               type="button"
               className={`level-input-mode-switch is-${inputMode}`}
               onClick={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
-              disabled={!introReady}
+              disabled={!introReady || Boolean(result)}
               aria-label={inputMode === 'counter' ? 'Zur Schnelleingabe wechseln' : 'Zum Trefferzähler wechseln'}
               title={inputMode === 'counter' ? 'Treffer zählen' : 'Schnelleingabe'}
             >
@@ -188,17 +180,17 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
                 onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
                 completionPending={isAttemptComplete(attempt)}
                 onFinish={finishAttempt}
-                interactionDisabled={!introReady}
+                interactionDisabled={!introReady || Boolean(result)}
               />
             ) : (
               <QuickDartInput
                 attempt={attempt}
                 minimumDarts={minimumDarts}
                 onComplete={finishQuickAttempt}
-                disabled={!introReady}
+                disabled={!introReady || Boolean(result)}
               />
             )}
-            <button type="button" className="level-giveup-button" onClick={giveUpLevel} disabled={!introReady}>Aufgeben</button>
+            <button type="button" className="level-giveup-button" onClick={giveUpLevel} disabled={!introReady || Boolean(result)}>Aufgeben</button>
 
             {pendingInputMode && (
               <div className="level-input-mode-confirm" role="alertdialog" aria-modal="true" aria-labelledby="input-mode-confirm-title">
@@ -212,8 +204,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
                 </div>
               </div>
             )}
-          </>
-        )}
+        </div>
 
         {result && (
           <LevelCompleteAnimation
@@ -225,7 +216,6 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
             isBoss={level.boss === true}
             levelId={level.id}
             autoPerfect={result.autoPerfect === true}
-            onContinue={result.autoPerfect ? null : finishLevel}
           />
         )}
       </article>

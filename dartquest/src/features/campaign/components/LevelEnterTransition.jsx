@@ -8,8 +8,8 @@ function LevelEnterTransition({ level, sourceRect, onComplete }) {
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const zoomTimer = window.setTimeout(() => setPhase('zooming'), reducedMotion ? 20 : 120)
-    const completeTimer = window.setTimeout(onComplete, reducedMotion ? 140 : 540)
+    const zoomTimer = window.setTimeout(() => setPhase('zooming'), reducedMotion ? 20 : 300)
+    const completeTimer = window.setTimeout(onComplete, reducedMotion ? 140 : 1500)
     document.body.style.overflow = 'hidden'
 
     return () => {

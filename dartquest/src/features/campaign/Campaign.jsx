@@ -33,6 +33,31 @@ import './Campaign.css'
 const CAMPAIGN_STORAGE_BASE_KEY =
   'dartquest-campaign-progress'
 
+const FALLBACK_PATH_LEVEL_POSITIONS = [0, 11.65, 23.87, 33.06, 42.11, 53.62, 65.6, 73.49, 86.59, 100]
+
+function measureLevelPositionsOnPath(path) {
+  const totalLength = path.getTotalLength()
+  const sampleCount = 1600
+
+  return Array.from({ length: 10 }, (_, index) => {
+    const target = getWorldPosition(1, index + 1)
+    let nearestLength = 0
+    let nearestDistance = Number.POSITIVE_INFINITY
+
+    for (let sample = 0; sample <= sampleCount; sample += 1) {
+      const length = totalLength * sample / sampleCount
+      const point = path.getPointAtLength(length)
+      const distance = (point.x - target.x) ** 2 + (point.y - target.y) ** 2
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearestLength = length
+      }
+    }
+
+    return nearestLength / totalLength * 100
+  })
+}
+
 const difficultyNames = {
   1: 'ANFÄNGER',
   2: 'LEICHT',
@@ -171,12 +196,23 @@ function Campaign({
   const playActivationTimer = useRef(null)
   const [activatingLevelId, setActivatingLevelId] = useState(null)
   const [unlockAnimation, setUnlockAnimation] = useState(null)
+  const campaignPathRef = useRef(null)
+  const [pathLevelPositions, setPathLevelPositions] = useState(FALLBACK_PATH_LEVEL_POSITIONS)
   const unlockFrom = unlockAnimation?.from
   const unlockTo = unlockAnimation?.to
   const unlockCrossWorld = unlockAnimation?.crossWorld
 
   useEffect(() => () => {
     if (playActivationTimer.current) window.clearTimeout(playActivationTimer.current)
+  }, [])
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      if (campaignPathRef.current) {
+        setPathLevelPositions(measureLevelPositionsOnPath(campaignPathRef.current))
+      }
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   useEffect(() => {
@@ -785,7 +821,7 @@ function Campaign({
             }
           : null,
       })
-    }, 100)
+    }, 300)
   }
 
   function finishLevelEnter() {
@@ -888,19 +924,6 @@ function Campaign({
      UI
      ======================================================= */
 
-  const mapLevelPathPositions = [
-    0,
-    11.65,
-    23.87,
-    33.06,
-    42.11,
-    53.62,
-    65.6,
-    73.49,
-    86.59,
-    100,
-  ]
-
   const highestUnlockedMapIndex =
     visibleLevels.reduce(
       (highestIndex, level, index) =>
@@ -919,7 +942,7 @@ function Campaign({
     })
 
   const mapPathProgress =
-    mapLevelPathPositions[
+    pathLevelPositions[
       highestUnlockedMapIndex
     ] ?? 0
 
@@ -929,8 +952,8 @@ function Campaign({
   const unlockToIndex = unlockAnimation
     ? (unlockAnimation.to - 1) % 10
     : 0
-  const unlockPathStart = mapLevelPathPositions[unlockFromIndex] ?? 0
-  const unlockPathEnd = mapLevelPathPositions[unlockToIndex] ?? unlockPathStart
+  const unlockPathStart = pathLevelPositions[unlockFromIndex] ?? 0
+  const unlockPathEnd = pathLevelPositions[unlockToIndex] ?? unlockPathStart
   const unlockPathLength = Math.max(0, unlockPathEnd - unlockPathStart)
   const unlockVisible = unlockAnimation && !unlockAnimation.crossWorld &&
     Math.ceil(unlockAnimation.from / 10) === selectedWorld
@@ -1321,6 +1344,7 @@ function Campaign({
           </defs>
 
           <path
+            ref={campaignPathRef}
             className="dq-path-shadow"
 
             pathLength="100"
@@ -1362,18 +1386,8 @@ function Campaign({
                 pathLength="100"
                 style={{
                   '--dq-unlock-length': unlockPathLength,
+                  '--dq-unlock-gap': 100 - unlockPathLength,
                   '--dq-unlock-offset': -unlockPathStart,
-                  '--dq-unlock-tail-from': -unlockPathStart,
-                  '--dq-unlock-tail-to': -unlockPathEnd,
-                }}
-                d="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
-              />
-              <path
-                className="dq-path-unlock-tail"
-                pathLength="100"
-                style={{
-                  '--dq-unlock-tail-from': -unlockPathStart,
-                  '--dq-unlock-tail-to': -unlockPathEnd,
                 }}
                 d="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
               />
