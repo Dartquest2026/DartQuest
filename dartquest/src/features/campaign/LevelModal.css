@@ -23,7 +23,7 @@
   border: 1px solid #42e695 !important;
   border-radius: 24px !important;
 
-  background: #071b15 !important;
+  background: #000f0d !important;
 
   box-shadow:
     0 30px 80px rgba(0, 0, 0, 0.7),
@@ -544,10 +544,10 @@
   }
 
   .level-modal {
-    width: min(100%, 390px) !important;
+    width: min(100%, 420px) !important;
     max-height: calc(100dvh - max(12px, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
     padding: 12px 14px 10px !important;
-    border-radius: 18px !important;
+    border-radius: 20px !important;
     overflow: hidden !important;
   }
 
@@ -599,4 +599,10 @@
     font-size: 15px;
     line-height: 1.35;
   }
+}
+
+@media (max-width: 560px) and (max-height: 680px) {
+  .level-modal-eyebrow { margin-bottom: 1px; }
+  .level-modal-title { margin-bottom: 4px; font-size: 18px; }
+  .level-giveup-button { min-height: 34px; margin-top: 5px; padding: 5px; }
 }

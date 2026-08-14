@@ -3,13 +3,12 @@
 .dartboard-rim { fill: #070c11; stroke: #5d6b72; stroke-width: 2.5; }
 .dartboard-base { fill: #111820; stroke: #9cabb0; stroke-width: 1.2; }
 .dartboard-field { stroke: rgba(202,216,220,.48); stroke-width: .7; transition: fill .25s ease, stroke .25s ease, opacity .25s ease; }
-.dartboard-field.ring-single-inner.segment-dark, .dartboard-field.ring-single-outer.segment-dark { fill: #101413; }
-.dartboard-field.ring-single-inner.segment-light, .dartboard-field.ring-single-outer.segment-light { fill: #e8ddbd; }
-.dartboard-field.ring-double.segment-dark, .dartboard-field.ring-triple.segment-dark { fill: #df303b; }
-.dartboard-field.ring-double.segment-light, .dartboard-field.ring-triple.segment-light { fill: #15914d; }
-.dartboard-bull-outer { fill: #15914d; stroke: #cbd6d8; stroke-width: .8; }
-.dartboard-bull-inner { fill: #df303b; stroke: #cbd6d8; stroke-width: .8; }
-.dartboard-texture { pointer-events: none; opacity: .1; filter: url(#sisalTexture); mix-blend-mode: soft-light; }
+.dartboard-field.ring-single-inner.segment-dark, .dartboard-field.ring-single-outer.segment-dark { fill: #0d0d0d; }
+.dartboard-field.ring-single-inner.segment-light, .dartboard-field.ring-single-outer.segment-light { fill: #e8d8b5; }
+.dartboard-field.ring-double.segment-dark, .dartboard-field.ring-triple.segment-dark { fill: #d32f2f; }
+.dartboard-field.ring-double.segment-light, .dartboard-field.ring-triple.segment-light { fill: #169b62; }
+.dartboard-bull-outer { fill: #169b62; stroke: #cbd6d8; stroke-width: .8; }
+.dartboard-bull-inner { fill: #d32f2f; stroke: #cbd6d8; stroke-width: .8; }
 .dartboard-number { fill: #f3f5f4; font-size: 9px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; }
 .dartboard-field.dartboard-segment--target.dartboard-segment--target,
 .dartboard-bull-outer.dartboard-segment--target,

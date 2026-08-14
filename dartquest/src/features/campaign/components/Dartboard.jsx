@@ -37,21 +37,15 @@ function Dartboard({ targets, hitCounters }) {
   })
 
   const rings = [
-    ['single-inner', 18, 70],
-    ['triple', 70, 82],
-    ['single-outer', 82, 106],
-    ['double', 106, 119],
+    ['single-inner', 18, 73],
+    ['triple', 73, 79],
+    ['single-outer', 79, 112],
+    ['double', 112, 118],
   ]
 
   return (
     <div className="attempt-dartboard" aria-label="Dartscheibe mit markierten Zielfeldern">
       <svg viewBox="-18 -18 276 276" role="img">
-        <defs>
-          <filter id="sisalTexture">
-            <feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="2" seed="7" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-        </defs>
         <circle className="dartboard-rim" cx="120" cy="120" r="137" />
         <circle className="dartboard-base" cx="120" cy="120" r="121" />
         {NUMBERS.flatMap((number, index) => rings.map(([ring, inner, outer]) => (
@@ -64,7 +58,6 @@ function Dartboard({ targets, hitCounters }) {
         )))}
         <circle className={`dartboard-bull-outer${highlightedBulls.has('outer') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="17" pathLength="1" />
         <circle className={`dartboard-bull-inner${highlightedBulls.has('inner') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="7" pathLength="1" />
-        <circle className="dartboard-texture" cx="120" cy="120" r="119" />
         {NUMBERS.map((number, index) => {
           const [x, y] = point(130, index * 18)
           return <text key={number} x={x} y={y} className="dartboard-number">{number}</text>
