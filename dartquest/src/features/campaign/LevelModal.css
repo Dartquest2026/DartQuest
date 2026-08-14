@@ -485,6 +485,20 @@
   }
 }
 
+.level-giveup-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px;
+  border: 1px solid rgba(255, 98, 106, 0.28);
+  border-radius: 14px;
+  background: rgba(55, 20, 22, 0.5);
+  color: #ffabb0;
+  font: inherit;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 .level-modal-multiplayer {
   display: grid;
   gap: 5px;
