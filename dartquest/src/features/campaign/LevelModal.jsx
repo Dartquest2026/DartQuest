@@ -8,6 +8,7 @@ import {
   isAutoPerfectAttempt,
   isAttemptComplete,
   nextVisit,
+  previousVisit,
   registerTargetHit,
   undoTargetHit,
 } from './utils/levelAttempt'
@@ -128,6 +129,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
               attempt={attempt}
               onHit={applyHit}
               onNextVisit={() => setAttempt((current) => nextVisit(current))}
+              onPreviousVisit={() => setAttempt((current) => previousVisit(current))}
               onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
               completionPending={isAttemptComplete(attempt)}
               onFinish={finishAttempt}

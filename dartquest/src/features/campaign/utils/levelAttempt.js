@@ -179,6 +179,11 @@ export function nextVisit(attempt) {
   return { ...attempt, visits, totalDarts: visits * 3 }
 }
 
+export function previousVisit(attempt) {
+  const visits = Math.max(1, attempt.visits - 1)
+  return { ...attempt, visits, totalDarts: visits * 3 }
+}
+
 export function undoTargetHit(attempt, targetId) {
   const index = attempt.hitHistory.findLastIndex((hit) => hit.targetId === targetId)
   if (index < 0) return attempt

@@ -1,7 +1,7 @@
 import Dartboard from './Dartboard'
 import './HitCounter.css'
 
-function HitCounter({ attempt, onHit, onNextVisit, onUndo, completionPending, onFinish }) {
+function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, completionPending, onFinish }) {
   const expectedTarget = attempt.sequence[attempt.sequenceIndex]
 
   return (
@@ -13,7 +13,10 @@ function HitCounter({ attempt, onHit, onNextVisit, onUndo, completionPending, on
         <div><span>Darts gesamt</span><strong>{attempt.totalDarts}</strong></div>
       </header>
 
-      <button className="hit-counter-next-visit" type="button" onClick={onNextVisit} disabled={completionPending}>Nächste Aufnahme</button>
+      <div className="hit-counter-visit-actions">
+        <button className="hit-counter-previous-visit" type="button" onClick={onPreviousVisit} disabled={attempt.visits <= 1}>↶ Aufnahme</button>
+        <button className="hit-counter-next-visit" type="button" onClick={onNextVisit} disabled={completionPending}>Nächste Aufnahme</button>
+      </div>
 
       <div className="hit-counter-targets">
         {attempt.targets.map((target) => {
