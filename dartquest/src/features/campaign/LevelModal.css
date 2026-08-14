@@ -485,6 +485,22 @@
   }
 }
 
+.level-result-perfect-copy {
+  margin: -2px 0 10px;
+  color: #69efb7;
+  font-weight: 800;
+  animation: levelPerfectGlow 1.2s ease-out both;
+}
+
+@keyframes levelPerfectGlow {
+  from { opacity: 0; transform: scale(0.94); text-shadow: 0 0 18px rgba(66, 230, 149, 0); }
+  to { opacity: 1; transform: scale(1); text-shadow: 0 0 18px rgba(66, 230, 149, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-result-perfect-copy { animation: none; }
+}
+
 .level-giveup-button {
   width: 100%;
   margin-top: 16px;

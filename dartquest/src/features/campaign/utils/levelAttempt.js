@@ -203,8 +203,27 @@ export function isAttemptComplete(attempt) {
   ) && (!attempt.ordered || attempt.sequenceIndex >= attempt.sequence.length)
 }
 
+export function getRequiredHitCount(attempt) {
+  return attempt.targets.reduce(
+    (total, target) => total + target.requiredHits,
+    0,
+  )
+}
+
+export function isAutoPerfectAttempt(attempt) {
+  return attempt.visits === 1 &&
+    getRequiredHitCount(attempt) === 3 &&
+    isAttemptComplete(attempt)
+}
+
 export function calculateLevelStars(level, totalDarts) {
-  const minimumDarts = positiveInteger(level.targetHits, 1)
+  const structuredMinimum = Array.isArray(level.targets)
+    ? level.targets.reduce(
+        (total, target) => total + positiveInteger(target.requiredHits, 1),
+        0,
+      )
+    : 1
+  const minimumDarts = positiveInteger(level.targetHits, structuredMinimum)
   if (totalDarts === minimumDarts) return 4
   if (totalDarts <= minimumDarts * 3) return 3
   if (totalDarts <= minimumDarts * 6) return 2

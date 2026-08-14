@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import HitCounter from './components/HitCounter'
 import {
   createAbandonedResult,
   createAttemptResult,
   createLevelAttempt,
+  isAutoPerfectAttempt,
   isAttemptComplete,
   nextVisit,
   registerTargetHit,
@@ -19,10 +20,14 @@ function formatTaskForDisplay(task) {
 function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
   const [result, setResult] = useState(null)
+  const completionStarted = useRef(false)
+  const resultDelivered = useRef(false)
 
   useEffect(() => {
     if (!result || !level) return undefined
     const timer = setTimeout(() => {
+      if (resultDelivered.current) return
+      resultDelivered.current = true
       onComplete(level, result)
       onClose()
     }, 2500)
@@ -38,20 +43,32 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     const nextAttempt = registerTargetHit(attempt, targetId)
     if (nextAttempt === attempt) return
     setAttempt(nextAttempt)
+
+    if (isAutoPerfectAttempt(nextAttempt) && !completionStarted.current) {
+      completionStarted.current = true
+      setResult({
+        ...createAttemptResult(level, nextAttempt, Date.now(), 3),
+        autoPerfect: true,
+      })
+    }
   }
 
   function finishAttempt(finishingDart) {
-    if (!isAttemptComplete(attempt)) return
+    if (!isAttemptComplete(attempt) || completionStarted.current) return
+    completionStarted.current = true
     setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
   }
 
   function finishLevel() {
-    if (!result) return
+    if (!result || resultDelivered.current) return
+    resultDelivered.current = true
     onComplete(level, result)
     onClose()
   }
 
   function giveUpLevel() {
+    if (resultDelivered.current) return
+    resultDelivered.current = true
     onComplete(level, createAbandonedResult(level, attempt))
     onClose()
   }
@@ -89,7 +106,10 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
           <div className="level-result-screen">
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
             <div className="level-result-stars">{'⭐'.repeat(result.stars)}</div>
-            <h2>Level geschafft!</h2>
+            <h2>{result.autoPerfect ? 'Perfekt!' : 'Level geschafft!'}</h2>
+            {result.autoPerfect && (
+              <p className="level-result-perfect-copy">Alle Ziele in der ersten Aufnahme getroffen.</p>
+            )}
             <p className="level-result-range">
               {result.totalDarts} {result.totalDarts === 1 ? 'Pfeil' : 'Pfeile'} · {result.visits} {result.visits === 1 ? 'Aufnahme' : 'Aufnahmen'}
             </p>
@@ -97,7 +117,9 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
               <div><span>XP</span><strong>+{result.xp}</strong></div>
               <div><span>Coins</span><strong>+{result.coins}</strong></div>
             </div>
-            <button className="level-result-continue" type="button" onClick={finishLevel}>Weiter</button>
+            {!result.autoPerfect && (
+              <button className="level-result-continue" type="button" onClick={finishLevel}>Weiter</button>
+            )}
           </div>
         )}
       </article>
