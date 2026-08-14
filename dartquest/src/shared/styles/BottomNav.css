@@ -33,7 +33,7 @@
   border: 0;
   background: transparent;
 
-  color: #8ea39d;
+  color: #87918d;
 
   font: inherit;
   font-size: 12px;
@@ -47,21 +47,36 @@
 .bottom-nav button svg {
   width: 26px;
   height: 26px;
+
+  color: inherit;
+  filter: none;
 }
 
 .bottom-nav button.active {
   color: #42e695;
+
+  text-shadow: 0 0 9px rgba(66,230,149,.38);
 }
 
 .bottom-nav button.active svg {
   filter: drop-shadow(0 0 8px rgba(66,230,149,.55));
 }
 
+.bottom-nav button:not(.active) {
+  color: #87918d;
+  text-shadow: none;
+}
+
+.bottom-nav button:not(.active) svg {
+  color: inherit;
+  filter: none;
+}
+
 .bottom-nav button:active {
   transform: scale(.94);
 }
 
-.bottom-nav-icon { position: relative; display: grid; min-width: 28px; min-height: 28px; place-items: center; font-size: 23px; line-height: 1; }
+.bottom-nav-icon { position: relative; display: grid; min-width: 28px; min-height: 28px; place-items: center; color: inherit; line-height: 1; }
 .bottom-nav-badge { position: absolute; top: -7px; right: -11px; display: grid; min-width: 18px; height: 18px; place-items: center; padding: 0 4px; border: 2px solid #05120e; border-radius: 999px; background: #f04452; color: white; font-size: 9px; font-weight: 900; line-height: 1; box-shadow: 0 0 9px rgba(240,68,82,.55); }
 
 @media (max-width: 560px) {

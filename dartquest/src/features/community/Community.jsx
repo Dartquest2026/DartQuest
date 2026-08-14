@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Leaderboard from '../leaderboard/Leaderboard'
+import GlobalLeaderboard from '../leaderboard/GlobalLeaderboard'
 import './Community.css'
 
 const communityItems = [
@@ -29,7 +30,10 @@ function EmptyCommunityPage({ title, icon, children, action, onBack }) {
 function Community({ activeProfile }) {
   const [section, setSection] = useState('communityHome')
 
-  if (section === 'leaderboard' || section === 'groups') {
+  if (section === 'leaderboard') {
+    return <GlobalLeaderboard activeProfile={activeProfile} onBack={() => setSection('communityHome')} />
+  }
+  if (section === 'groups') {
     return <Leaderboard activeProfile={activeProfile} onBack={() => setSection('communityHome')} />
   }
   if (section === 'friends') return <EmptyCommunityPage title="Freunde" icon="🤝" action="SPIELER SUCHEN" onBack={() => setSection('communityHome')}>Noch keine Freunde hinzugefügt.</EmptyCommunityPage>
