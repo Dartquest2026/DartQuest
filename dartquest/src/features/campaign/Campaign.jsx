@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   getLevelsByDifficulty,
@@ -14,6 +14,7 @@ import {
 } from '../multiplayer/multiplayerSaves'
 
 import LevelModal from './LevelModal'
+import LevelEnterTransition from './components/LevelEnterTransition'
 import CampaignExitModal from './CampaignExitModal'
 import {
   getCampaignPlayerCount,
@@ -164,6 +165,35 @@ function Campaign({
 
   const [exitAfterSlotSave, setExitAfterSlotSave] =
     useState(false)
+
+  const [levelEnterTransition, setLevelEnterTransition] = useState(null)
+  const levelEnterLocked = useRef(false)
+  const [unlockAnimation, setUnlockAnimation] = useState(null)
+  const unlockFrom = unlockAnimation?.from
+  const unlockTo = unlockAnimation?.to
+  const unlockCrossWorld = unlockAnimation?.crossWorld
+
+  useEffect(() => {
+    if (!unlockFrom || !unlockTo) return undefined
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const arrivalDelay = reducedMotion ? 80 : 760
+    const finishDelay = reducedMotion ? 360 : 1360
+    const worldDelay = reducedMotion ? 20 : 620
+    const arriveTimer = window.setTimeout(() => {
+      setUnlockAnimation((current) => current ? { ...current, phase: 'arrived' } : null)
+    }, arrivalDelay)
+    const worldTimer = unlockCrossWorld
+      ? window.setTimeout(() => setSelectedWorld(Math.ceil(unlockTo / 10)), worldDelay)
+      : null
+    const finishTimer = window.setTimeout(() => setUnlockAnimation(null), finishDelay)
+
+    return () => {
+      window.clearTimeout(arriveTimer)
+      if (worldTimer) window.clearTimeout(worldTimer)
+      window.clearTimeout(finishTimer)
+    }
+  }, [unlockFrom, unlockTo, unlockCrossWorld])
 
   useEffect(() => {
     if (exitRequest > 0) {
@@ -698,7 +728,8 @@ function Campaign({
   ) {
 
     if (
-      !isLevelUnlocked(level)
+      !isLevelUnlocked(level) ||
+      unlockAnimation
     ) {
       return
     }
@@ -716,15 +747,38 @@ function Campaign({
       !selectedPreviewLevel ||
       !isLevelUnlocked(
         selectedPreviewLevel,
-      )
+      ) ||
+      levelEnterLocked.current ||
+      unlockAnimation
     ) {
       return
     }
 
-
-    setSelectedLevel(
-      selectedPreviewLevel,
+    const sourceNode = document.querySelector(
+      `[data-campaign-level-id="${selectedPreviewLevel.id}"]`,
     )
+    const sourceRect = sourceNode?.getBoundingClientRect()
+
+    levelEnterLocked.current = true
+    setLevelEnterTransition({
+      level: selectedPreviewLevel,
+      sourceRect: sourceRect
+        ? {
+            x: sourceRect.x,
+            y: sourceRect.y,
+            width: sourceRect.width,
+            height: sourceRect.height,
+          }
+        : null,
+    })
+  }
+
+  function finishLevelEnter() {
+    const level = levelEnterTransition?.level
+    if (!level) return
+    setSelectedLevel(level)
+    setLevelEnterTransition(null)
+    levelEnterLocked.current = false
   }
 
 
@@ -779,6 +833,19 @@ function Campaign({
       // globalen Rewards mehr. public.profiles ist ab jetzt maßgeblich.
       xp: progress.xp ?? 0,
       coins: progress.coins ?? 0,
+    }
+
+    const newlyUnlocked =
+      updatedProgress.unlockedLevel > progress.unlockedLevel
+
+    if (newlyUnlocked) {
+      setUnlockAnimation({
+        from: level.id,
+        to: updatedProgress.unlockedLevel,
+        boss: level.boss === true,
+        crossWorld: Math.ceil(level.id / 10) !== Math.ceil(updatedProgress.unlockedLevel / 10),
+        phase: 'traveling',
+      })
     }
 
     setProgress(updatedProgress)
@@ -839,6 +906,21 @@ function Campaign({
     mapLevelPathPositions[
       highestUnlockedMapIndex
     ] ?? 0
+
+  const unlockFromIndex = unlockAnimation
+    ? (unlockAnimation.from - 1) % 10
+    : 0
+  const unlockToIndex = unlockAnimation
+    ? (unlockAnimation.to - 1) % 10
+    : 0
+  const unlockPathStart = mapLevelPathPositions[unlockFromIndex] ?? 0
+  const unlockPathEnd = mapLevelPathPositions[unlockToIndex] ?? unlockPathStart
+  const unlockPathLength = Math.max(0, unlockPathEnd - unlockPathStart)
+  const unlockVisible = unlockAnimation && !unlockAnimation.crossWorld &&
+    Math.ceil(unlockAnimation.from / 10) === selectedWorld
+  const displayedMapPathProgress = unlockVisible && unlockAnimation.phase === 'traveling'
+    ? unlockPathStart
+    : mapPathProgress
 
   return (
     <main className="dq-campaign">
@@ -1217,7 +1299,7 @@ function Campaign({
                 fill="none"
                 stroke="white"
                 strokeWidth="5"
-                strokeDasharray={`${mapPathProgress} 100`}
+                strokeDasharray={`${displayedMapPathProgress} 100`}
               />
             </mask>
           </defs>
@@ -1257,6 +1339,30 @@ function Campaign({
             "
           />
 
+          {unlockVisible && (
+            <>
+              <path
+                className={`dq-path-unlock${unlockAnimation.boss ? ' is-boss' : ''}`}
+                pathLength="100"
+                style={{
+                  '--dq-unlock-length': unlockPathLength,
+                  '--dq-unlock-offset': -unlockPathStart,
+                }}
+                d="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
+              />
+              <circle className="dq-path-unlock-head" r="1.15">
+                <animateMotion
+                  dur="760ms"
+                  fill="freeze"
+                  calcMode="linear"
+                  keyPoints={`${unlockPathStart / 100};${unlockPathEnd / 100}`}
+                  keyTimes="0;1"
+                  path="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
+                />
+              </circle>
+            </>
+          )}
+
         </svg>
 
 
@@ -1285,6 +1391,7 @@ function Campaign({
             return (
               <button
                 key={level.id}
+                data-campaign-level-id={level.id}
 
                 type="button"
 
@@ -1301,6 +1408,18 @@ function Campaign({
 
                   level.boss
                     ? 'boss'
+                    : '',
+
+                  unlockAnimation?.from === level.id
+                    ? 'just-completed'
+                    : '',
+
+                  unlockAnimation?.to === level.id
+                    ? `unlocking ${unlockAnimation.phase}`
+                    : '',
+
+                  unlockAnimation?.boss && unlockAnimation?.to === level.id
+                    ? 'boss-unlock'
                     : '',
                 ].join(' ')}
 
@@ -1675,6 +1794,14 @@ function Campaign({
 
 
       {/* LEVEL MODAL */}
+
+      {levelEnterTransition && (
+        <LevelEnterTransition
+          level={levelEnterTransition.level}
+          sourceRect={levelEnterTransition.sourceRect}
+          onComplete={finishLevelEnter}
+        />
+      )}
 
       <LevelModal
         level={

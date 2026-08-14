@@ -86,6 +86,29 @@
   animation: levelModalIn 0.23s ease;
 }
 
+.level-modal.is-intro-entering .level-modal-eyebrow,
+.level-modal.is-intro-entering .level-modal-title,
+.level-modal.is-intro-entering .attempt-dartboard,
+.level-modal.is-intro-entering .hit-counter-visit,
+.level-modal.is-intro-entering .hit-counter-visit-actions,
+.level-modal.is-intro-entering .hit-counter-targets,
+.level-modal.is-intro-entering .level-giveup-button { opacity: 0; }
+
+.level-modal .level-modal-eyebrow { animation: levelContentReveal .22s .04s both; }
+.level-modal .level-modal-title { animation: levelContentReveal .22s .11s both; }
+.level-modal .attempt-dartboard { animation: levelBoardReveal .3s .18s cubic-bezier(.2,.8,.2,1) both; }
+.level-modal .hit-counter-visit { animation: levelContentReveal .2s .32s both; }
+.level-modal .hit-counter-visit-actions { animation: levelContentReveal .2s .38s both; }
+.level-modal .hit-counter-targets { animation: levelContentReveal .2s .44s both; }
+.level-modal .level-giveup-button { animation: levelContentReveal .2s .5s both; }
+
+.level-modal.is-intro-entering .dartboard-segment--target {
+  animation-play-state: paused;
+  stroke-opacity: 0;
+}
+
+.level-modal.is-intro-ready .dartboard-segment--target { stroke-opacity: 1; }
+
 /* CLOSE */
 
 .level-modal-close {
@@ -485,6 +508,16 @@
   }
 }
 
+@keyframes levelContentReveal {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes levelBoardReveal {
+  from { opacity: 0; transform: scale(.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .level-result-perfect-copy {
   margin: -2px 0 10px;
   color: #69efb7;
@@ -499,6 +532,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .level-result-perfect-copy { animation: none; }
+  .level-modal,
+  .level-modal .level-modal-eyebrow,
+  .level-modal .level-modal-title,
+  .level-modal .attempt-dartboard,
+  .level-modal .hit-counter-visit,
+  .level-modal .hit-counter-visit-actions,
+  .level-modal .hit-counter-targets,
+  .level-modal .level-giveup-button { animation: none; opacity: 1; transform: none; }
 }
 
 .level-giveup-button {

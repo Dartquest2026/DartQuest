@@ -1,0 +1,74 @@
+.level-enter-transition {
+  position: fixed;
+  z-index: 9998;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.level-enter-transition__veil,
+.level-enter-transition__world {
+  position: absolute;
+  inset: 0;
+}
+
+.level-enter-transition__veil {
+  background: rgba(0, 9, 7, .16);
+  transition: background .12s ease-out;
+}
+
+.level-enter-transition__world {
+  background: radial-gradient(circle at center, rgba(0,255,127,.08), transparent 42%);
+  opacity: 0;
+  transform: scale(1);
+  transition: transform .42s cubic-bezier(.2,.78,.22,1), opacity .22s ease, filter .42s ease;
+}
+
+.level-enter-transition__node {
+  position: absolute;
+  left: var(--level-enter-x);
+  top: var(--level-enter-y);
+  display: grid;
+  width: var(--level-enter-size);
+  height: var(--level-enter-size);
+  place-content: center;
+  border: 2px solid #00ff7f;
+  border-radius: 50%;
+  background: radial-gradient(circle, #123f30 0 48%, #06130f 72%);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(0,255,127,.65), inset 0 0 12px rgba(0,255,127,.2);
+  will-change: transform, opacity;
+  transition: transform .42s cubic-bezier(.18,.8,.2,1), opacity .38s ease, box-shadow .12s ease;
+}
+
+.level-enter-transition__node span {
+  color: #70ffc0;
+  font-size: clamp(6px, calc(var(--level-enter-size) * .13), 11px);
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.level-enter-transition__node strong {
+  font-size: clamp(18px, calc(var(--level-enter-size) * .42), 34px);
+  line-height: 1;
+}
+
+.level-enter-transition.is-focusing .level-enter-transition__veil { background: rgba(0, 9, 7, .48); }
+.level-enter-transition.is-focusing .level-enter-transition__node { box-shadow: 0 0 24px rgba(0,255,127,.9), 0 0 48px rgba(0,255,127,.35), inset 0 0 16px rgba(0,255,127,.28); }
+.level-enter-transition.is-boss .level-enter-transition__node { border-color: #78ffbd; box-shadow: 0 0 28px rgba(0,255,127,1), 0 0 62px rgba(0,255,127,.45); }
+
+.level-enter-transition.is-zooming .level-enter-transition__veil { background: rgba(0, 9, 7, .9); }
+.level-enter-transition.is-zooming .level-enter-transition__world { opacity: 1; transform: scale(1.2); filter: blur(8px); }
+.level-enter-transition.is-zooming .level-enter-transition__node {
+  opacity: 0;
+  transform: translate3d(var(--level-enter-dx), var(--level-enter-dy), 0) scale(10);
+  box-shadow: 0 0 50px rgba(0,255,127,.75), inset 0 0 30px rgba(0,255,127,.32);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-enter-transition__node { display: none; }
+  .level-enter-transition__veil { transition-duration: .12s; }
+  .level-enter-transition__world { display: none; }
+}

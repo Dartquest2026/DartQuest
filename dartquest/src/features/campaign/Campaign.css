@@ -1394,6 +1394,32 @@
   transition: stroke-dasharray 0.35s ease;
 }
 
+.dq-path-unlock {
+  fill: none;
+  stroke: #8affc6;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-dasharray: 0 100;
+  stroke-dashoffset: var(--dq-unlock-offset);
+  filter: drop-shadow(0 0 3px #00ff7f) drop-shadow(0 0 8px rgba(0,255,127,.82));
+  animation: dqUnlockPathTravel .76s cubic-bezier(.2,.72,.25,1) forwards;
+}
+
+.dq-path-unlock.is-boss {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px #8affc6) drop-shadow(0 0 11px rgba(0,255,127,.95));
+}
+
+.dq-path-unlock-head {
+  fill: #d7ffe9;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #00ff7f);
+}
+
+@keyframes dqUnlockPathTravel {
+  from { stroke-dasharray: 0 100; }
+  to { stroke-dasharray: var(--dq-unlock-length) 100; }
+}
+
 /* LEVEL NODES */
 
 .dq-node {
@@ -1447,6 +1473,85 @@
 
 .dq-node.locked {
   opacity: 0.55;
+}
+
+.dq-node.just-completed {
+  animation: dqCompletedLevelGlow .4s ease-out both;
+}
+
+.dq-node.unlocking {
+  pointer-events: none;
+}
+
+.dq-node.unlocking.traveling strong {
+  opacity: 0;
+  transform: scale(.65);
+}
+
+.dq-node.unlocking.traveling::before {
+  content: '🔒';
+  position: absolute;
+  font-size: 16px;
+}
+
+.dq-node.unlocking.arrived {
+  animation: dqUnlockedNodePulse .56s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.dq-node.unlocking.arrived::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #63ffb2;
+  border-radius: 50%;
+  animation: dqUnlockRing .56s ease-out both;
+}
+
+.dq-node.unlocking.arrived strong {
+  animation: dqUnlockNumberIn .24s ease-out both;
+}
+
+.dq-node.unlocking.boss-unlock.arrived {
+  animation-name: dqUnlockedBossPulse;
+}
+
+@keyframes dqCompletedLevelGlow {
+  0% { box-shadow: 0 0 10px rgba(0,255,127,.25); }
+  55% { box-shadow: 0 0 25px rgba(0,255,127,.85); }
+  100% { box-shadow: 0 0 15px rgba(40,218,188,.3); }
+}
+
+@keyframes dqUnlockedNodePulse {
+  0% { transform: translate(-50%,-50%) scale(.88); box-shadow: 0 0 4px rgba(0,255,127,.2); }
+  48% { transform: translate(-50%,-50%) scale(1.15); box-shadow: 0 0 30px rgba(0,255,127,.95); }
+  100% { transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 15px rgba(40,218,188,.3); }
+}
+
+@keyframes dqUnlockedBossPulse {
+  0% { transform: translate(-50%,-50%) scale(.86); box-shadow: 0 0 8px rgba(0,255,127,.3); }
+  48% { transform: translate(-50%,-50%) scale(1.2); box-shadow: 0 0 38px rgba(0,255,127,1); }
+  100% { transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 20px rgba(233,185,67,.4); }
+}
+
+@keyframes dqUnlockRing {
+  from { opacity: .95; transform: scale(.9); }
+  to { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes dqUnlockNumberIn {
+  from { opacity: 0; transform: scale(.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dq-path-unlock { animation: none; stroke-dasharray: var(--dq-unlock-length) 100; filter: none; }
+  .dq-path-unlock-head { display: none; }
+  .dq-node.just-completed,
+  .dq-node.unlocking.arrived,
+  .dq-node.unlocking.boss-unlock.arrived,
+  .dq-node.unlocking.arrived strong,
+  .dq-node.unlocking.arrived::after { animation: none; }
+  .dq-node.unlocking.arrived { box-shadow: 0 0 18px rgba(0,255,127,.65); }
 }
 
 .dq-node strong {

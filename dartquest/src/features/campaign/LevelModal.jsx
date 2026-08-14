@@ -55,8 +55,15 @@ function formatAttemptTitle(level, attempt) {
 function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
   const [result, setResult] = useState(null)
+  const [introReady, setIntroReady] = useState(false)
   const completionStarted = useRef(false)
   const resultDelivered = useRef(false)
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timer = window.setTimeout(() => setIntroReady(true), reducedMotion ? 40 : 560)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (!result || !level) return undefined
@@ -75,6 +82,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     : []
 
   function applyHit(targetId) {
+    if (!introReady) return
     const nextAttempt = registerTargetHit(attempt, targetId)
     if (nextAttempt === attempt) return
     setAttempt(nextAttempt)
@@ -89,7 +97,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
   }
 
   function finishAttempt(finishingDart) {
-    if (!isAttemptComplete(attempt) || completionStarted.current) return
+    if (!introReady || !isAttemptComplete(attempt) || completionStarted.current) return
     completionStarted.current = true
     setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
   }
@@ -110,7 +118,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
 
   return (
     <div className="level-modal-backdrop" onClick={onClose}>
-      <article className="level-modal" onClick={(event) => event.stopPropagation()}>
+      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}`} onClick={(event) => event.stopPropagation()}>
         <button className="level-modal-close" type="button" onClick={onClose} aria-label="Level schließen">×</button>
 
         {!result && (
@@ -133,8 +141,9 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
               onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
               completionPending={isAttemptComplete(attempt)}
               onFinish={finishAttempt}
+              interactionDisabled={!introReady}
             />
-            <button type="button" className="level-giveup-button" onClick={giveUpLevel}>Aufgeben</button>
+            <button type="button" className="level-giveup-button" onClick={giveUpLevel} disabled={!introReady}>Aufgeben</button>
           </>
         )}
 
