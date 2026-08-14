@@ -106,12 +106,15 @@ function Leaderboard({ activeProfile, onBack }) {
     <main className="leaderboard-screen">
       <header className="leaderboard-header">
         <button type="button" onClick={mode === 'detail' ? returnToGroupList : onBack}>‹</button>
-        <div><span>DARTQUEST</span><h1>Rangliste</h1></div>
+        <div><span>DARTQUEST</span><h1>Gruppen</h1></div>
       </header>
 
       {mode === 'list' && (
         <>
-          <section className="leaderboard-intro"><div>🏆</div><h2>Rangliste</h2><p>Miss dich mit deinen Freunden.</p></section>
+          <section className="leaderboard-groups-intro">
+            <span>GRUPPEN</span>
+            <p>Erstelle eine Gruppe oder tritt einer bestehenden bei.</p>
+          </section>
           <div className="leaderboard-actions">
             <button type="button" onClick={() => { setMode('create'); setError('') }}>＋<strong>GRUPPE ERSTELLEN</strong></button>
             <button type="button" onClick={() => { setMode('join'); setJoinCode(''); setError('') }}>🔢<strong>GRUPPE BEITRETEN</strong></button>

@@ -3,10 +3,9 @@
 .leaderboard-header > button { display: grid; width: 43px; height: 43px; place-items: center; padding: 0; border: 1px solid rgba(66,230,149,.3); border-radius: 12px; background: #092019; color: #42e695; font-size: 29px; }
 .leaderboard-header span,.leaderboard-form-card > p,.leaderboard-group-head > span { color: #42e695; font-size: 12px; font-weight: 900; letter-spacing: 1.2px; }
 .leaderboard-header h1 { margin: 2px 0 0; font-size: 27px; }
-.leaderboard-intro { padding: 18px; border: 1px solid rgba(66,230,149,.24); border-radius: 20px; background: radial-gradient(circle at 15% 0,rgba(66,230,149,.13),transparent 35%),#061a14; text-align: center; }
-.leaderboard-intro > div { font-size: 34px; filter: drop-shadow(0 0 10px rgba(244,197,66,.25)); }
-.leaderboard-intro h2 { margin: 7px 0 4px; font-size: 22px; }
-.leaderboard-intro p { margin: 0; color: #9eb2aa; font-size: 14px; }
+.leaderboard-groups-intro { margin-bottom: 12px; padding: 4px 2px 0; }
+.leaderboard-groups-intro span { color: #42e695; font-size: 12px; font-weight: 900; letter-spacing: 1.2px; }
+.leaderboard-groups-intro p { margin: 5px 0 0; color: #9eb2aa; font-size: 14px; line-height: 1.4; }
 .leaderboard-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 18px; }
 .leaderboard-actions button { display: grid; min-height: 91px; place-items: center; padding: 12px; border: 1px solid rgba(66,230,149,.25); border-radius: 15px; background: linear-gradient(145deg,#08231b,#04140f); color: #42e695; font-size: 25px; }
 .leaderboard-actions strong { color: white; font-size: 12px; }
