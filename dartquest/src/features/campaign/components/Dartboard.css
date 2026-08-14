@@ -1,32 +1,32 @@
 .attempt-dartboard { width: min(48vw, 190px); margin: -4px auto 0; }
 .attempt-dartboard svg { display: block; overflow: visible; filter: drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
-.dartboard-rim { fill: #070c11; stroke: #5d6b72; stroke-width: 2.5; }
-.dartboard-base { fill: #111820; stroke: #9cabb0; stroke-width: 1.2; }
-.dartboard-field { stroke: rgba(202,216,220,.48); stroke-width: .7; transition: fill .25s ease, stroke .25s ease, opacity .25s ease; }
-.dartboard-field.ring-single-inner.segment-dark, .dartboard-field.ring-single-outer.segment-dark { fill: #0d0d0d; }
-.dartboard-field.ring-single-inner.segment-light, .dartboard-field.ring-single-outer.segment-light { fill: #e8d8b5; }
-.dartboard-field.ring-double.segment-dark, .dartboard-field.ring-triple.segment-dark { fill: #d32f2f; }
-.dartboard-field.ring-double.segment-light, .dartboard-field.ring-triple.segment-light { fill: #169b62; }
-.dartboard-bull-outer { fill: #169b62; stroke: #cbd6d8; stroke-width: .8; }
-.dartboard-bull-inner { fill: #d32f2f; stroke: #cbd6d8; stroke-width: .8; }
+.dartboard-rim { fill: #030605; stroke: #384743; stroke-width: 2.5; }
+.dartboard-base { fill: #080d0b; stroke: #63726e; stroke-width: 1.2; }
+.dartboard-field { stroke: rgba(166,184,178,.36); stroke-width: .7; transition: fill .25s ease, stroke .25s ease, opacity .25s ease; }
+.dartboard-field.ring-single-inner.segment-dark, .dartboard-field.ring-single-outer.segment-dark { fill: #070908; }
+.dartboard-field.ring-single-inner.segment-light, .dartboard-field.ring-single-outer.segment-light { fill: #9f9883; }
+.dartboard-field.ring-double.segment-dark, .dartboard-field.ring-triple.segment-dark { fill: #7f252a; }
+.dartboard-field.ring-double.segment-light, .dartboard-field.ring-triple.segment-light { fill: #0d5f3a; }
+.dartboard-bull-outer { fill: #0d5f3a; stroke: #aebbb5; stroke-width: .8; }
+.dartboard-bull-inner { fill: #7f252a; stroke: #aebbb5; stroke-width: .8; }
 .dartboard-number { fill: #f3f5f4; font-size: 9px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; }
 .dartboard-field.dartboard-segment--target.dartboard-segment--target,
 .dartboard-bull-outer.dartboard-segment--target,
-.dartboard-bull-inner.dartboard-segment--target { stroke: #6ff7ba; stroke-width: 1.8; stroke-opacity: 1; filter: drop-shadow(0 0 2px rgba(66,230,149,.5)); stroke-dasharray: .16 .06; animation: dartTargetOrbit 1.65s linear infinite; }
+.dartboard-bull-inner.dartboard-segment--target { stroke: #00ff7f; stroke-width: 2.8; stroke-opacity: 1; filter: drop-shadow(0 0 4px rgba(0,255,127,.95)) drop-shadow(0 0 9px rgba(0,255,127,.72)); stroke-dasharray: .3 .04; animation: dartTargetOrbit 1.45s linear infinite; }
 @keyframes dartTargetOrbit {
   from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -.22; }
+  to { stroke-dashoffset: -.34; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dartboard-field.dartboard-segment--target.dartboard-segment--target,
   .dartboard-bull-outer.dartboard-segment--target,
   .dartboard-bull-inner.dartboard-segment--target {
     animation: none;
-    stroke: #67e9b2;
-    stroke-width: 1.8;
+    stroke: #00ff7f;
+    stroke-width: 2.6;
     stroke-opacity: 1;
     stroke-dasharray: none;
     stroke-dashoffset: 0;
-    filter: none;
+    filter: drop-shadow(0 0 4px rgba(0,255,127,.8));
   }
 }
