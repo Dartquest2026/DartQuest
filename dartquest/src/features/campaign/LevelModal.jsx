@@ -6,7 +6,8 @@ import {
   createAttemptResult,
   createLevelAttempt,
   isAttemptComplete,
-  registerDart,
+  nextVisit,
+  registerTargetHit,
   undoTargetHit,
 } from './utils/levelAttempt'
 import './LevelModal.css'
@@ -33,11 +34,15 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     ? players.filter((player) => player?.active !== false).map((player) => player?.name).filter(Boolean)
     : []
 
-  function applyDart(targetId = null) {
-    const nextAttempt = registerDart(attempt, targetId)
+  function applyHit(targetId) {
+    const nextAttempt = registerTargetHit(attempt, targetId)
     if (nextAttempt === attempt) return
     setAttempt(nextAttempt)
-    if (isAttemptComplete(nextAttempt)) setResult(createAttemptResult(level, nextAttempt))
+  }
+
+  function finishAttempt(finishingDart) {
+    if (!isAttemptComplete(attempt)) return
+    setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
   }
 
   function finishLevel() {
@@ -70,9 +75,11 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
 
             <HitCounter
               attempt={attempt}
-              onHit={(targetId) => applyDart(targetId)}
-              onMiss={() => applyDart()}
+              onHit={applyHit}
+              onNextVisit={() => setAttempt((current) => nextVisit(current))}
               onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
+              completionPending={isAttemptComplete(attempt)}
+              onFinish={finishAttempt}
             />
             <button type="button" className="level-giveup-button" onClick={giveUpLevel}>Aufgeben</button>
           </>

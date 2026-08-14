@@ -76,6 +76,9 @@ function App() {
   const [activePage, setActivePage] =
     useState('home')
 
+  const [rootNavigationKeys, setRootNavigationKeys] =
+    useState({ home: 0, campaign: 0, community: 0, profile: 0 })
+
   const [campaignExitRequest, setCampaignExitRequest] =
     useState(0)
 
@@ -266,26 +269,36 @@ function App() {
     return profile
   }
 
-  function changePage(nextPage) {
-    const campaignIsOpen =
-      activePage === 'singleplayerCampaign' ||
-      activePage === 'multiplayerCampaign'
+  function openRoot(destination) {
+    setRootNavigationKeys((current) => ({
+      ...current,
+      [destination]: current[destination] + 1,
+    }))
 
-    if (campaignIsOpen && nextPage !== activePage) {
-      setPageAfterCampaignExit(nextPage)
-      setCampaignExitRequest((request) => request + 1)
-      return
-    }
-
-    if (nextPage === 'campaign') {
+    if (destination === 'campaign') {
       continueSoloCampaign()
       return
     }
 
-    if (nextPage === 'home' || nextPage === 'profile') {
+    if (destination === 'home' || destination === 'profile') {
       refreshActiveProfile().catch((error) => setAuthError(error.message))
     }
-    setActivePage(nextPage)
+
+    setActivePage(destination)
+  }
+
+  function navigateToRoot(destination) {
+    const campaignIsOpen =
+      activePage === 'singleplayerCampaign' ||
+      activePage === 'multiplayerCampaign'
+
+    if (campaignIsOpen) {
+      setPageAfterCampaignExit(destination)
+      setCampaignExitRequest((request) => request + 1)
+      return
+    }
+
+    openRoot(destination)
   }
 
   function finishCampaignExit() {
@@ -293,12 +306,7 @@ function App() {
     setCampaignExitRequest(0)
     setPageAfterCampaignExit('home')
 
-    if (nextPage === 'campaign') {
-      continueSoloCampaign()
-      return
-    }
-
-    setActivePage(nextPage)
+    openRoot(nextPage)
   }
 
   if (authLoading) {
@@ -321,6 +329,7 @@ function App() {
 
       {activePage === 'home' && (
         <Home
+          key={`home-root-${rootNavigationKeys.home}`}
           activeProfile={activeProfile}
           onContinueCampaign={
             continueSoloCampaign
@@ -488,6 +497,7 @@ function App() {
         'singleplayerCampaign' && (
 
         <Campaign
+          key={`campaign-root-${rootNavigationKeys.campaign}`}
           settings={
             singleplayerCampaignSettings
           }
@@ -505,6 +515,7 @@ function App() {
         'multiplayerCampaign' && (
 
         <Campaign
+          key={`campaign-root-${rootNavigationKeys.campaign}`}
           settings={
             multiplayerCampaignSettings
           }
@@ -520,6 +531,7 @@ function App() {
 
       {activePage === 'profile' && (
         <Profile
+          key={`profile-root-${rootNavigationKeys.profile}`}
           activeProfile={activeProfile}
           onLogout={logout}
           onProfileUpdated={refreshActiveProfile}
@@ -528,7 +540,11 @@ function App() {
       )}
 
       {activePage === 'community' && (
-        <Community activeProfile={activeProfile} onRequestsChanged={refreshPendingRequestCount} />
+        <Community
+          key={`community-root-${rootNavigationKeys.community}`}
+          activeProfile={activeProfile}
+          onRequestsChanged={refreshPendingRequestCount}
+        />
       )}
 
       {/* NAVIGATION */}
@@ -539,7 +555,7 @@ function App() {
         }
 
         onChangePage={
-          changePage
+          navigateToRoot
         }
         pendingRequestCount={pendingRequestCount}
       />

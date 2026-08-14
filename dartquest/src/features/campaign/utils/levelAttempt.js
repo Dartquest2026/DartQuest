@@ -14,7 +14,7 @@ function normalizeField(value) {
 function makeTarget(value, index = 0) {
   const label = String(value.label ?? value.target ?? value.id ?? `Ziel ${index + 1}`)
   const targetType = value.targetType ?? 'field'
-  const number = positiveInteger(value.number)
+  const number = positiveInteger(value.number ?? value.targetValue)
 
   return {
     id: String(value.id ?? `${targetType}:${number ?? normalizeField(label)}`),
@@ -22,6 +22,7 @@ function makeTarget(value, index = 0) {
     requiredHits: positiveInteger(value.requiredHits ?? value.hits, 1),
     targetType,
     number,
+    targetValue: number,
   }
 }
 
@@ -150,48 +151,48 @@ export function createLevelAttempt(level, startedAt = Date.now()) {
   return {
     ...parsed,
     hitCounters: Object.fromEntries(parsed.targets.map((target) => [target.id, 0])),
-    darts: [],
-    totalDarts: 0,
+    hitHistory: [],
+    visits: 1,
+    totalDarts: 3,
     sequenceIndex: 0,
     startedAt,
     playerId: null,
   }
 }
 
-export function registerDart(attempt, targetId = null) {
-  if (targetId) {
-    const target = attempt.targets.find((entry) => entry.id === targetId)
-    const expected = attempt.sequence[attempt.sequenceIndex]
-    if (!target || attempt.hitCounters[targetId] >= target.requiredHits) return attempt
-    if (attempt.ordered && expected !== targetId) return attempt
-  }
+export function registerTargetHit(attempt, targetId) {
+  const target = attempt.targets.find((entry) => entry.id === targetId)
+  const expected = attempt.sequence[attempt.sequenceIndex]
+  if (!target || attempt.hitCounters[targetId] >= target.requiredHits) return attempt
+  if (attempt.ordered && expected !== targetId) return attempt
 
   return {
     ...attempt,
-    hitCounters: targetId
-      ? { ...attempt.hitCounters, [targetId]: attempt.hitCounters[targetId] + 1 }
-      : attempt.hitCounters,
-    darts: [...attempt.darts, { targetId, playerId: attempt.playerId }],
-    totalDarts: attempt.totalDarts + 1,
-    sequenceIndex: attempt.sequenceIndex + (targetId && attempt.ordered ? 1 : 0),
+    hitCounters: { ...attempt.hitCounters, [targetId]: attempt.hitCounters[targetId] + 1 },
+    hitHistory: [...attempt.hitHistory, { targetId, playerId: attempt.playerId }],
+    sequenceIndex: attempt.sequenceIndex + (attempt.ordered ? 1 : 0),
   }
 }
 
+export function nextVisit(attempt) {
+  const visits = attempt.visits + 1
+  return { ...attempt, visits, totalDarts: visits * 3 }
+}
+
 export function undoTargetHit(attempt, targetId) {
-  const index = attempt.darts.findLastIndex((dart) => dart.targetId === targetId)
+  const index = attempt.hitHistory.findLastIndex((hit) => hit.targetId === targetId)
   if (index < 0) return attempt
 
   if (attempt.ordered) {
-    const lastHit = attempt.darts.findLast((dart) => dart.targetId)
+    const lastHit = attempt.hitHistory.at(-1)
     if (lastHit?.targetId !== targetId) return attempt
   }
 
-  const darts = attempt.darts.filter((_, dartIndex) => dartIndex !== index)
+  const hitHistory = attempt.hitHistory.filter((_, hitIndex) => hitIndex !== index)
   return {
     ...attempt,
     hitCounters: { ...attempt.hitCounters, [targetId]: attempt.hitCounters[targetId] - 1 },
-    darts,
-    totalDarts: darts.length,
+    hitHistory,
     sequenceIndex: attempt.sequenceIndex - (attempt.ordered ? 1 : 0),
   }
 }
@@ -202,13 +203,6 @@ export function isAttemptComplete(attempt) {
   ) && (!attempt.ordered || attempt.sequenceIndex >= attempt.sequence.length)
 }
 
-export function getVisitState(totalDarts) {
-  return {
-    visit: Math.floor(totalDarts / 3) + 1,
-    dartsInCurrentVisit: totalDarts % 3,
-  }
-}
-
 export function calculateLevelStars(level, totalDarts) {
   const minimumDarts = positiveInteger(level.targetHits, 1)
   if (totalDarts === minimumDarts) return 4
@@ -217,14 +211,22 @@ export function calculateLevelStars(level, totalDarts) {
   return 1
 }
 
-export function createAttemptResult(level, attempt, completedAt = Date.now()) {
-  const stars = calculateLevelStars(level, attempt.totalDarts)
+export function getExactTotalDarts(visits, finishingDart) {
+  const safeVisits = positiveInteger(visits, 1)
+  const safeFinishingDart = Math.min(3, positiveInteger(finishingDart, 3))
+  return (safeVisits - 1) * 3 + safeFinishingDart
+}
+
+export function createAttemptResult(level, attempt, completedAt = Date.now(), finishingDart = 3) {
+  const totalDarts = getExactTotalDarts(attempt.visits, finishingDart)
+  const stars = calculateLevelStars(level, totalDarts)
   return {
     success: true,
     stars,
-    darts: attempt.totalDarts,
-    totalDarts: attempt.totalDarts,
-    visits: Math.ceil(attempt.totalDarts / 3),
+    darts: totalDarts,
+    totalDarts,
+    visits: attempt.visits,
+    finishingDart: Math.min(3, positiveInteger(finishingDart, 3)),
     hitCounters: { ...attempt.hitCounters },
     startedAt: new Date(attempt.startedAt).toISOString(),
     completedAt: new Date(completedAt).toISOString(),

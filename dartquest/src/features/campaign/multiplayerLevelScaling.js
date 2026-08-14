@@ -96,6 +96,15 @@ export function scaleLevelForMultiplayer(level, playerCount) {
   return {
     ...level,
     task: scaleTaskText(level.task, factor, scaledPerfectDarts),
+    targets: Array.isArray(level.targets)
+      ? level.targets.map((target) => ({
+          ...target,
+          requiredHits: toPositiveInteger(target.requiredHits) * factor,
+        }))
+      : level.targets,
+    sequence: Array.isArray(level.sequence)
+      ? Array.from({ length: factor }, () => level.sequence).flat()
+      : level.sequence,
     targetHits: scaledTargetHits,
     perfectDarts: scaledPerfectDarts,
     multiplayerGoal,
