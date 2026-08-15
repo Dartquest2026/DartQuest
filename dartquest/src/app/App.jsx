@@ -221,9 +221,11 @@ function App() {
     let recoveryTimer
 
     if (recoveryRoute) {
-      window.history.replaceState(null, '', PASSWORD_RESET_PATH)
       recoveryTimer = window.setTimeout(() => {
-        if (mounted) setRecoveryStatus('invalid')
+        if (mounted) {
+          window.history.replaceState(null, '', PASSWORD_RESET_PATH)
+          setRecoveryStatus('invalid')
+        }
       }, recoveryError || !recoveryLocation ? 0 : 3000)
     }
 
@@ -246,6 +248,7 @@ function App() {
       if (!mounted) return
       if (event === 'PASSWORD_RECOVERY' && recoveryRoute && session) {
         window.clearTimeout(recoveryTimer)
+        window.history.replaceState(null, '', PASSWORD_RESET_PATH)
         setRecoveryStatus('ready')
         setAuthLoading(false)
         return
