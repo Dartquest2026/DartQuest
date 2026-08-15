@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import {
+  bossStarRequirements,
   getLevelsByDifficulty,
 } from './data/levels'
 
@@ -26,6 +27,11 @@ import {
 } from './campaignUnlocking'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
+import {
+  buildCampaignProgress,
+  completeCampaignLevel,
+  loadCampaignProgress,
+} from './campaignStorage'
 
 import './Campaign.css'
 
@@ -101,6 +107,7 @@ function Campaign({
   onExit = () => {},
   activeProfile = null,
   onProfileRewards = async () => {},
+  onProfileSynced = () => {},
 }) {
 
   const baseLevels =
@@ -135,14 +142,6 @@ function Campaign({
   /* =======================================================
      BOSS STERNE NACH SCHWIERIGKEIT
      ======================================================= */
-
-  const bossStarRequirements = {
-    1: 9,
-    2: 15,
-    3: 20,
-    4: 25,
-    5: 25,
-  }
 
   const BOSS_STAR_REQUIREMENT =
     bossStarRequirements[
@@ -182,6 +181,8 @@ function Campaign({
   const [saveModalOpen, setSaveModalOpen] =
     useState(false)
 
+  const [remoteProgressLoading, setRemoteProgressLoading] = useState(!settings.multiplayer)
+  const [remoteProgressError, setRemoteProgressError] = useState('')
   const [multiplayerSaves, setMultiplayerSaves] =
     useState([])
 
@@ -402,10 +403,6 @@ function Campaign({
 
   function saveAndExit() {
     if (!settings.multiplayer) {
-      localStorage.setItem(
-        CAMPAIGN_STORAGE_KEY,
-        JSON.stringify(progress),
-      )
       setLeaveModalOpen(false)
       onExit()
       return
@@ -436,6 +433,7 @@ function Campaign({
      ======================================================= */
 
   useEffect(() => {
+    let cancelled = false
 
     setProgress({
       unlockedLevel: 1,
@@ -447,8 +445,7 @@ function Campaign({
     setSelectedWorld(1)
     setPreviewLevelId(1)
     setSelectedLevel(null)
-
-
+    setRemoteProgressError('')
     const isNewMultiplayerGame =
       settings.multiplayer &&
       settings.isNewGame === true
@@ -460,7 +457,8 @@ function Campaign({
         : null
 
     if (isNewMultiplayerGame) {
-      return
+      setRemoteProgressLoading(false)
+      return () => { cancelled = true }
     }
 
 
@@ -503,83 +501,50 @@ function Campaign({
 
       setSelectedWorld(restoredWorld)
       setPreviewLevelId(restoredPreviewLevel)
+      setRemoteProgressLoading(false)
 
-      return
+      return () => { cancelled = true }
     }
 
+    setRemoteProgressLoading(true)
+    const loadRemoteProgress = async () => {
+      try {
+        const remoteRows = await loadCampaignProgress(settings.difficulty)
+        if (cancelled) return
+        const remoteProgress = buildCampaignProgress(remoteRows, levels.length)
+        setProgress(remoteProgress)
+        setSelectedWorld(Math.min(Math.max(1, Math.ceil(remoteProgress.unlockedLevel / 10)), worldNames.length))
+        setPreviewLevelId(remoteProgress.unlockedLevel)
 
-    const savedProgress =
-      localStorage.getItem(
-        CAMPAIGN_STORAGE_KEY,
-      )
-
-
-    if (!savedProgress) {
-      return
+        const savedProgress = localStorage.getItem(CAMPAIGN_STORAGE_KEY)
+        if (savedProgress) {
+          try {
+            const parsedProgress = JSON.parse(savedProgress)
+            const importRows = Object.entries(parsedProgress.results ?? {})
+              .map(([levelId, result]) => ({
+                levelId: Number(levelId),
+                stars: Number(result?.stars) || 0,
+                bestDarts: result?.darts ?? null,
+                firstCompletedAt: result?.completedAt ?? null,
+              }))
+              .filter((row) => Number.isInteger(row.levelId) && row.levelId > 0 && row.stars >= 1 && row.stars <= 4)
+            if (importRows.length) {
+              setRemoteProgressError(
+                'Ein lokaler Altstand wurde gefunden. Der sichere Import ist noch nicht verfügbar; die lokalen Daten bleiben auf diesem Gerät erhalten.',
+              )
+            }
+          } catch {
+            // Invalid legacy data must never replace or block valid remote progress.
+          }
+        }
+      } catch (error) {
+        if (!cancelled) setRemoteProgressError(error.message)
+      } finally {
+        if (!cancelled) setRemoteProgressLoading(false)
+      }
     }
-
-
-    try {
-
-      const parsedProgress =
-        JSON.parse(
-          savedProgress,
-        )
-
-
-      const unlockedLevel =
-        Math.min(
-          parsedProgress
-            .unlockedLevel ?? 1,
-
-          levels.length,
-        )
-
-
-      const currentWorld =
-        Math.min(
-          Math.max(
-            1,
-
-            Math.ceil(
-              unlockedLevel / 10,
-            ),
-          ),
-
-          worldNames.length,
-        )
-
-
-      setProgress({
-        unlockedLevel,
-
-        results:
-          parsedProgress.results ?? {},
-
-        xp:
-          parsedProgress.xp ?? 0,
-
-        coins:
-          parsedProgress.coins ?? 0,
-      })
-
-
-      setSelectedWorld(
-        currentWorld,
-      )
-
-
-      setPreviewLevelId(
-        unlockedLevel,
-      )
-
-    } catch {
-
-      localStorage.removeItem(
-        CAMPAIGN_STORAGE_KEY,
-      )
-
-    }
+    loadRemoteProgress()
+    return () => { cancelled = true }
 
   }, [
     settings.difficulty,
@@ -588,6 +553,7 @@ function Campaign({
     settings.savedGame,
     CAMPAIGN_STORAGE_KEY,
     levels.length,
+    activeProfile?.id,
   ])
 
 
@@ -907,9 +873,34 @@ function Campaign({
 
     const newlyUnlocked =
       updatedProgress.unlockedLevel > progress.unlockedLevel
+    let confirmedCompletion = {
+      awardedXP: 0,
+      awardedCoins: 0,
+    }
 
-    if (successfulAttempt && (earnedXP > 0 || earnedCoins > 0)) {
+    if (successfulAttempt && !settings.multiplayer) {
+      const saved = await completeCampaignLevel({
+        completionId: result.completionId,
+        difficulty: settings.difficulty,
+        levelId: level.id,
+        stars: bestStars,
+        bestDarts,
+      })
+      updatedProgress.results[level.id] = {
+        ...updatedProgress.results[level.id],
+        stars: saved.progress.stars,
+        darts: saved.progress.bestDarts,
+        completedAt: saved.progress.firstCompletedAt,
+        updatedAt: saved.progress.updatedAt,
+      }
+      onProfileSynced(saved.profile)
+      confirmedCompletion = saved
+    } else if (successfulAttempt && (earnedXP > 0 || earnedCoins > 0)) {
       await onProfileRewards({ xp: earnedXP, coins: earnedCoins })
+      confirmedCompletion = {
+        awardedXP: earnedXP,
+        awardedCoins: earnedCoins,
+      }
     }
 
     setPendingReturnLevelId(level.id)
@@ -925,11 +916,9 @@ function Campaign({
 
     setProgress(updatedProgress)
 
-    if (!settings.multiplayer) {
-      localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(updatedProgress))
-    }
-
     setPreviewLevelId(Math.min(level.id + 1, levels.length))
+
+    return confirmedCompletion
 
   }
 
@@ -974,6 +963,14 @@ function Campaign({
   const displayedMapPathProgress = unlockVisible && unlockAnimation.phase !== 'arrived'
     ? unlockPathStart
     : mapPathProgress
+
+  if (!settings.multiplayer && remoteProgressLoading) {
+    return <main className="dq-campaign dq-remote-state"><p>Kampagnenfortschritt wird geladen …</p></main>
+  }
+
+  if (!settings.multiplayer && remoteProgressError) {
+    return <main className="dq-campaign dq-remote-state" role="alert"><strong>Kampagnenfortschritt nicht verfügbar</strong><p>{remoteProgressError}</p><button type="button" onClick={() => window.location.reload()}>ERNEUT VERSUCHEN</button></main>
+  }
 
   return (
     <main className="dq-campaign">

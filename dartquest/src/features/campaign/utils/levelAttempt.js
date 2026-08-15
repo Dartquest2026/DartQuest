@@ -253,6 +253,7 @@ export function createAttemptResult(level, attempt, completedAt = Date.now(), fi
   const totalDarts = getExactTotalDarts(attempt.visits, finishingDart)
   const stars = calculateLevelStars(level, totalDarts)
   return {
+    completionId: crypto.randomUUID(),
     success: true,
     stars,
     darts: totalDarts,
@@ -275,6 +276,7 @@ export function createQuickAttemptResult(level, totalDarts, startedAt = Date.now
   const finishingDart = ((exactTotalDarts - 1) % 3) + 1
 
   return {
+    completionId: crypto.randomUUID(),
     success: true,
     stars: calculateLevelStars(level, exactTotalDarts),
     darts: exactTotalDarts,

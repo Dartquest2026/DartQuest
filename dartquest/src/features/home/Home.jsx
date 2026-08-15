@@ -5,6 +5,8 @@ import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
 import './Home.css'
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION
+
 function Home({
   activeProfile,
   onContinueCampaign,
@@ -117,6 +119,9 @@ function Home({
           <span className="home-season-arrow" aria-hidden="true">›</span>
         </button>
       </main>
+      <footer className="home-version" aria-label={`DartQuest Version ${APP_VERSION}`}>
+        v{APP_VERSION}
+      </footer>
     </section>
   )
 }

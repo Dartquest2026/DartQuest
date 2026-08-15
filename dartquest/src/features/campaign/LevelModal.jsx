@@ -75,13 +75,17 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
   const [autoPerfectPending, setAutoPerfectPending] = useState(false)
   const [returningToMap, setReturningToMap] = useState(false)
   const [profileSyncError, setProfileSyncError] = useState('')
+  const [confirmedRewards, setConfirmedRewards] = useState(null)
   const [introReady, setIntroReady] = useState(false)
   const completionStarted = useRef(false)
   const resultDelivered = useRef(false)
   const onCompleteRef = useRef(onComplete)
   const onCloseRef = useRef(onClose)
-  onCompleteRef.current = onComplete
-  onCloseRef.current = onClose
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+    onCloseRef.current = onClose
+  }, [onClose, onComplete])
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -100,17 +104,30 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
 
   useEffect(() => {
     if (!result || !level) return undefined
-    const timer = setTimeout(async () => {
+    let cancelled = false
+    const startedAt = Date.now()
+    const persistCompletion = async () => {
       if (resultDelivered.current) return
       resultDelivered.current = true
       try {
-        await onCompleteRef.current(level, result)
-        setReturningToMap(true)
+        const saved = await onCompleteRef.current(level, result)
+        if (cancelled) return
+        setConfirmedRewards({
+          xp: saved?.awardedXP ?? result.xp ?? 0,
+          coins: saved?.awardedCoins ?? result.coins ?? 0,
+        })
+        const remainingAnimationMs = Math.max(0, 3200 - (Date.now() - startedAt))
+        window.setTimeout(() => {
+          if (!cancelled) setReturningToMap(true)
+        }, remainingAnimationMs)
       } catch (error) {
-        setProfileSyncError(error?.message || 'XP und Coins konnten nicht gespeichert werden.')
+        if (!cancelled) {
+          setProfileSyncError(error?.message || 'XP und Coins konnten nicht gespeichert werden.')
+        }
       }
-    }, 3200)
-    return () => clearTimeout(timer)
+    }
+    persistCompletion()
+    return () => { cancelled = true }
   }, [result, level])
 
   useEffect(() => {
@@ -278,15 +295,15 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
           <>
             <LevelCompleteAnimation
               stars={result.stars}
-              xp={result.xp}
-              coins={result.coins}
+              xp={confirmedRewards?.xp ?? 0}
+              coins={confirmedRewards?.coins ?? 0}
               totalDarts={result.totalDarts}
               visits={result.visits}
               isBoss={level.boss === true}
               levelId={level.id}
               autoPerfect={result.autoPerfect === true}
             />
-            {!returningToMap && !profileSyncError && <p className="level-profile-sync-status" role="status">XP und Coins werden gespeichert …</p>}
+            {!confirmedRewards && !profileSyncError && <p className="level-profile-sync-status" role="status">XP und Coins werden gespeichert …</p>}
             {profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
           </>
         )}
