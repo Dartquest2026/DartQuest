@@ -40,21 +40,21 @@ function LevelCompleteAnimation({ stars, xp, coins, totalDarts, visits, isBoss =
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const timers = []
-    const rewardStart = reducedMotion ? 80 : 2850
+    const rewardStart = reducedMotion ? 80 : 1580
     const rewardSteps = reducedMotion ? 1 : 12
     for (let step = 1; step <= rewardSteps; step += 1) {
       timers.push(window.setTimeout(() => {
         setDisplayXP(Math.round((xp ?? 0) * step / rewardSteps))
         setDisplayCoins(Math.round((coins ?? 0) * step / rewardSteps))
-      }, rewardStart + step * (reducedMotion ? 1 : 50)))
+      }, rewardStart + step * (reducedMotion ? 1 : 28)))
     }
     if (onStarReveal) {
       for (let index = 0; index < earnedStars; index += 1) {
-        timers.push(window.setTimeout(() => onStarReveal(index + 1), reducedMotion ? 40 : 700 + index * 300))
+        timers.push(window.setTimeout(() => onStarReveal(index + 1), reducedMotion ? 40 : 400 + index * 165))
       }
     }
-    if (autoPerfect && onPerfectReveal) timers.push(window.setTimeout(onPerfectReveal, reducedMotion ? 60 : 2200))
-    if (onRewardsReveal) timers.push(window.setTimeout(onRewardsReveal, reducedMotion ? 80 : 2850))
+    if (autoPerfect && onPerfectReveal) timers.push(window.setTimeout(onPerfectReveal, reducedMotion ? 60 : 1180))
+    if (onRewardsReveal) timers.push(window.setTimeout(onRewardsReveal, reducedMotion ? 80 : 1580))
     return () => timers.forEach((timer) => window.clearTimeout(timer))
   }, [autoPerfect, coins, earnedStars, onPerfectReveal, onRewardsReveal, onStarReveal, xp])
 
@@ -68,8 +68,8 @@ function LevelCompleteAnimation({ stars, xp, coins, totalDarts, visits, isBoss =
             key={star}
             className="is-earned"
             style={{
-              '--empty-star-delay': `${620 + (star - 1) * 40}ms`,
-              '--earned-star-delay': `${700 + (star - 1) * 300}ms`,
+              '--empty-star-delay': `${350 + (star - 1) * 30}ms`,
+              '--earned-star-delay': `${400 + (star - 1) * 165}ms`,
             }}
             aria-hidden="true"
           >

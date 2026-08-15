@@ -219,10 +219,10 @@ function Campaign({
     if (!unlockFrom || !unlockTo) return undefined
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const travelDelay = reducedMotion ? 20 : 220
-    const arrivalDelay = reducedMotion ? 80 : 1420
-    const finishDelay = reducedMotion ? 420 : 2320
-    const worldDelay = reducedMotion ? 20 : 1120
+    const travelDelay = reducedMotion ? 20 : 240
+    const arrivalDelay = reducedMotion ? 80 : 1740
+    const finishDelay = reducedMotion ? 420 : 2350
+    const worldDelay = reducedMotion ? 20 : 1250
     const travelTimer = window.setTimeout(() => {
       setUnlockAnimation((current) => current ? { ...current, phase: 'traveling' } : null)
     }, travelDelay)
@@ -795,8 +795,7 @@ function Campaign({
       !isLevelUnlocked(
         selectedPreviewLevel,
       ) ||
-      levelEnterLocked.current ||
-      unlockAnimation
+      levelEnterLocked.current
     ) {
       return
     }
@@ -1392,11 +1391,11 @@ function Campaign({
                 d="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88"
               />
               <circle className="dq-path-unlock-aura" r="2.8">
-                <animateMotion dur="1200ms" fill="freeze" calcMode="linear" keyPoints={`${unlockPathStart / 100};${unlockPathEnd / 100}`} keyTimes="0;1" path="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88" />
+                <animateMotion dur="1500ms" fill="freeze" calcMode="linear" keyPoints={`${unlockPathStart / 100};${unlockPathEnd / 100}`} keyTimes="0;1" path="M 12 10 C 30 8, 52 10, 66 19 C 78 26, 84 31, 80 36 C 74 44, 57 47, 38 48 C 22 49, 12 53, 14 60 C 16 69, 34 74, 56 76 C 70 77, 79 82, 84 88" />
               </circle>
               <circle className="dq-path-unlock-head" r="1.55">
                 <animateMotion
-                  dur="1200ms"
+                  dur="1500ms"
                   fill="freeze"
                   calcMode="linear"
                   keyPoints={`${unlockPathStart / 100};${unlockPathEnd / 100}`}
@@ -1622,13 +1621,14 @@ function Campaign({
 
                 type="button"
 
-                disabled={Boolean(activatingLevelId || levelEnterTransition || unlockAnimation)}
+                disabled={Boolean(activatingLevelId || levelEnterTransition)}
 
                 onClick={
                   startSelectedLevel
                 }
               >
-                <span aria-hidden="true">▶</span> SPIELEN
+                <span className="dq-play-icon" aria-hidden="true" />
+                SPIELEN
               </button>
 
             </div>

@@ -9,7 +9,7 @@
   overflow: hidden;
   text-align: center;
   padding: max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));
-  animation: levelCompleteOutro .7s 4.7s ease-in both;
+  animation: levelCompleteOutro .42s 2.7s ease-in both;
 }
 
 .level-complete-animation::before {
@@ -80,7 +80,7 @@
   line-height: 1;
   text-shadow: 0 0 20px rgba(0,255,127,.34);
   opacity: 0;
-  animation: levelMessageIn .4s 2.15s cubic-bezier(.22,1,.36,1) both;
+  animation: levelMessageIn .3s 1.12s cubic-bezier(.22,1,.36,1) both;
 }
 
 .stars-4 .level-complete-message h2,
@@ -95,13 +95,13 @@
   color: #b9cec6;
   font-size: 14px;
   opacity: 0;
-  animation: levelCompleteFadeUp .35s 2.55s ease-out both;
+  animation: levelCompleteFadeUp .26s 1.38s ease-out both;
 }
 
 .level-complete-range {
   margin: 0;
   color: #849c93;
-  animation-delay: 2.75s;
+  animation-delay: 1.5s;
 }
 
 .level-complete-rewards {
@@ -112,7 +112,7 @@
   opacity: 0;
   color: #b9cec6;
   font-size: 15px;
-  animation: levelCompleteFadeUp .4s 2.85s ease-out both;
+  animation: levelCompleteFadeUp .3s 1.6s ease-out both;
 }
 
 .level-complete-rewards span { white-space: nowrap; }
@@ -166,7 +166,7 @@
   .level-complete-range,
   .level-complete-rewards { animation: levelCompleteSimpleFade .16s ease-out both; }
 
-  .level-complete-animation { animation: levelCompleteReducedOutro .2s 5.7s ease-out both; }
+  .level-complete-animation { animation: levelCompleteReducedOutro .2s 2.9s ease-out both; }
 
   @keyframes levelCompleteSimpleFade {
     from { opacity: 0; }

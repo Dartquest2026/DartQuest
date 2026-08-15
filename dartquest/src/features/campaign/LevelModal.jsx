@@ -84,7 +84,7 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
       resultDelivered.current = true
       onComplete(level, result)
       onClose()
-    }, 6000)
+    }, 3200)
     return () => clearTimeout(timer)
   }, [result, level, onComplete, onClose])
 
