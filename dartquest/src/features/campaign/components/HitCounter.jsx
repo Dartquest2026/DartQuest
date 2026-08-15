@@ -1,7 +1,7 @@
 import Dartboard from './Dartboard'
 import './HitCounter.css'
 
-function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, completionPending, onFinish, interactionDisabled = false }) {
+function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, completionPending, autoPerfectPending = false, onFinish, interactionDisabled = false }) {
   const expectedTarget = attempt.sequence[attempt.sequenceIndex]
 
   return (
@@ -15,7 +15,9 @@ function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, comp
 
       <div className="hit-counter-visit-actions">
         <button className="hit-counter-previous-visit" type="button" onClick={onPreviousVisit} disabled={interactionDisabled || attempt.visits <= 1}>↶ Aufnahme</button>
-        <button className="hit-counter-next-visit" type="button" onClick={onNextVisit} disabled={interactionDisabled || completionPending}>Nächste Aufnahme</button>
+        <button className="hit-counter-next-visit" type="button" onClick={onNextVisit} disabled={interactionDisabled}>
+          {completionPending ? 'Aufnahme nachtragen · +3 Darts' : 'Nächste Aufnahme'}
+        </button>
       </div>
 
       <div className="hit-counter-targets">
@@ -41,15 +43,24 @@ function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, comp
 
       {completionPending && (
         <section className="finishing-dart" aria-live="polite">
-          <strong>Aufgabe erfüllt ✓</strong>
-          <span>Mit welchem Dart dieser Aufnahme?</span>
-          <div>
-            {[1, 2, 3].map((dart) => (
-              <button key={dart} type="button" onClick={() => onFinish(dart)} disabled={interactionDisabled}>
-                <small>Dart</small>{dart}
-              </button>
-            ))}
-          </div>
+          <strong>{autoPerfectPending ? 'Perfekt erkannt ★★★★' : 'Aufgabe erfüllt ✓'}</strong>
+          {autoPerfectPending ? (
+            <>
+              <span>Fehlt eine Aufnahme? Jetzt noch korrigieren.</span>
+              <button className="finishing-dart-correction" type="button" onClick={onNextVisit} disabled={interactionDisabled}>+ Aufnahme</button>
+            </>
+          ) : (
+            <>
+              <span>Mit welchem Dart dieser Aufnahme?</span>
+              <div>
+                {[1, 2, 3].map((dart) => (
+                  <button key={dart} type="button" onClick={() => onFinish(dart)} disabled={interactionDisabled}>
+                    <small>Dart</small>{dart}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       )}
     </section>

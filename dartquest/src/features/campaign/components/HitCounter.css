@@ -27,6 +27,7 @@
 .finishing-dart > span { color: #d8e6e1; font-size: 13px; }
 .finishing-dart > div { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .finishing-dart button { min-height: 47px; border: 1px solid rgba(66,230,149,.35); border-radius: 11px; background: #102e25; color: #fff; font: inherit; font-size: 20px; font-weight: 900; cursor: pointer; }
+.finishing-dart button.finishing-dart-correction { width: 100%; min-height: 42px; border-color: #42e695; background: rgba(66,230,149,.08); color: #42e695; font-size: 12px; text-transform: uppercase; box-shadow: 0 0 12px rgba(66,230,149,.12); }
 .finishing-dart button small { display: block; color: #92aaa1; font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
 
 @media (max-width: 560px) {

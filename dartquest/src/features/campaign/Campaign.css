@@ -1676,6 +1676,15 @@
   animation: dqCompletedLevelGlow .62s ease-out both;
 }
 
+.dq-node.map-return-focus {
+  animation: dqMapReturnFocus .58s ease-in-out both;
+}
+
+@keyframes dqMapReturnFocus {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.28) drop-shadow(0 0 9px rgba(66,230,149,.72)); }
+}
+
 .dq-node.unlocking {
   pointer-events: none;
 }

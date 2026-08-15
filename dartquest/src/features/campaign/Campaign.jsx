@@ -196,7 +196,11 @@ function Campaign({
   const playActivationTimer = useRef(null)
   const [activatingLevelId, setActivatingLevelId] = useState(null)
   const [unlockAnimation, setUnlockAnimation] = useState(null)
+  const [pendingUnlockAnimation, setPendingUnlockAnimation] = useState(null)
+  const [pendingReturnLevelId, setPendingReturnLevelId] = useState(null)
+  const [mapReturnLevelId, setMapReturnLevelId] = useState(null)
   const campaignPathRef = useRef(null)
+  const returnToMapTimer = useRef(null)
   const [pathLevelPositions, setPathLevelPositions] = useState(FALLBACK_PATH_LEVEL_POSITIONS)
   const unlockFrom = unlockAnimation?.from
   const unlockTo = unlockAnimation?.to
@@ -204,6 +208,7 @@ function Campaign({
 
   useEffect(() => () => {
     if (playActivationTimer.current) window.clearTimeout(playActivationTimer.current)
+    if (returnToMapTimer.current) window.clearTimeout(returnToMapTimer.current)
   }, [])
 
   useEffect(() => {
@@ -834,7 +839,21 @@ function Campaign({
 
 
   function closeLevel() {
+    const completedLevelId = pendingReturnLevelId
+    const queuedUnlock = pendingUnlockAnimation
     setSelectedLevel(null)
+
+    if (!completedLevelId) return
+
+    setPendingReturnLevelId(null)
+    setPendingUnlockAnimation(null)
+    setMapReturnLevelId(completedLevelId)
+    if (returnToMapTimer.current) window.clearTimeout(returnToMapTimer.current)
+    returnToMapTimer.current = window.setTimeout(() => {
+      setMapReturnLevelId(null)
+      if (queuedUnlock) setUnlockAnimation(queuedUnlock)
+      returnToMapTimer.current = null
+    }, queuedUnlock ? 1000 : 700)
   }
 
 
@@ -889,15 +908,16 @@ function Campaign({
     const newlyUnlocked =
       updatedProgress.unlockedLevel > progress.unlockedLevel
 
-    if (newlyUnlocked) {
-      setUnlockAnimation({
-        from: level.id,
-        to: updatedProgress.unlockedLevel,
-        boss: level.boss === true,
-        crossWorld: Math.ceil(level.id / 10) !== Math.ceil(updatedProgress.unlockedLevel / 10),
-        phase: 'charging',
-      })
-    }
+    setPendingReturnLevelId(level.id)
+    setPendingUnlockAnimation(newlyUnlocked
+      ? {
+          from: level.id,
+          to: updatedProgress.unlockedLevel,
+          boss: level.boss === true,
+          crossWorld: Math.ceil(level.id / 10) !== Math.ceil(updatedProgress.unlockedLevel / 10),
+          phase: 'charging',
+        }
+      : null)
 
     setProgress(updatedProgress)
 
@@ -913,9 +933,6 @@ function Campaign({
           console.error('Profil-Rewards konnten nicht gespeichert werden.', rewardError)
         })
     }
-
-
-    setSelectedLevel(null)
   }
 
 
@@ -1461,6 +1478,10 @@ function Campaign({
                     ? 'just-completed'
                     : '',
 
+                  mapReturnLevelId === level.id
+                    ? 'map-return-focus'
+                    : '',
+
                   unlockAnimation?.to === level.id
                     ? `unlocking ${unlockAnimation.phase}`
                     : '',
@@ -1860,6 +1881,14 @@ function Campaign({
       <LevelModal
         level={
           selectedLevel
+        }
+
+        inputModeHintEligible={
+          selectedLevel?.id === 1
+        }
+
+        difficulty={
+          settings.difficulty
         }
 
         multiplayer={

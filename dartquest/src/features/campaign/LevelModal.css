@@ -583,6 +583,48 @@
   transform: scale(.985);
 }
 
+.level-modal-backdrop.is-returning-to-map {
+  pointer-events: none;
+  animation: levelReturnBackdrop 2.1s ease-in-out both !important;
+}
+
+.level-modal.is-returning-to-map .level-gameplay-layer {
+  animation: levelGameplayReturn 1.25s .2s cubic-bezier(.4,0,.2,1) both;
+}
+
+.level-modal.is-returning-to-map .level-complete-animation {
+  opacity: 0;
+}
+
+.dq-campaign:has(.level-modal.is-returning-to-map) > :not(.level-modal-backdrop) {
+  animation: levelCampaignReveal 1.35s .35s cubic-bezier(.22,.72,.2,1) both;
+}
+
+@keyframes levelReturnBackdrop {
+  0% { background: rgba(0,8,6,.9); }
+  35% { background: rgba(0,8,6,.72); }
+  100% { background: rgba(0,8,6,0); }
+}
+
+@keyframes levelGameplayReturn {
+  from { opacity: .2; transform: scale(.985); }
+  to { opacity: 0; transform: scale(.96); }
+}
+
+@keyframes levelCampaignReveal {
+  from { opacity: 0; transform: scale(1.025); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-modal-backdrop.is-returning-to-map,
+  .level-modal.is-returning-to-map .level-gameplay-layer,
+  .dq-campaign:has(.level-modal.is-returning-to-map) > :not(.level-modal-backdrop) {
+    animation-duration: .16s !important;
+    animation-delay: 0s !important;
+  }
+}
+
 @keyframes levelCompletionBackdropSequence {
   0% { background: rgba(0,8,6,.52); }
   12%, 82% { background: rgba(0,8,6,.9); }
@@ -708,8 +750,64 @@ button.level-input-mode-switch small { font-size: 8px; font-weight: 900; letter-
 button.level-input-mode-switch.is-quick { border-color: rgba(0,255,127,.62); color: #66f5af; }
 button.level-input-mode-switch:disabled { cursor: default; opacity: .45; }
 
+button.level-input-mode-switch.is-coachmark-target {
+  z-index: 12;
+  border-color: #42e695;
+  color: #dffff0;
+  box-shadow: 0 0 9px rgba(0,255,127,.48), 0 0 22px rgba(0,255,127,.2);
+  animation: inputModeHintTarget 1.35s ease-in-out infinite alternate;
+}
+
+.level-input-mode-hint {
+  position: absolute;
+  z-index: 11;
+  top: 48px;
+  left: 11px;
+  width: min(280px, calc(100% - 22px));
+  padding: 12px;
+  border: 1px solid rgba(66,230,149,.62);
+  border-radius: 12px;
+  background: rgba(3,22,16,.98);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,.48), 0 0 16px rgba(66,230,149,.13);
+  animation: inputModeHintIn .24s ease-out both;
+}
+
+.level-input-mode-hint::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 24px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid rgba(66,230,149,.62);
+  border-left: 1px solid rgba(66,230,149,.62);
+  background: #031610;
+  transform: rotate(45deg);
+}
+
+.level-input-mode-hint strong { display: block; color: #f3fff9; font-size: 13px; }
+.level-input-mode-hint p { margin: 5px 0 9px; color: #a9beb6; font-size: 11px; line-height: 1.35; }
+.level-input-mode-hint button { min-height: 34px; padding: 0 12px; border: 1px solid #42e695; border-radius: 9px; background: rgba(66,230,149,.08); color: #65ffb4; font: inherit; font-size: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; }
+
+@keyframes inputModeHintTarget {
+  from { box-shadow: 0 0 7px rgba(0,255,127,.35), 0 0 15px rgba(0,255,127,.12); }
+  to { box-shadow: 0 0 12px rgba(0,255,127,.72), 0 0 25px rgba(0,255,127,.25); }
+}
+
+@keyframes inputModeHintIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 560px) {
   button.level-input-mode-switch { top: 7px; left: 8px; min-width: 64px; min-height: 27px; padding: 3px 6px; }
+  .level-input-mode-hint { top: 41px; left: 8px; width: min(260px, calc(100% - 16px)); padding: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.level-input-mode-switch.is-coachmark-target,
+  .level-input-mode-hint { animation: none; }
 }
 
 .level-giveup-button {

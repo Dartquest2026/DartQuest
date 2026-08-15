@@ -19,6 +19,7 @@ import {
 import './LevelModal.css'
 
 const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
+const INPUT_MODE_HINT_STORAGE_KEY = 'dartquest_seen_input_mode_hint'
 
 function formatTaskForDisplay(task) {
   return String(task ?? '').replace(/\s+mit maximal\s+\d+\s+Darts?$/i, '')
@@ -58,7 +59,7 @@ function formatAttemptTitle(level, attempt) {
   return 'Ziele: ' + targets.map((target) => target.label + ' (' + target.requiredHits + ')').join(' · ')
 }
 
-function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
+function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = false, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
   const minimumDarts = getMinimumDarts(level)
   const [inputMode, setInputMode] = useState(() => {
@@ -66,10 +67,20 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     return savedMode === 'quick' ? 'quick' : 'counter'
   })
   const [pendingInputMode, setPendingInputMode] = useState(null)
+  const inputModeHintStorageKey = `${INPUT_MODE_HINT_STORAGE_KEY}_difficulty_${difficulty}`
+  const [showInputModeHint, setShowInputModeHint] = useState(() => (
+    inputModeHintEligible && Number(level?.id) === 1 && localStorage.getItem(inputModeHintStorageKey) !== 'true'
+  ))
   const [result, setResult] = useState(null)
+  const [autoPerfectPending, setAutoPerfectPending] = useState(false)
+  const [returningToMap, setReturningToMap] = useState(false)
   const [introReady, setIntroReady] = useState(false)
   const completionStarted = useRef(false)
   const resultDelivered = useRef(false)
+  const onCompleteRef = useRef(onComplete)
+  const onCloseRef = useRef(onClose)
+  onCompleteRef.current = onComplete
+  onCloseRef.current = onClose
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -78,15 +89,46 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
   }, [])
 
   useEffect(() => {
+    if (!showInputModeHint) return undefined
+    const timer = window.setTimeout(() => {
+      localStorage.setItem(inputModeHintStorageKey, 'true')
+      setShowInputModeHint(false)
+    }, 6000)
+    return () => window.clearTimeout(timer)
+  }, [inputModeHintStorageKey, showInputModeHint])
+
+  useEffect(() => {
     if (!result || !level) return undefined
     const timer = setTimeout(() => {
       if (resultDelivered.current) return
       resultDelivered.current = true
-      onComplete(level, result)
-      onClose()
+      onCompleteRef.current(level, result)
+      setReturningToMap(true)
     }, 3200)
     return () => clearTimeout(timer)
-  }, [result, level, onComplete, onClose])
+  }, [result, level])
+
+  useEffect(() => {
+    if (!returningToMap) return undefined
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timer = window.setTimeout(() => onCloseRef.current(), reducedMotion ? 180 : 2100)
+    return () => window.clearTimeout(timer)
+  }, [returningToMap])
+
+  useEffect(() => {
+    if (!autoPerfectPending || !isAutoPerfectAttempt(attempt)) return undefined
+
+    const timer = window.setTimeout(() => {
+      if (completionStarted.current) return
+      completionStarted.current = true
+      setResult({
+        ...createAttemptResult(level, attempt, Date.now(), 3),
+        autoPerfect: true,
+      })
+    }, 1100)
+
+    return () => window.clearTimeout(timer)
+  }, [attempt, autoPerfectPending, level])
 
   const displayedTask = formatAttemptTitle(level, attempt)
   const playerNames = Array.isArray(players)
@@ -100,18 +142,25 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     setAttempt(nextAttempt)
 
     if (isAutoPerfectAttempt(nextAttempt) && !completionStarted.current) {
-      completionStarted.current = true
-      setResult({
-        ...createAttemptResult(level, nextAttempt, Date.now(), 3),
-        autoPerfect: true,
-      })
+      setAutoPerfectPending(true)
     }
   }
 
   function finishAttempt(finishingDart) {
     if (!introReady || !isAttemptComplete(attempt) || completionStarted.current) return
+    setAutoPerfectPending(false)
     completionStarted.current = true
     setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
+  }
+
+  function addVisit() {
+    setAutoPerfectPending(false)
+    setAttempt((current) => nextVisit(current))
+  }
+
+  function undoHit(targetId) {
+    setAutoPerfectPending(false)
+    setAttempt((current) => undoTargetHit(current, targetId))
   }
 
   function finishQuickAttempt(totalDarts) {
@@ -137,6 +186,11 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
     applyInputMode(nextMode)
   }
 
+  function dismissInputModeHint() {
+    localStorage.setItem(inputModeHintStorageKey, 'true')
+    setShowInputModeHint(false)
+  }
+
   function giveUpLevel() {
     if (resultDelivered.current) return
     resultDelivered.current = true
@@ -145,8 +199,8 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
   }
 
   return (
-    <div className="level-modal-backdrop" onClick={result ? undefined : onClose}>
-      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${result ? ' is-completing' : ''}`} onClick={(event) => event.stopPropagation()}>
+    <div className={`level-modal-backdrop${returningToMap ? ' is-returning-to-map' : ''}`} onClick={result ? undefined : onClose}>
+      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${result ? ' is-completing' : ''}${returningToMap ? ' is-returning-to-map' : ''}`} onClick={(event) => event.stopPropagation()}>
         {!result && <button className="level-modal-close" type="button" onClick={onClose} aria-label="Level schließen">×</button>}
 
         <div className={`level-gameplay-layer${result ? ' is-finished' : ''}`} aria-hidden={result ? 'true' : undefined}>
@@ -154,15 +208,23 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
             <h2 className="level-modal-title">{displayedTask}</h2>
             <button
               type="button"
-              className={`level-input-mode-switch is-${inputMode}`}
+              className={`level-input-mode-switch is-${inputMode}${showInputModeHint ? ' is-coachmark-target' : ''}`}
               onClick={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
               disabled={!introReady || Boolean(result)}
               aria-label={inputMode === 'counter' ? 'Zur Schnelleingabe wechseln' : 'Zum Trefferzähler wechseln'}
+              aria-describedby={showInputModeHint ? 'input-mode-hint' : undefined}
               title={inputMode === 'counter' ? 'Treffer zählen' : 'Schnelleingabe'}
             >
               <span aria-hidden="true"><i /></span>
               <small>{inputMode === 'counter' ? 'Zähler' : 'Schnell'}</small>
             </button>
+            {showInputModeHint && !result && (
+              <aside className="level-input-mode-hint" id="input-mode-hint" role="status">
+                <strong>Du kannst hier jederzeit wechseln.</strong>
+                <p>Wechsle zwischen Trefferzähler und Schnelleingabe.</p>
+                <button type="button" onClick={dismissInputModeHint}>Verstanden</button>
+              </aside>
+            )}
             {multiplayer && (
               <div className="level-modal-multiplayer">
                 <strong>👥 {playerCount} Spieler</strong>
@@ -175,10 +237,11 @@ function LevelModalAttempt({ level, multiplayer = false, playerCount = 1, player
               <HitCounter
                 attempt={attempt}
                 onHit={applyHit}
-                onNextVisit={() => setAttempt((current) => nextVisit(current))}
+                onNextVisit={addVisit}
                 onPreviousVisit={() => setAttempt((current) => previousVisit(current))}
-                onUndo={(targetId) => setAttempt((current) => undoTargetHit(current, targetId))}
+                onUndo={undoHit}
                 completionPending={isAttemptComplete(attempt)}
+                autoPerfectPending={autoPerfectPending}
                 onFinish={finishAttempt}
                 interactionDisabled={!introReady || Boolean(result)}
               />
