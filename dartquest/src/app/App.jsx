@@ -7,7 +7,7 @@ import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
 import Profile from '../features/profile/Profile'
 import Community from '../features/community/Community'
-import { getPendingRequestCount } from '../features/community/communityStorage'
+import { getPendingRequests } from '../features/community/communityStorage'
 import {
   addProfileRewards,
   getSessionProfile,
@@ -71,7 +71,7 @@ function App() {
   const [authError, setAuthError] =
     useState('')
 
-  const [pendingRequestCount, setPendingRequestCount] = useState(0)
+  const [pendingRequests, setPendingRequests] = useState([])
 
   const [activePage, setActivePage] =
     useState('home')
@@ -220,7 +220,10 @@ function App() {
       setActiveProfile(profile)
       setAuthError(error?.message ?? '')
       setAuthLoading(false)
-      if (!profile) setActivePage('home')
+      if (!profile) {
+        setPendingRequests([])
+        setActivePage('home')
+      }
     })
 
     return () => {
@@ -229,25 +232,32 @@ function App() {
     }
   }, [])
 
-  const refreshPendingRequestCount = useCallback(async () => {
-    if (!activeProfile) { setPendingRequestCount(0); return }
-    try { setPendingRequestCount(await getPendingRequestCount()) }
-    catch { setPendingRequestCount(0) }
+  const refreshPendingRequests = useCallback(async () => {
+    if (!activeProfile) { setPendingRequests([]); return [] }
+    try {
+      const requests = await getPendingRequests()
+      setPendingRequests(requests)
+      return requests
+    } catch {
+      setPendingRequests([])
+      return []
+    }
   }, [activeProfile])
 
   useEffect(() => {
     if (!activeProfile) return undefined
-    const initialTimer = window.setTimeout(refreshPendingRequestCount, 0)
-    const timer = window.setInterval(refreshPendingRequestCount, 30000)
-    const refreshOnFocus = () => refreshPendingRequestCount()
+    const initialTimer = window.setTimeout(refreshPendingRequests, 0)
+    const timer = window.setInterval(refreshPendingRequests, 30000)
+    const refreshOnFocus = () => refreshPendingRequests()
     window.addEventListener('focus', refreshOnFocus)
     return () => { window.clearTimeout(initialTimer); window.clearInterval(timer); window.removeEventListener('focus', refreshOnFocus) }
-  }, [activeProfile, refreshPendingRequestCount])
+  }, [activeProfile, refreshPendingRequests])
 
   async function logout() {
     try {
       await logoutProfile()
       setActiveProfile(null)
+      setPendingRequests([])
       setActivePage('home')
     } catch (error) {
       setAuthError(error.message)
@@ -316,7 +326,7 @@ function App() {
   if (!activeProfile) {
     return (
       <>
-        <AuthScreen onAuthenticated={(profile) => { setActiveProfile(profile); setAuthError('') }} />
+        <AuthScreen onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError('') }} />
         {authError && <p className="app-auth-error">{authError}</p>}
       </>
     )
@@ -543,7 +553,8 @@ function App() {
         <Community
           key={`community-root-${rootNavigationKeys.community}`}
           activeProfile={activeProfile}
-          onRequestsChanged={refreshPendingRequestCount}
+          pendingRequests={pendingRequests}
+          onRequestsChanged={refreshPendingRequests}
         />
       )}
 
@@ -557,7 +568,7 @@ function App() {
         onChangePage={
           navigateToRoot
         }
-        pendingRequestCount={pendingRequestCount}
+        pendingRequestCount={pendingRequests.length}
       />
 
     </div>

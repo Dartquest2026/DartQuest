@@ -10,6 +10,9 @@
 .community-card-icon { display: grid; width: 56px; height: 56px; place-items: center; border: 1px solid rgba(66,230,149,.17); border-radius: 16px; background: rgba(2,15,11,.5); font-size: 28px; filter: drop-shadow(0 0 9px rgba(66,230,149,.2)); }
 .community-card-copy { min-width: 0; }.community-card-copy strong,.community-card-copy small { display: block; }
 .community-card-copy strong { margin-bottom: 6px; font-size: 16px; letter-spacing: .8px; }.community-card-copy small { color: #9fb4ac; font-size: 12px; line-height: 1.35; }
+.community-card-title { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.community-card-title strong { margin-bottom: 6px; }
+.community-card-badge { display: grid; flex: 0 0 auto; min-width: 18px; height: 18px; margin-bottom: 6px; place-items: center; padding: 0 4px; border: 2px solid #05120e; border-radius: 999px; background: #f04452; color: white; font-size: 9px; font-weight: 900; line-height: 1; box-shadow: 0 0 9px rgba(240,68,82,.55); }
 .community-card-arrow { position: relative; z-index: 1; color: #42e695; font-size: 29px; }
 .community-card em { position: relative; z-index: 1; padding: 5px 7px; border: 1px solid rgba(244,197,66,.3); border-radius: 7px; color: #f4c542; font-size: 8px; font-style: normal; font-weight: 900; letter-spacing: .5px; white-space: nowrap; }
 .community-subpage-header { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; }.community-subpage-header > button { display: grid; width: 43px; height: 43px; place-items: center; padding: 0; border: 1px solid rgba(66,230,149,.3); border-radius: 12px; background: #092019; color: #42e695; font-size: 29px; }.community-subpage-header h1 { margin: 2px 0 0; font-size: 27px; }

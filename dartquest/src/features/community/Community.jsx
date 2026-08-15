@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Leaderboard from '../leaderboard/Leaderboard'
 import GlobalLeaderboard from '../leaderboard/GlobalLeaderboard'
-import { getFriends, getPendingRequests, respondToFriendRequest, respondToGroupInvite, searchProfiles, sendFriendRequest } from './communityStorage'
+import { getFriends, respondToFriendRequest, respondToGroupInvite, searchProfiles, sendFriendRequest } from './communityStorage'
 import './Community.css'
 import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
@@ -45,33 +45,31 @@ function FriendsPage({ onBack }) {
   </main>
 }
 
-function RequestsPage({ onBack, onRequestsChanged }) {
-  const [requests, setRequests] = useState([])
+function RequestsPage({ onBack, requests, onRequestsChanged }) {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState('')
-  const load = useCallback(() => getPendingRequests().then(setRequests).catch((error) => setMessage(error.message)), [])
-  useEffect(() => { load() }, [load])
   async function respond(request, accept) {
     setBusy(request.id); setMessage('')
     try {
       if (request.type === 'friend') await respondToFriendRequest(request.id, accept)
       else await respondToGroupInvite(request.id, accept)
       setMessage(accept ? (request.type === 'friend' ? 'Ihr seid jetzt Freunde.' : 'Du bist der Gruppe beigetreten.') : 'Anfrage abgelehnt.')
-      await load(); onRequestsChanged()
+      await onRequestsChanged()
     } catch (error) { setMessage(error.message) } finally { setBusy('') }
   }
   return <main className="community-screen"><Header title="Anfragen" onBack={onBack} /><section className="community-list"><h2>OFFENE ANFRAGEN</h2>{message && <p className="community-message">{message}</p>}{!requests.length && <p className="community-list-empty">Keine offenen Anfragen</p>}{requests.map((request) => <article className="community-request" key={request.id}><span>{request.type === 'friend' ? '🤝' : '👥'}</span><div><small>{request.type === 'friend' ? 'FREUNDSCHAFTSANFRAGE' : 'GRUPPENEINLADUNG'}</small><strong>{request.type === 'friend' ? `${request.senderName} möchte dein Freund werden.` : `${request.senderName} lädt dich in die Gruppe „${request.groupName}“ ein.`}</strong><div><button disabled={busy === request.id} onClick={() => respond(request, true)}>{request.type === 'friend' ? 'ANNEHMEN' : 'BEITRETEN'}</button><button disabled={busy === request.id} onClick={() => respond(request, false)}>ABLEHNEN</button></div></div></article>)}</section></main>
 }
 
-function Community({ activeProfile, onRequestsChanged }) {
+function Community({ activeProfile, pendingRequests = [], onRequestsChanged }) {
   const [section, setSection] = useState('communityHome')
+  const pendingFriendRequestCount = pendingRequests.filter((request) => request.type === 'friend').length
   const back = () => setSection('communityHome')
   if (section === 'leaderboard') return <GlobalLeaderboard activeProfile={activeProfile} onBack={back} onRequestsChanged={onRequestsChanged} />
   if (section === 'groups') return <Leaderboard activeProfile={activeProfile} onBack={back} />
   if (section === 'friends') return <FriendsPage onBack={back} />
-  if (section === 'requests') return <RequestsPage onBack={back} onRequestsChanged={onRequestsChanged} />
+  if (section === 'requests') return <RequestsPage onBack={back} requests={pendingRequests} onRequestsChanged={onRequestsChanged} />
   if (section === 'tournaments') return <main className="community-screen"><Header title="Turniere" onBack={back} /><p className="community-list-empty">Kommt bald</p></main>
-  return <main className="community-screen"><header className="community-header"><span>DARTQUEST</span><h1>COMMUNITY</h1><p>Spieler finden, Gruppen verwalten und vergleichen.</p></header><section className="community-grid" aria-label="Community-Bereiche">{communityItems.map((item) => <button key={item.id} type="button" className="community-card" onClick={() => setSection(item.id)}><span className="community-card-icon">{item.icon}</span><span className="community-card-copy"><strong>{item.title}</strong><small>{item.description}</small></span>{item.comingSoon ? <em>KOMMT BALD</em> : <span className="community-card-arrow">›</span>}</button>)}</section></main>
+  return <main className="community-screen"><header className="community-header"><span>DARTQUEST</span><h1>COMMUNITY</h1><p>Spieler finden, Gruppen verwalten und vergleichen.</p></header><section className="community-grid" aria-label="Community-Bereiche">{communityItems.map((item) => <button key={item.id} type="button" className="community-card" onClick={() => setSection(item.id)}><span className="community-card-icon">{item.icon}</span><span className="community-card-copy"><span className="community-card-title"><strong>{item.title}</strong>{item.id === 'requests' && pendingFriendRequestCount > 0 && <span className="community-card-badge" aria-label={`${pendingFriendRequestCount} offene Freundschaftsanfragen`}>{pendingFriendRequestCount > 99 ? '99+' : pendingFriendRequestCount}</span>}</span><small>{item.description}</small></span>{item.comingSoon ? <em>KOMMT BALD</em> : <span className="community-card-arrow">›</span>}</button>)}</section></main>
 }
 
 export default Community
