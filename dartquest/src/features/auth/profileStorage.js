@@ -132,10 +132,12 @@ export async function getSessionProfile() {
   return data.session ? loadSupabaseProfile(data.session.user) : null
 }
 
-export async function addProfileRewards({ userId, xp = 0, coins = 0 }) {
+export async function addProfileRewards({ xp = 0, coins = 0 }) {
   const earnedXP = Math.max(0, Math.trunc(Number(xp) || 0))
   const earnedCoins = Math.max(0, Math.trunc(Number(coins) || 0))
-  if (!userId) throw new Error('Das Profil konnte nicht aktualisiert werden.')
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+  const userId = authData.user?.id
+  if (authError || !userId) throw new Error('Das Profil konnte nicht aktualisiert werden.')
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const { data: current, error: loadError } = await supabase
@@ -164,7 +166,6 @@ export async function addProfileRewards({ userId, xp = 0, coins = 0 }) {
     if (updateError) throw new Error(authErrorMessage(updateError, 'profile'))
     if (!updated) continue
 
-    const { data: authData } = await supabase.auth.getUser()
     const profile = mapProfile(updated, authData.user)
     cacheProfile(profile)
     return profile
@@ -189,6 +190,7 @@ export function subscribeToAuthChanges(callback) {
 export async function logoutProfile() {
   const { error } = await supabase.auth.signOut()
   if (error) throw new Error(authErrorMessage(error))
+  localStorage.removeItem(PROFILE_CACHE_KEY)
 }
 
 export async function resetProfileProgressFields(profileId) {

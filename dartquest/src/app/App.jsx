@@ -271,10 +271,7 @@ function App() {
   }
 
   async function applyProfileRewards(rewards) {
-    const profile = await addProfileRewards({
-      userId: activeProfile.id,
-      ...rewards,
-    })
+    const profile = await addProfileRewards(rewards)
     setActiveProfile(profile)
     return profile
   }

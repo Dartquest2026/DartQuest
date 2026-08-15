@@ -74,6 +74,7 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
   const [result, setResult] = useState(null)
   const [autoPerfectPending, setAutoPerfectPending] = useState(false)
   const [returningToMap, setReturningToMap] = useState(false)
+  const [profileSyncError, setProfileSyncError] = useState('')
   const [introReady, setIntroReady] = useState(false)
   const completionStarted = useRef(false)
   const resultDelivered = useRef(false)
@@ -99,11 +100,15 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
 
   useEffect(() => {
     if (!result || !level) return undefined
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (resultDelivered.current) return
       resultDelivered.current = true
-      onCompleteRef.current(level, result)
-      setReturningToMap(true)
+      try {
+        await onCompleteRef.current(level, result)
+        setReturningToMap(true)
+      } catch (error) {
+        setProfileSyncError(error?.message || 'XP und Coins konnten nicht gespeichert werden.')
+      }
     }, 3200)
     return () => clearTimeout(timer)
   }, [result, level])
@@ -270,16 +275,20 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
         </div>
 
         {result && (
-          <LevelCompleteAnimation
-            stars={result.stars}
-            xp={result.xp}
-            coins={result.coins}
-            totalDarts={result.totalDarts}
-            visits={result.visits}
-            isBoss={level.boss === true}
-            levelId={level.id}
-            autoPerfect={result.autoPerfect === true}
-          />
+          <>
+            <LevelCompleteAnimation
+              stars={result.stars}
+              xp={result.xp}
+              coins={result.coins}
+              totalDarts={result.totalDarts}
+              visits={result.visits}
+              isBoss={level.boss === true}
+              levelId={level.id}
+              autoPerfect={result.autoPerfect === true}
+            />
+            {!returningToMap && !profileSyncError && <p className="level-profile-sync-status" role="status">XP und Coins werden gespeichert …</p>}
+            {profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
+          </>
         )}
       </article>
     </div>

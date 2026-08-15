@@ -861,7 +861,7 @@ function Campaign({
      LEVEL ABSCHLIESSEN
      ======================================================= */
 
-  function completeLevel(
+  async function completeLevel(
     level,
     result,
   ) {
@@ -908,6 +908,10 @@ function Campaign({
     const newlyUnlocked =
       updatedProgress.unlockedLevel > progress.unlockedLevel
 
+    if (successfulAttempt && (earnedXP > 0 || earnedCoins > 0)) {
+      await onProfileRewards({ xp: earnedXP, coins: earnedCoins })
+    }
+
     setPendingReturnLevelId(level.id)
     setPendingUnlockAnimation(newlyUnlocked
       ? {
@@ -927,12 +931,6 @@ function Campaign({
 
     setPreviewLevelId(Math.min(level.id + 1, levels.length))
 
-    if (successfulAttempt && (earnedXP > 0 || earnedCoins > 0)) {
-      onProfileRewards({ xp: earnedXP, coins: earnedCoins })
-        .catch((rewardError) => {
-          console.error('Profil-Rewards konnten nicht gespeichert werden.', rewardError)
-        })
-    }
   }
 
 

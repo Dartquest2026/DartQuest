@@ -48,6 +48,7 @@ function FriendsPage({ onBack }) {
 function RequestsPage({ onBack, requests, onRequestsChanged }) {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState('')
+  const [pendingRejection, setPendingRejection] = useState(null)
   async function respond(request, accept) {
     setBusy(request.id); setMessage('')
     try {
@@ -55,9 +56,20 @@ function RequestsPage({ onBack, requests, onRequestsChanged }) {
       else await respondToGroupInvite(request.id, accept)
       setMessage(accept ? (request.type === 'friend' ? 'Ihr seid jetzt Freunde.' : 'Du bist der Gruppe beigetreten.') : 'Anfrage abgelehnt.')
       await onRequestsChanged()
-    } catch (error) { setMessage(error.message) } finally { setBusy('') }
+      return true
+    } catch (error) {
+      setMessage(error.message)
+      return false
+    } finally { setBusy('') }
   }
-  return <main className="community-screen"><Header title="Anfragen" onBack={onBack} /><section className="community-list"><h2>OFFENE ANFRAGEN</h2>{message && <p className="community-message">{message}</p>}{!requests.length && <p className="community-list-empty">Keine offenen Anfragen</p>}{requests.map((request) => <article className="community-request" key={request.id}><span>{request.type === 'friend' ? '🤝' : '👥'}</span><div><small>{request.type === 'friend' ? 'FREUNDSCHAFTSANFRAGE' : 'GRUPPENEINLADUNG'}</small><strong>{request.type === 'friend' ? `${request.senderName} möchte dein Freund werden.` : `${request.senderName} lädt dich in die Gruppe „${request.groupName}“ ein.`}</strong><div><button disabled={busy === request.id} onClick={() => respond(request, true)}>{request.type === 'friend' ? 'ANNEHMEN' : 'BEITRETEN'}</button><button disabled={busy === request.id} onClick={() => respond(request, false)}>ABLEHNEN</button></div></div></article>)}</section></main>
+  async function confirmRejection() {
+    if (!pendingRejection || busy) return
+    if (await respond(pendingRejection, false)) setPendingRejection(null)
+  }
+  function cancelRejection() {
+    if (!busy) setPendingRejection(null)
+  }
+  return <main className="community-screen"><Header title="Anfragen" onBack={onBack} /><section className="community-list"><h2>OFFENE ANFRAGEN</h2>{message && <p className="community-message">{message}</p>}{!requests.length && <p className="community-list-empty">Keine offenen Anfragen</p>}{requests.map((request) => <article className="community-request" key={request.id}><span>{request.type === 'friend' ? '🤝' : '👥'}</span><div><small>{request.type === 'friend' ? 'FREUNDSCHAFTSANFRAGE' : 'GRUPPENEINLADUNG'}</small><strong>{request.type === 'friend' ? `${request.senderName} möchte dein Freund werden.` : `${request.senderName} lädt dich in die Gruppe „${request.groupName}“ ein.`}</strong><div><button disabled={busy === request.id} onClick={() => respond(request, true)}>{request.type === 'friend' ? 'ANNEHMEN' : 'BEITRETEN'}</button><button disabled={busy === request.id} onClick={() => setPendingRejection(request)}>ABLEHNEN</button></div></div></article>)}</section>{pendingRejection && <div className="community-reject-backdrop" onClick={cancelRejection}><section className="community-reject-modal" role="alertdialog" aria-modal="true" aria-labelledby="community-reject-title" onClick={(event) => event.stopPropagation()}><div className="community-reject-icon" aria-hidden="true">⚠</div><h2 id="community-reject-title">{pendingRejection.type === 'friend' ? 'Freundschaftsanfrage wirklich ablehnen?' : 'Gruppeneinladung wirklich ablehnen?'}</h2><p>Die Anfrage bleibt bestehen, bis du das Ablehnen ausdrücklich bestätigst.</p><div className="community-reject-actions"><button className="community-reject-cancel" type="button" disabled={Boolean(busy)} onClick={cancelRejection}>ABBRECHEN</button><button className="community-reject-confirm" type="button" disabled={Boolean(busy)} onClick={confirmRejection}>{busy ? 'WIRD ABGELEHNT …' : 'ABLEHNEN'}</button></div></section></div>}</main>
 }
 
 function Community({ activeProfile, pendingRequests = [], onRequestsChanged }) {
