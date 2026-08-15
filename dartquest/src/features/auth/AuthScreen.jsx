@@ -1,18 +1,43 @@
 import { useRef, useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
-import { loginProfile, registerProfile } from './profileStorage'
+import { loginProfile, registerProfile, requestPasswordRecovery } from './profileStorage'
+import { isValidEmail, normalizeEmail } from './passwordRecovery'
 import './AuthScreen.css'
 
-function AuthScreen({ onAuthenticated }) {
+const RECOVERY_SENT_MESSAGE = 'Wenn zu dieser E-Mail-Adresse ein Konto existiert, haben wir dir einen Link zum Zurücksetzen des Passworts gesendet.'
+
+function AuthScreen({ onAuthenticated, initialMessage = '' }) {
   const [mode, setMode] = useState('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(initialMessage)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const emailInputRef = useRef(null)
+
+  async function requestReset() {
+    if (busy) return
+    setError('')
+    setMessage('')
+    const cleanEmail = normalizeEmail(email)
+    setEmail(cleanEmail)
+    if (!isValidEmail(cleanEmail)) {
+      setError('Bitte gib eine gültige E-Mail-Adresse ein.')
+      emailInputRef.current?.focus()
+      return
+    }
+    setBusy(true)
+    try {
+      await requestPasswordRecovery(cleanEmail)
+    } catch {
+      // Die Antwort bleibt auch bei unbekannten Konten und technischen Fehlern neutral.
+    } finally {
+      setMessage(RECOVERY_SENT_MESSAGE)
+      setBusy(false)
+    }
+  }
 
   function insertAtSign() {
     const input = emailInputRef.current
@@ -30,8 +55,14 @@ function AuthScreen({ onAuthenticated }) {
 
   async function submit(event) {
     event.preventDefault()
+    if (busy) return
     setError('')
     setMessage('')
+
+    if (mode === 'forgot') {
+      await requestReset()
+      return
+    }
 
     if (mode === 'register') {
       if (name.trim().length < 2) return setError('Der Profilname muss mindestens 2 Zeichen haben.')
@@ -69,13 +100,27 @@ function AuthScreen({ onAuthenticated }) {
     setRepeatPassword('')
   }
 
+  function openForgotPassword() {
+    setMode('forgot')
+    setError('')
+    setMessage('')
+    setPassword('')
+    requestAnimationFrame(() => emailInputRef.current?.focus())
+  }
+
+  function returnToLogin() {
+    setMode('login')
+    setError('')
+    setMessage('')
+  }
+
   return (
     <main className="auth-screen">
       <section className="auth-panel">
         <img className="auth-logo" src={logo} alt="DartQuest" />
         <p className="auth-eyebrow">DARTQUEST ACCOUNT</p>
-        <h1>{mode === 'register' ? 'Profil erstellen' : 'Willkommen zurück'}</h1>
-        <p className="auth-intro">{mode === 'register' ? 'Erstelle deinen DartQuest-Account.' : 'Melde dich mit deinem DartQuest-Account an.'}</p>
+        <h1>{mode === 'register' ? 'Profil erstellen' : mode === 'forgot' ? 'Passwort vergessen?' : 'Willkommen zurück'}</h1>
+        <p className="auth-intro">{mode === 'register' ? 'Erstelle deinen DartQuest-Account.' : mode === 'forgot' ? 'Gib deine E-Mail-Adresse ein. Wir senden dir einen sicheren Link.' : 'Melde dich mit deinem DartQuest-Account an.'}</p>
 
         <form onSubmit={submit}>
           {mode === 'register' && <label>Profilname<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="nickname" required /></label>}
@@ -98,16 +143,25 @@ function AuthScreen({ onAuthenticated }) {
               <button type="button" onClick={insertAtSign} aria-label="@-Zeichen einfügen">@</button>
             </span>
           </label>
-          <label>Passwort<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /></label>
+          {mode !== 'forgot' && <label>Passwort<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /></label>}
+          {mode === 'login' && (
+            <button className="auth-forgot" type="button" onClick={openForgotPassword} disabled={busy}>
+              Passwort vergessen?
+            </button>
+          )}
           {mode === 'register' && <label>Passwort wiederholen<input type="password" value={repeatPassword} onChange={(event) => setRepeatPassword(event.target.value)} autoComplete="new-password" required /></label>}
-          {error && <p className="auth-error" role="alert">{error}</p>}
-          {message && <p className="auth-success" role="status">{message}</p>}
-          <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'BITTE WARTEN …' : mode === 'register' ? 'PROFIL ERSTELLEN' : 'ANMELDEN'}</button>
+          {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}
+          {message && <p className="auth-success" role="status" aria-live="polite">{message}</p>}
+          <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'BITTE WARTEN …' : mode === 'register' ? 'PROFIL ERSTELLEN' : mode === 'forgot' ? 'RESET-LINK SENDEN' : 'ANMELDEN'}</button>
         </form>
 
-        <button className="auth-secondary" type="button" onClick={switchMode}>
-          {mode === 'login' ? 'NEUES PROFIL ANLEGEN' : 'BESTEHENDES PROFIL ANMELDEN'}
-        </button>
+        {mode === 'forgot' ? (
+          <button className="auth-secondary" type="button" onClick={returnToLogin}>ZURÜCK ZUR ANMELDUNG</button>
+        ) : (
+          <button className="auth-secondary" type="button" onClick={switchMode}>
+            {mode === 'login' ? 'NEUES PROFIL ANLEGEN' : 'BESTEHENDES PROFIL ANMELDEN'}
+          </button>
+        )}
         <small className="auth-note">Online-Account über Supabase Auth.</small>
       </section>
     </main>

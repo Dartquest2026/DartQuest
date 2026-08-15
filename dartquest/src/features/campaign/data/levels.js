@@ -1,8 +1,8 @@
-import { beginnerLevels } from '../difficulty/beginner'
-import { easyLevels } from '../difficulty/easy'
-import { mediumLevels } from '../difficulty/medium'
-import { hardLevels } from '../difficulty/hard'
-import { proLevels } from '../difficulty/pro'
+import { beginnerLevels } from '../difficulty/beginner.js'
+import { easyLevels } from '../difficulty/easy.js'
+import { mediumLevels } from '../difficulty/medium.js'
+import { hardLevels } from '../difficulty/hard.js'
+import { proLevels } from '../difficulty/pro.js'
 
 export const difficultyLevels = {
   1: beginnerLevels,

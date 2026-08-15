@@ -5,7 +5,7 @@ const campaignPages = new Set([
   'multiplayerCampaign',
 ])
 
-const homePages = new Set(['home', 'singleplayer', 'multiplayer'])
+const homePages = new Set(['home', 'singleplayer', 'multiplayer', 'settings'])
 
 function getActiveMainPage(activePage) {
   if (campaignPages.has(activePage)) return 'campaign'

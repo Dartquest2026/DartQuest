@@ -5,7 +5,13 @@ import Singleplayer from '../features/singleplayer/Singleplayer'
 import Campaign from '../features/campaign/Campaign'
 import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
+import PasswordRecoveryScreen from '../features/auth/PasswordRecoveryScreen'
+import {
+  isPasswordRecoveryLocation,
+  PASSWORD_RESET_PATH,
+} from '../features/auth/passwordRecovery'
 import Profile from '../features/profile/Profile'
+import Settings from '../features/settings/Settings'
 import Community from '../features/community/Community'
 import { getPendingRequests } from '../features/community/communityStorage'
 import {
@@ -62,6 +68,11 @@ const soloDifficulties = [
 ]
 
 function App() {
+  const [recoveryRoute, setRecoveryRoute] = useState(
+    () => window.location.pathname === PASSWORD_RESET_PATH,
+  )
+  const [recoveryStatus, setRecoveryStatus] = useState('checking')
+  const [loginMessage, setLoginMessage] = useState('')
   const [activeProfile, setActiveProfile] =
     useState(null)
 
@@ -203,8 +214,24 @@ function App() {
 
   useEffect(() => {
     let mounted = true
+    const recoveryLocation = isPasswordRecoveryLocation()
+    const recoverySearch = new URLSearchParams(window.location.search)
+    const recoveryHash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const recoveryError = recoverySearch.has('error') || recoveryHash.has('error')
+    let recoveryTimer
 
-    getSessionProfile()
+    if (recoveryRoute) {
+      window.history.replaceState(null, '', PASSWORD_RESET_PATH)
+      recoveryTimer = window.setTimeout(() => {
+        if (mounted) setRecoveryStatus('invalid')
+      }, recoveryError || !recoveryLocation ? 0 : 3000)
+    }
+
+    const initialProfile = recoveryRoute
+      ? Promise.resolve(null)
+      : getSessionProfile()
+
+    initialProfile
       .then((profile) => {
         if (mounted) setActiveProfile(profile)
       })
@@ -215,8 +242,18 @@ function App() {
         if (mounted) setAuthLoading(false)
       })
 
-    const unsubscribe = subscribeToAuthChanges((profile, error) => {
+    const unsubscribe = subscribeToAuthChanges((profile, error, event, session) => {
       if (!mounted) return
+      if (event === 'PASSWORD_RECOVERY' && recoveryRoute && session) {
+        window.clearTimeout(recoveryTimer)
+        setRecoveryStatus('ready')
+        setAuthLoading(false)
+        return
+      }
+      if (recoveryRoute) {
+        setAuthLoading(false)
+        return
+      }
       setActiveProfile(profile)
       setAuthError(error?.message ?? '')
       setAuthLoading(false)
@@ -228,9 +265,19 @@ function App() {
 
     return () => {
       mounted = false
+      window.clearTimeout(recoveryTimer)
       unsubscribe()
     }
-  }, [])
+  }, [recoveryRoute])
+
+  function returnToLogin(message) {
+    window.history.replaceState(null, '', '/')
+    setLoginMessage(message)
+    setRecoveryRoute(false)
+    setRecoveryStatus('checking')
+    setActiveProfile(null)
+    setAuthLoading(false)
+  }
 
   const refreshPendingRequests = useCallback(async () => {
     if (!activeProfile) { setPendingRequests([]); return [] }
@@ -316,6 +363,15 @@ function App() {
     openRoot(nextPage)
   }
 
+  if (recoveryRoute) {
+    return (
+      <PasswordRecoveryScreen
+        status={recoveryStatus}
+        onBackToLogin={returnToLogin}
+      />
+    )
+  }
+
   if (authLoading) {
     return <main className="auth-screen"><p>Profil wird geladen …</p></main>
   }
@@ -323,7 +379,7 @@ function App() {
   if (!activeProfile) {
     return (
       <>
-        <AuthScreen onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError('') }} />
+        <AuthScreen initialMessage={loginMessage} onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError(''); setLoginMessage('') }} />
         {authError && <p className="app-auth-error">{authError}</p>}
       </>
     )
@@ -354,6 +410,7 @@ function App() {
             )
           }
           onOpenProfile={() => setActivePage('profile')}
+          onOpenSettings={() => setActivePage('settings')}
         />
       )}
 
@@ -543,6 +600,13 @@ function App() {
           onLogout={logout}
           onProfileUpdated={refreshActiveProfile}
           onAccountDeleted={() => { setActiveProfile(null); setActivePage('home') }}
+        />
+      )}
+
+      {activePage === 'settings' && (
+        <Settings
+          activeProfile={activeProfile}
+          onBack={() => setActivePage('home')}
         />
       )}
 

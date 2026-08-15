@@ -15,8 +15,14 @@
 .auth-primary,.auth-secondary { width: 100%; min-height: 52px; border-radius: 14px; font-size: 15px; font-weight: 900; cursor: pointer; }
 .auth-primary { margin-top: 4px; border: 1px solid #42e695; background: linear-gradient(135deg,#42e695,#20cdae); color: #03110d; }
 .auth-primary:disabled { opacity: .55; }
+.auth-forgot { justify-self: end; margin-top: -7px; padding: 4px 0; border: 0; background: transparent; color: #8ff0bd; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; }
+.auth-forgot:focus-visible,.auth-secondary:focus-visible,.auth-primary:focus-visible { outline: 3px solid rgba(66,230,149,.45); outline-offset: 3px; }
+.auth-forgot:disabled { opacity: .55; cursor: default; }
+.auth-password-toggle { grid-template-columns: 22px 1fr !important; align-items: center; cursor: pointer; }
+.auth-password-toggle input { width: 20px; min-height: 20px; accent-color: #42e695; }
 .auth-secondary { margin-top: 12px; border: 1px solid rgba(66,230,149,.34); background: #071f18; color: #42e695; }
 .auth-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(255,90,100,.12); color: #ffabb1; font-size: 14px; line-height: 1.4; }
 .auth-success { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(66,230,149,.1); color: #8ff0bd; font-size: 14px; line-height: 1.4; }
 .auth-note { display: block; margin-top: 16px; color: #89a098; font-size: 12px; line-height: 1.4; text-align: center; }
 @media (max-height:700px){.auth-screen{place-items:start center}.auth-panel{padding:18px}.auth-logo{width:150px;margin-bottom:9px}.auth-intro{margin-bottom:14px}.auth-panel form{gap:10px}}
+@media (prefers-reduced-motion:reduce){.auth-email-input>button:active{transform:none}}

@@ -13,6 +13,7 @@ function Home({
   onOpenSingleplayer,
   onOpenMultiplayer,
   onOpenProfile,
+  onOpenSettings,
 }) {
   const [homeView, setHomeView] = useState('home')
   const xp = Number(activeProfile?.xp) || 0
@@ -45,6 +46,7 @@ function Home({
           className="home-menu-button"
           type="button"
           aria-label="Menü öffnen"
+          onClick={onOpenSettings}
         >
           ☰
         </button>

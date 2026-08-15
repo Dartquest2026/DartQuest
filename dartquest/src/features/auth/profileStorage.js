@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase'
+import { getPasswordResetRedirectUrl, normalizeEmail } from './passwordRecovery'
 
 export const PROFILE_STORAGE_KEY = 'dartquest-profiles'
 export const PROFILE_CACHE_KEY = 'dartquest-supabase-profile-cache'
@@ -126,6 +127,24 @@ export async function loginProfile(email, password) {
   return loadSupabaseProfile(data.user)
 }
 
+export async function requestPasswordRecovery(email) {
+  await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
+    redirectTo: getPasswordResetRedirectUrl(),
+  })
+}
+
+export async function finishPasswordRecovery(password) {
+  const { error: updateError } = await supabase.auth.updateUser({ password })
+  if (updateError) {
+    throw new Error('Das Passwort konnte nicht geändert werden. Fordere bitte einen neuen Link an.')
+  }
+  const { error: signOutError } = await supabase.auth.signOut()
+  if (signOutError) {
+    throw new Error('Das Passwort wurde geändert. Bitte schließe diese Seite und melde dich erneut an.')
+  }
+  localStorage.removeItem(PROFILE_CACHE_KEY)
+}
+
 export async function getSessionProfile() {
   const { data, error } = await supabase.auth.getSession()
   if (error) throw new Error(authErrorMessage(error))
@@ -175,12 +194,16 @@ export async function addProfileRewards({ xp = 0, coins = 0 }) {
 }
 
 export function subscribeToAuthChanges(callback) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
     window.setTimeout(async () => {
       try {
-        callback(session ? await loadSupabaseProfile(session.user) : null)
+        if (event === 'PASSWORD_RECOVERY') {
+          callback(null, null, event, session)
+          return
+        }
+        callback(session ? await loadSupabaseProfile(session.user) : null, null, event, session)
       } catch (error) {
-        callback(null, error)
+        callback(null, error, event, session)
       }
     }, 0)
   })
