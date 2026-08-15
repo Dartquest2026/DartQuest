@@ -1,5 +1,4 @@
 import { resetProfileProgressFields } from '../auth/profileStorage.js'
-import { resetCampaignProgress } from '../campaign/campaignStorage.js'
 
 const PERSONAL_PROGRESS_KEYS = [
   'dartquest-singleplayer-difficulty',
@@ -18,9 +17,8 @@ export function getPersonalProgressKeys() {
 }
 
 export async function resetCurrentProfileProgress(profileId) {
-  await resetCampaignProgress()
-  await resetProfileProgressFields(profileId)
   const removedKeys = getPersonalProgressKeys()
   removedKeys.forEach((key) => localStorage.removeItem(key))
+  await resetProfileProgressFields(profileId)
   return removedKeys
 }

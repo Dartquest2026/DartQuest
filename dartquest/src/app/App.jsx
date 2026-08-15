@@ -276,10 +276,6 @@ function App() {
     return profile
   }
 
-  function applySyncedCampaignProfile(profile) {
-    setActiveProfile((current) => current ? { ...current, ...profile } : current)
-  }
-
   function openRoot(destination) {
     setRootNavigationKeys((current) => ({
       ...current,
@@ -516,7 +512,6 @@ function App() {
           onExit={finishCampaignExit}
           activeProfile={activeProfile}
           onProfileRewards={applyProfileRewards}
-          onProfileSynced={applySyncedCampaignProfile}
         />
       )}
 
@@ -535,7 +530,6 @@ function App() {
           onExit={finishCampaignExit}
           activeProfile={activeProfile}
           onProfileRewards={applyProfileRewards}
-          onProfileSynced={applySyncedCampaignProfile}
         />
       )}
 
