@@ -794,15 +794,15 @@
 /* Versionsnummer oben rechts im Home-Header */
 .home-version {
   position: absolute;
-  top: 18px;
-  right: 45px;
+  top: 20px;
+  right: 50px;
 
   margin: 0;
   padding: 0;
 
   color: rgba(159, 178, 171, 0.82);
 
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.05em;
