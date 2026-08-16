@@ -794,8 +794,8 @@
 /* Versionsnummer oben rechts im Home-Header */
 .home-version {
   position: absolute;
-  top: 28px;
-  right: 40px;
+  top: 18px;
+  right: 45px;
 
   margin: 0;
   padding: 0;
