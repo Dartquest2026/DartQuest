@@ -1,7 +1,7 @@
 {
   "name": "dartquest",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,15 @@
     "lint": "eslint .",
     "test:campaign-transfer": "node --test scripts/campaign-transfer.test.mjs",
     "test:password-recovery": "node --test scripts/password-recovery.test.mjs",
+    "test:settings": "node --test scripts/settings.test.mjs",
+    "test:help-contact": "node --test scripts/help-contact.test.mjs",
+    "test:boss-defeated": "node --test scripts/boss-defeated.test.mjs",
+    "test:boss-intro": "node --test scripts/boss-intro.test.mjs",
+    "test:world-transition": "node --test scripts/world-transition.test.mjs",
+    "test:coin-animation": "node --test scripts/coin-animation.test.mjs",
+    "test:return-transition": "node --test scripts/return-transition.test.mjs",
+    "test:standard-games": "node --test scripts/standard-games.test.mjs",
+    "test:release-new-features": "node --test scripts/release-new-features.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

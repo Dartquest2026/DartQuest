@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
+import { NewBadge, useNewFeatures, useVisibleFeature } from '../releases/NewFeatures'
 import PlayerAvatar from '../../shared/components/PlayerAvatar'
 
 import './Home.css'
@@ -15,6 +16,8 @@ function Home({
   onOpenProfile,
   onOpenSettings,
 }) {
+  const { markSeen } = useNewFeatures()
+  const versionRef = useVisibleFeature('version-display')
   const [homeView, setHomeView] = useState('home')
   const xp = Number(activeProfile?.xp) || 0
   const coins = Number(activeProfile?.coins) || 0
@@ -115,14 +118,22 @@ function Home({
           </button>
         </div>
 
+        <div className="home-options-grid">
+          <button className="home-settings-card" type="button" onClick={() => { markSeen('settings-home-entry'); onOpenSettings() }}>
+            <span aria-hidden="true">⚙</span>
+            <strong>Einstellungen <NewBadge featureId="settings-home-entry" /></strong>
+            <small>Sound, Bedienung &amp; Geräte</small>
+          </button>
+        </div>
+
         <button className="home-season-card" type="button" onClick={() => setHomeView('season')}>
           <span className="home-season-icon" aria-hidden="true">🎯</span>
           <span className="home-season-copy"><small>SAISONALE AUFGABEN</small><strong>Aktuelle Saison</strong><em>Schließe Aufgaben ab und sichere dir Belohnungen.</em></span>
           <span className="home-season-arrow" aria-hidden="true">›</span>
         </button>
       </main>
-      <footer className="home-version" aria-label={`DartQuest Version ${APP_VERSION}`}>
-        v{APP_VERSION}
+      <footer ref={versionRef} className="home-version" aria-label={`DartQuest Version ${APP_VERSION}`}>
+        v{APP_VERSION} <NewBadge featureId="version-display" />
       </footer>
     </section>
   )

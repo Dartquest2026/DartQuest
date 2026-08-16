@@ -12,6 +12,7 @@ import {
 } from '../features/auth/passwordRecovery'
 import Profile from '../features/profile/Profile'
 import Settings from '../features/settings/Settings'
+import { applySettings, loadSettings } from '../features/settings/settingsStorage'
 import Community from '../features/community/Community'
 import { getPendingRequests } from '../features/community/communityStorage'
 import {
@@ -21,6 +22,7 @@ import {
   subscribeToAuthChanges,
 } from '../features/auth/profileStorage'
 import BottomNav from '../shared/components/BottomNav'
+import { NewFeaturesProvider } from '../features/releases/NewFeatures'
 
 import './App.css'
 import '../shared/styles/BottomNav.css'
@@ -73,6 +75,15 @@ function App() {
   )
   const [recoveryStatus, setRecoveryStatus] = useState('checking')
   const [loginMessage, setLoginMessage] = useState('')
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const refresh = () => applySettings(loadSettings(), document.documentElement, media)
+    refresh()
+    media.addEventListener?.('change', refresh)
+    window.addEventListener('dartquest:settings', refresh)
+    return () => { media.removeEventListener?.('change', refresh); window.removeEventListener('dartquest:settings', refresh) }
+  }, [])
   const [activeProfile, setActiveProfile] =
     useState(null)
 
@@ -381,14 +392,17 @@ function App() {
 
   if (!activeProfile) {
     return (
+      <NewFeaturesProvider profileId={null}>
       <>
         <AuthScreen initialMessage={loginMessage} onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError(''); setLoginMessage('') }} />
         {authError && <p className="app-auth-error">{authError}</p>}
       </>
+      </NewFeaturesProvider>
     )
   }
 
   return (
+    <NewFeaturesProvider profileId={activeProfile.id}>
     <div className="app-shell">
 
       {/* HOME */}
@@ -424,6 +438,7 @@ function App() {
         'singleplayer' && (
 
         <Singleplayer
+          activeProfile={activeProfile}
           onBack={() =>
             setActivePage('home')
           }
@@ -572,6 +587,8 @@ function App() {
           onExit={finishCampaignExit}
           activeProfile={activeProfile}
           onProfileRewards={applyProfileRewards}
+          onOpenProfile={() => setActivePage('profile')}
+          onLogout={logout}
         />
       )}
 
@@ -590,6 +607,8 @@ function App() {
           onExit={finishCampaignExit}
           activeProfile={activeProfile}
           onProfileRewards={applyProfileRewards}
+          onOpenProfile={() => setActivePage('profile')}
+          onLogout={logout}
         />
       )}
 
@@ -610,6 +629,8 @@ function App() {
         <Settings
           activeProfile={activeProfile}
           onBack={() => setActivePage('home')}
+          onOpenProfile={() => setActivePage('profile')}
+          onLogout={logout}
         />
       )}
 
@@ -636,6 +657,7 @@ function App() {
       />
 
     </div>
+    </NewFeaturesProvider>
   )
 }
 

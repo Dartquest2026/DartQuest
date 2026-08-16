@@ -4,6 +4,8 @@ import {
   getMultiplayerSaves,
   MAX_MULTIPLAYER_SAVES,
 } from './multiplayerSaves'
+import StandardGame from '../standardGames/StandardGame'
+import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 
 import './Multiplayer.css'
 
@@ -59,6 +61,7 @@ function Multiplayer({
   onStartCampaign,
   onContinueCampaign,
 }) {
+  const { markSeen } = useNewFeatures()
   const [players, setPlayers] = useState([
     {
       id: 1,
@@ -157,6 +160,11 @@ function Multiplayer({
     if (selectedMode === 'campaign') {
       setSelectedMode('modes')
       setCampaignType(null)
+      return
+    }
+
+    if (selectedMode === 'standard') {
+      setSelectedMode('modes')
       return
     }
 
@@ -591,6 +599,7 @@ function Multiplayer({
                 <button
                   type="button"
                   className="multiplayer-mode-card"
+                  onClick={() => { markSeen('standard-games'); setSelectedMode('standard') }}
                 >
 
                   <span className="multiplayer-mode-icon">
@@ -599,11 +608,11 @@ function Multiplayer({
 
                   <div>
                     <strong>
-                      Standardspiele
+                      Standardspiele <NewBadge featureId="standard-games" />
                     </strong>
 
                     <small>
-                      501 und weitere Spiele
+                      501 mit Double Out
                     </small>
                   </div>
 
@@ -616,6 +625,14 @@ function Multiplayer({
               </div>
 
         </section>
+      )}
+
+      {selectedMode === 'standard' && (
+        <StandardGame
+          initialPlayers={activePlayers.map((player) => player.name)}
+          activeProfile={activeProfile}
+          onBack={() => setSelectedMode('modes')}
+        />
       )}
 
 

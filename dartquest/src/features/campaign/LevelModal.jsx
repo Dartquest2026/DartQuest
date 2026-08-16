@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import HitCounter from './components/HitCounter'
 import LevelCompleteAnimation from './components/LevelCompleteAnimation'
+import BossDefeatedSequence from './components/BossDefeatedSequence'
 import QuickDartInput from './components/QuickDartInput'
 import {
   createAbandonedResult,
@@ -17,9 +18,12 @@ import {
   undoTargetHit,
 } from './utils/levelAttempt'
 import './LevelModal.css'
+import { confirmInputModeHint, hasConfirmedInputModeHint } from '../settings/tutorialStorage'
+import { shouldShowBossDefeated } from './bossDefeated'
+import { getReturnTransitionTiming, RETURN_TRANSITION_PHASES } from './returnTransition'
+import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 
 const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
-const INPUT_MODE_HINT_STORAGE_KEY = 'dartquest_seen_input_mode_hint'
 
 function formatTaskForDisplay(task) {
   return String(task ?? '').replace(/\s+mit maximal\s+\d+\s+Darts?$/i, '')
@@ -59,7 +63,7 @@ function formatAttemptTitle(level, attempt) {
   return 'Ziele: ' + targets.map((target) => target.label + ' (' + target.requiredHits + ')').join(' · ')
 }
 
-function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = false, multiplayer = false, playerCount = 1, players = [], onClose, onComplete }) {
+function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintEligible = false, multiplayer = false, playerCount = 1, players = [], onClose, onComplete, onOpenSettings, onExitCampaign }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
   const minimumDarts = getMinimumDarts(level)
   const [inputMode, setInputMode] = useState(() => {
@@ -67,19 +71,25 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
     return savedMode === 'quick' ? 'quick' : 'counter'
   })
   const [pendingInputMode, setPendingInputMode] = useState(null)
-  const inputModeHintStorageKey = `${INPUT_MODE_HINT_STORAGE_KEY}_difficulty_${difficulty}`
   const [showInputModeHint, setShowInputModeHint] = useState(() => (
-    inputModeHintEligible && Number(level?.id) === 1 && localStorage.getItem(inputModeHintStorageKey) !== 'true'
+    inputModeHintEligible && Number(level?.id) === 1 && !hasConfirmedInputModeHint(profileId, difficulty)
   ))
   const [result, setResult] = useState(null)
   const [autoPerfectPending, setAutoPerfectPending] = useState(false)
-  const [returningToMap, setReturningToMap] = useState(false)
+  const [returnTransition, setReturnTransition] = useState(RETURN_TRANSITION_PHASES.idle)
+  const [normalConfirmation, setNormalConfirmation] = useState(null)
   const [profileSyncError, setProfileSyncError] = useState('')
+  const [bossConfirmation, setBossConfirmation] = useState(null)
   const [introReady, setIntroReady] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [restartConfirmOpen, setRestartConfirmOpen] = useState(false)
+  const menuButtonRef = useRef(null)
   const completionStarted = useRef(false)
   const resultDelivered = useRef(false)
+  const returnStarted = useRef(false)
   const onCompleteRef = useRef(onComplete)
   const onCloseRef = useRef(onClose)
+  const { markSeen } = useNewFeatures()
   onCompleteRef.current = onComplete
   onCloseRef.current = onClose
 
@@ -90,35 +100,75 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
   }, [])
 
   useEffect(() => {
+    if (!menuOpen) return undefined
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        if (restartConfirmOpen) setRestartConfirmOpen(false)
+        else closePauseMenu()
+      }
+    }
+    const closeOnBack = () => {
+      setRestartConfirmOpen(false)
+      setMenuOpen(false)
+      window.setTimeout(() => menuButtonRef.current?.focus(), 0)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    window.addEventListener('popstate', closeOnBack)
+    return () => { window.removeEventListener('keydown', closeOnEscape); window.removeEventListener('popstate', closeOnBack) }
+  }, [menuOpen, restartConfirmOpen])
+
+  useEffect(() => {
     if (!showInputModeHint) return undefined
     const timer = window.setTimeout(() => {
-      localStorage.setItem(inputModeHintStorageKey, 'true')
       setShowInputModeHint(false)
     }, 6000)
     return () => window.clearTimeout(timer)
-  }, [inputModeHintStorageKey, showInputModeHint])
+  }, [showInputModeHint])
 
   useEffect(() => {
     if (!result || !level) return undefined
+    const animationMode = document.documentElement.dataset.animations
+    const completionDelay = level.boss
+      ? animationMode === 'off' ? 0 : animationMode === 'reduced' ? 120 : 500
+      : 3200
     const timer = setTimeout(async () => {
       if (resultDelivered.current) return
       resultDelivered.current = true
       try {
-        await onCompleteRef.current(level, result)
-        setReturningToMap(true)
+        const confirmation = await onCompleteRef.current(level, result)
+        if (shouldShowBossDefeated({ level, result, confirmation })) setBossConfirmation(confirmation)
+        else {
+  setNormalConfirmation(confirmation)
+  beginReturnToMap()
+}
       } catch (error) {
         setProfileSyncError(error?.message || 'XP und Coins konnten nicht gespeichert werden.')
       }
-    }, 3200)
+    }, completionDelay)
     return () => clearTimeout(timer)
   }, [result, level])
 
+  function beginReturnToMap() {
+    if (returnStarted.current) return
+    returnStarted.current = true
+    setReturnTransition(RETURN_TRANSITION_PHASES.fadingOutGame)
+  }
+
   useEffect(() => {
-    if (!returningToMap) return undefined
+    if (returnTransition !== RETURN_TRANSITION_PHASES.fadingOutGame) return undefined
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const timer = window.setTimeout(() => onCloseRef.current(), reducedMotion ? 180 : 2100)
-    return () => window.clearTimeout(timer)
-  }, [returningToMap])
+    const animationMode = document.documentElement.dataset.animations
+    const timing = getReturnTransitionTiming(animationMode, reducedMotion)
+    const timers = [
+      window.setTimeout(() => setReturnTransition(RETURN_TRANSITION_PHASES.switchingView), timing.switchAt),
+      window.setTimeout(() => { setReturnTransition(RETURN_TRANSITION_PHASES.fadingInMap); markSeen('game-map-crossfade') }, timing.revealAt),
+      window.setTimeout(() => {
+        setReturnTransition(RETURN_TRANSITION_PHASES.complete)
+        onCloseRef.current()
+      }, timing.completeAt),
+    ]
+    return undefined
+  }, [markSeen, returnTransition])
 
   useEffect(() => {
     if (!autoPerfectPending || !isAutoPerfectAttempt(attempt)) return undefined
@@ -192,7 +242,7 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
   }
 
   function dismissInputModeHint() {
-    localStorage.setItem(inputModeHintStorageKey, 'true')
+    confirmInputModeHint(profileId, difficulty)
     setShowInputModeHint(false)
   }
 
@@ -203,10 +253,42 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
     onClose()
   }
 
+  function restartLevel() {
+    completionStarted.current = false
+    resultDelivered.current = false
+    setAttempt(createLevelAttempt(level))
+    setPendingInputMode(null)
+    setAutoPerfectPending(false)
+    setProfileSyncError('')
+    setBossConfirmation(null)
+    setResult(null)
+    setRestartConfirmOpen(false)
+    setMenuOpen(false)
+    if (window.history.state?.dartQuestOverlay === 'level-pause') window.history.back()
+  }
+
+  function openPauseMenu() {
+    if (!introReady || autoPerfectPending || completionStarted.current || menuOpen) return
+    markSeen('campaign-burger-menu')
+    window.history.pushState({ dartQuestOverlay: 'level-pause' }, '')
+    setMenuOpen(true)
+  }
+
+  function closePauseMenu() {
+    setRestartConfirmOpen(false)
+    if (window.history.state?.dartQuestOverlay === 'level-pause') window.history.back()
+    else {
+      setMenuOpen(false)
+      window.setTimeout(() => menuButtonRef.current?.focus(), 0)
+    }
+  }
+
   return (
-    <div className={`level-modal-backdrop${returningToMap ? ' is-returning-to-map' : ''}`} onClick={result ? undefined : onClose}>
-      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${result ? ' is-completing' : ''}${returningToMap ? ' is-returning-to-map' : ''}`} onClick={(event) => event.stopPropagation()}>
-        {!result && <button className="level-modal-close" type="button" onClick={onClose} aria-label="Level schließen">×</button>}
+    <div className={`level-modal-backdrop return-${returnTransition}`} data-return-transition={returnTransition} onClick={result ? undefined : beginReturnToMap}>
+      {returnTransition !== RETURN_TRANSITION_PHASES.idle && <div className="level-crossfade-new" aria-hidden="true"><NewBadge featureId="game-map-crossfade" /></div>}
+      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${result ? ' is-completing' : ''} return-${returnTransition}`} aria-hidden={returnTransition !== RETURN_TRANSITION_PHASES.idle ? 'true' : undefined} inert={returnTransition !== RETURN_TRANSITION_PHASES.idle ? '' : undefined} onClick={(event) => event.stopPropagation()}>
+        {!result && <button className="level-modal-close" type="button" onClick={beginReturnToMap} aria-label="Level schließen">×</button>}
+        {!result && <button ref={menuButtonRef} className="level-modal-menu" type="button" onClick={openPauseMenu} disabled={!introReady || autoPerfectPending || completionStarted.current} aria-label="Kampagnenmenü öffnen" aria-expanded={menuOpen}>☰ <NewBadge featureId="campaign-burger-menu" /></button>}
 
         <div className={`level-gameplay-layer${result ? ' is-finished' : ''}`} aria-hidden={result ? 'true' : undefined}>
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
@@ -272,9 +354,10 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
                 </div>
               </div>
             )}
+            {menuOpen && <div className="level-pause-backdrop" onClick={closePauseMenu}><section role="dialog" aria-modal="true" aria-labelledby="level-pause-title" onClick={(event) => event.stopPropagation()}><p>DARTQUEST</p><h3 id="level-pause-title">Spiel pausiert</h3><button autoFocus type="button" onClick={closePauseMenu}>WEITERSPIELEN</button><button type="button" onClick={() => { setMenuOpen(false); onOpenSettings(() => menuButtonRef.current?.focus()) }}>EINSTELLUNGEN</button><button type="button" onClick={() => setRestartConfirmOpen(true)}>LEVEL NEU STARTEN</button><button className="danger" type="button" onClick={() => { window.history.replaceState(null, ''); setMenuOpen(false); onExitCampaign() }}>KAMPAGNE VERLASSEN</button>{restartConfirmOpen && <div className="level-restart-confirm" onClick={() => setRestartConfirmOpen(false)}><div role="alertdialog" aria-modal="true" aria-labelledby="level-restart-title" onClick={(event) => event.stopPropagation()}><h4 id="level-restart-title">Level wirklich neu starten?</h4><span>Alle Eingaben dieses Versuchs werden zurückgesetzt.</span><button autoFocus type="button" onClick={() => setRestartConfirmOpen(false)}>ABBRECHEN</button><button className="danger" type="button" onClick={restartLevel}>NEU STARTEN</button></div></div>}</section></div>}
         </div>
 
-        {result && (
+        {result && !level.boss && (
           <>
             <LevelCompleteAnimation
               stars={result.stars}
@@ -282,14 +365,17 @@ function LevelModalAttempt({ level, difficulty = 1, inputModeHintEligible = fals
               coins={result.coins}
               totalDarts={result.totalDarts}
               visits={result.visits}
-              isBoss={level.boss === true}
+              isBoss={false}
               levelId={level.id}
               autoPerfect={result.autoPerfect === true}
             />
-            {!returningToMap && !profileSyncError && <p className="level-profile-sync-status" role="status">XP und Coins werden gespeichert …</p>}
+            {!normalConfirmation && !profileSyncError && <p className="level-profile-sync-status" role="status">XP und Coins werden gespeichert …</p>}
             {profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
           </>
         )}
+        {result && level.boss && !bossConfirmation && !profileSyncError && <p className="level-profile-sync-status" role="status">Boss-Abschluss wird gespeichert …</p>}
+        {bossConfirmation && <BossDefeatedSequence confirmation={bossConfirmation} onContinue={beginReturnToMap} />}
+        {result && level.boss && profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
       </article>
     </div>
   )

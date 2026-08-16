@@ -26,6 +26,11 @@ import {
 } from './campaignUnlocking'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
+import Settings from '../settings/Settings'
+import { getAutomaticWorldTransition } from './worldTransition'
+import { createConfirmedCoinAnimation } from './coinAnimation'
+import CampaignCoinCounter from './components/CampaignCoinCounter'
+import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 
 import './Campaign.css'
 
@@ -101,7 +106,10 @@ function Campaign({
   onExit = () => {},
   activeProfile = null,
   onProfileRewards = async () => {},
+  onOpenProfile = () => {},
+  onLogout = () => {},
 }) {
+  const { markSeen } = useNewFeatures()
 
   const baseLevels =
     getLevelsByDifficulty(
@@ -188,6 +196,11 @@ function Campaign({
   const [leaveModalOpen, setLeaveModalOpen] =
     useState(false)
 
+  const [campaignMenuOpen, setCampaignMenuOpen] = useState(false)
+  const [campaignSettingsOpen, setCampaignSettingsOpen] = useState(false)
+  const menuButtonRef = useRef(null)
+  const settingsReturnFocusRef = useRef(null)
+
   const [exitAfterSlotSave, setExitAfterSlotSave] =
     useState(false)
 
@@ -198,17 +211,29 @@ function Campaign({
   const [unlockAnimation, setUnlockAnimation] = useState(null)
   const [pendingUnlockAnimation, setPendingUnlockAnimation] = useState(null)
   const [pendingReturnLevelId, setPendingReturnLevelId] = useState(null)
+  const [pendingCoinAnimation, setPendingCoinAnimation] = useState(null)
+  const [coinAnimation, setCoinAnimation] = useState(null)
+  const coinAnimationId = useRef(0)
   const [mapReturnLevelId, setMapReturnLevelId] = useState(null)
   const campaignPathRef = useRef(null)
   const returnToMapTimer = useRef(null)
+  const worldFocusTimer = useRef(null)
   const [pathLevelPositions, setPathLevelPositions] = useState(FALLBACK_PATH_LEVEL_POSITIONS)
   const unlockFrom = unlockAnimation?.from
   const unlockTo = unlockAnimation?.to
   const unlockCrossWorld = unlockAnimation?.crossWorld
+  const autoAdvanceWorld = unlockAnimation?.autoAdvanceWorld === true
+
+  useEffect(() => {
+    if (!autoAdvanceWorld) return undefined
+    const timer = window.setTimeout(() => markSeen('automatic-world-switch'), 500)
+    return () => window.clearTimeout(timer)
+  }, [autoAdvanceWorld, markSeen])
 
   useEffect(() => () => {
     if (playActivationTimer.current) window.clearTimeout(playActivationTimer.current)
     if (returnToMapTimer.current) window.clearTimeout(returnToMapTimer.current)
+    if (worldFocusTimer.current) window.clearTimeout(worldFocusTimer.current)
   }, [])
 
   useEffect(() => {
@@ -223,19 +248,29 @@ function Campaign({
   useEffect(() => {
     if (!unlockFrom || !unlockTo) return undefined
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const travelDelay = reducedMotion ? 20 : 240
-    const arrivalDelay = reducedMotion ? 80 : 1740
-    const finishDelay = reducedMotion ? 420 : 2350
-    const worldDelay = reducedMotion ? 20 : 1250
+    const animationMode = document.documentElement.dataset.animations
+    const noMotion = animationMode === 'off'
+    const reducedMotion = animationMode === 'reduced'
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const travelDelay = noMotion ? 0 : reducedMotion ? 20 : 240
+    const arrivalDelay = noMotion ? 0 : reducedMotion ? 80 : 1740
+    const finishDelay = noMotion ? 80 : reducedMotion ? 420 : 2350
+    const worldDelay = noMotion ? 0 : reducedMotion ? 20 : 1250
     const travelTimer = window.setTimeout(() => {
       setUnlockAnimation((current) => current ? { ...current, phase: 'traveling' } : null)
     }, travelDelay)
     const arriveTimer = window.setTimeout(() => {
       setUnlockAnimation((current) => current ? { ...current, phase: 'arrived' } : null)
     }, arrivalDelay)
-    const worldTimer = unlockCrossWorld
-      ? window.setTimeout(() => setSelectedWorld(Math.ceil(unlockTo / 10)), worldDelay)
+    const worldTimer = unlockCrossWorld && autoAdvanceWorld
+      ? window.setTimeout(() => {
+          const targetWorld = Math.ceil(unlockTo / 10)
+          setSelectedWorld(targetWorld)
+          setPreviewLevelId(unlockTo)
+          setMapReturnLevelId(unlockTo)
+          if (worldFocusTimer.current) window.clearTimeout(worldFocusTimer.current)
+          worldFocusTimer.current = window.setTimeout(() => setMapReturnLevelId(null), noMotion ? 900 : reducedMotion ? 1100 : 1900)
+        }, worldDelay)
       : null
     const finishTimer = window.setTimeout(() => setUnlockAnimation(null), finishDelay)
 
@@ -245,13 +280,47 @@ function Campaign({
       if (worldTimer) window.clearTimeout(worldTimer)
       window.clearTimeout(finishTimer)
     }
-  }, [unlockFrom, unlockTo, unlockCrossWorld])
+  }, [autoAdvanceWorld, unlockFrom, unlockTo, unlockCrossWorld])
+
+  useEffect(() => {
+    if (!mapReturnLevelId || Math.ceil(mapReturnLevelId / 10) !== selectedWorld) return undefined
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector(`[data-campaign-level-id="${mapReturnLevelId}"]`)
+      const animationMode = document.documentElement.dataset.animations
+      target?.scrollIntoView({ behavior: animationMode === 'full' ? 'smooth' : 'auto', block: 'center', inline: 'center' })
+      target?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [mapReturnLevelId, selectedWorld])
 
   useEffect(() => {
     if (exitRequest > 0) {
+      // Existing external navigation request is intentionally mirrored into modal state.
       setLeaveModalOpen(true)
     }
   }, [exitRequest])
+
+  useEffect(() => {
+    if (!campaignMenuOpen) return undefined
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setCampaignMenuOpen(false)
+        window.setTimeout(() => menuButtonRef.current?.focus(), 0)
+      }
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [campaignMenuOpen])
+
+  useEffect(() => {
+    if (!campaignSettingsOpen) return undefined
+    const closeOnBack = () => {
+      setCampaignSettingsOpen(false)
+      window.setTimeout(() => settingsReturnFocusRef.current?.(), 0)
+    }
+    window.addEventListener('popstate', closeOnBack)
+    return () => window.removeEventListener('popstate', closeOnBack)
+  }, [campaignSettingsOpen])
 
 
   /* =======================================================
@@ -437,6 +506,7 @@ function Campaign({
 
   useEffect(() => {
 
+    // Campaign identity changes intentionally reset state before loading its saved snapshot.
     setProgress({
       unlockedLevel: 1,
       results: {},
@@ -841,12 +911,15 @@ function Campaign({
   function closeLevel() {
     const completedLevelId = pendingReturnLevelId
     const queuedUnlock = pendingUnlockAnimation
+    const queuedCoinAnimation = pendingCoinAnimation
     setSelectedLevel(null)
 
     if (!completedLevelId) return
 
     setPendingReturnLevelId(null)
     setPendingUnlockAnimation(null)
+    setPendingCoinAnimation(null)
+    if (queuedCoinAnimation) setCoinAnimation(queuedCoinAnimation)
     setMapReturnLevelId(completedLevelId)
     if (returnToMapTimer.current) window.clearTimeout(returnToMapTimer.current)
     returnToMapTimer.current = window.setTimeout(() => {
@@ -907,18 +980,42 @@ function Campaign({
 
     const newlyUnlocked =
       updatedProgress.unlockedLevel > progress.unlockedLevel
+    const crossesIntoNextWorld = newlyUnlocked
+      && Math.ceil(level.id / 10) !== Math.ceil(updatedProgress.unlockedLevel / 10)
+    const automaticWorldTransition = getAutomaticWorldTransition({
+      level,
+      successfulAttempt,
+      firstCompletion: isFirstCompletion,
+      previousUnlockedLevel: progress.unlockedLevel,
+      unlockedLevel: updatedProgress.unlockedLevel,
+      totalLevels: levels.length,
+      totalWorlds: worldNames.length,
+    })
 
+    let confirmedProfile = activeProfile
     if (successfulAttempt && (earnedXP > 0 || earnedCoins > 0)) {
-      await onProfileRewards({ xp: earnedXP, coins: earnedCoins })
+      confirmedProfile = await onProfileRewards({ xp: earnedXP, coins: earnedCoins })
     }
 
+    const nextCoinAnimationId = coinAnimationId.current + 1
+    const confirmedCoinAnimation = createConfirmedCoinAnimation({
+      beforeCoins: totalCoins,
+      awardedCoins: earnedCoins,
+      afterCoins: confirmedProfile?.coins,
+      rewardConfirmed: true,
+      id: nextCoinAnimationId,
+    })
+    if (confirmedCoinAnimation) coinAnimationId.current = nextCoinAnimationId
+
     setPendingReturnLevelId(level.id)
+    setPendingCoinAnimation(confirmedCoinAnimation)
     setPendingUnlockAnimation(newlyUnlocked
       ? {
           from: level.id,
           to: updatedProgress.unlockedLevel,
           boss: level.boss === true,
-          crossWorld: Math.ceil(level.id / 10) !== Math.ceil(updatedProgress.unlockedLevel / 10),
+          crossWorld: crossesIntoNextWorld,
+          autoAdvanceWorld: Boolean(automaticWorldTransition),
           phase: 'charging',
         }
       : null)
@@ -930,6 +1027,20 @@ function Campaign({
     }
 
     setPreviewLevelId(Math.min(level.id + 1, levels.length))
+
+    return {
+      saved: true,
+      levelId: level.id,
+      stars: result.stars,
+      awardedXP: earnedXP,
+      awardedCoins: confirmedCoinAnimation?.awarded ?? 0,
+      newlyUnlocked,
+      nextLevelId: newlyUnlocked && level.id < levels.length ? updatedProgress.unlockedLevel : null,
+      newWorldName: automaticWorldTransition
+        ? worldNames[automaticWorldTransition.targetWorld - 1]
+        : null,
+      campaignCompleted: successfulAttempt && level.boss === true && level.id === levels.length,
+    }
 
   }
 
@@ -976,7 +1087,9 @@ function Campaign({
     : mapPathProgress
 
   return (
-    <main className="dq-campaign">
+    <main className={`dq-campaign${autoAdvanceWorld ? ' is-world-transitioning' : ''}`}>
+
+      {autoAdvanceWorld && <div className="dq-world-unlock-notice" role="status" aria-live="polite"><span>NEUE WELT FREIGESCHALTET <NewBadge featureId="automatic-world-switch" /></span><strong>{worldNames[Math.ceil(unlockTo / 10) - 1]}</strong></div>}
 
       {/* HEADER */}
 
@@ -993,9 +1106,12 @@ function Campaign({
           </button>
         ) : (
           <button
+            ref={menuButtonRef}
             type="button"
             className="dq-header-button"
             aria-label="Menü"
+            aria-expanded={campaignMenuOpen}
+            onClick={() => setCampaignMenuOpen(true)}
           >
             ☰
           </button>
@@ -1070,19 +1186,13 @@ function Campaign({
         </div>
 
 
-        <div className="dq-coins">
-
-          🪙
-
-          <strong>
-            {totalCoins}
-          </strong>
-
-          <span>
-            Coins
-          </span>
-
-        </div>
+        <CampaignCoinCounter
+          confirmedCoins={totalCoins}
+          animation={coinAnimation}
+          onAnimationComplete={(animationId) => {
+            setCoinAnimation((current) => current?.id === animationId ? null : current)
+          }}
+        />
 
       </section>
 
@@ -1751,6 +1861,10 @@ function Campaign({
         />
       )}
 
+      {campaignMenuOpen && <div className="campaign-menu-backdrop" onClick={() => setCampaignMenuOpen(false)}><aside className="campaign-menu-drawer" role="dialog" aria-modal="true" aria-labelledby="campaign-menu-title" onClick={(event) => event.stopPropagation()}><p>DARTQUEST</p><h2 id="campaign-menu-title">Kampagnenmenü</h2><button autoFocus type="button" onClick={() => { setCampaignMenuOpen(false); window.setTimeout(() => menuButtonRef.current?.focus(), 0) }}>WEITERSPIELEN</button><button type="button" onClick={() => { settingsReturnFocusRef.current = () => menuButtonRef.current?.focus(); setCampaignMenuOpen(false); setCampaignSettingsOpen(true) }}>EINSTELLUNGEN</button><button className="danger" type="button" onClick={() => { setCampaignMenuOpen(false); setLeaveModalOpen(true) }}>KAMPAGNE VERLASSEN</button></aside></div>}
+
+      {campaignSettingsOpen && <div className="campaign-settings-layer"><Settings activeProfile={activeProfile} onBack={() => { if (window.history.state?.dartQuestOverlay === 'level-pause') window.history.back(); else { setCampaignSettingsOpen(false); window.setTimeout(() => settingsReturnFocusRef.current?.(), 0) } }} onOpenProfile={onOpenProfile} onLogout={onLogout} /></div>}
+
 
       {settings.multiplayer && saveModalOpen && (
         <div
@@ -1872,6 +1986,7 @@ function Campaign({
         <LevelEnterTransition
           level={levelEnterTransition.level}
           sourceRect={levelEnterTransition.sourceRect}
+          worldName={worldNames[Math.ceil(levelEnterTransition.level.id / 10) - 1]}
           onComplete={finishLevelEnter}
         />
       )}
@@ -1888,6 +2003,8 @@ function Campaign({
         difficulty={
           settings.difficulty
         }
+
+        profileId={activeProfile?.id}
 
         multiplayer={
           settings.multiplayer === true
@@ -1908,6 +2025,8 @@ function Campaign({
         onComplete={
           completeLevel
         }
+        onOpenSettings={(returnFocus) => { settingsReturnFocusRef.current = returnFocus; setCampaignSettingsOpen(true) }}
+        onExitCampaign={() => setLeaveModalOpen(true)}
       />
 
     </main>

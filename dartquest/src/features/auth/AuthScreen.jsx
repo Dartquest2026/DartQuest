@@ -2,11 +2,13 @@ import { useRef, useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
 import { loginProfile, registerProfile, requestPasswordRecovery } from './profileStorage'
 import { isValidEmail, normalizeEmail } from './passwordRecovery'
+import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 import './AuthScreen.css'
 
 const RECOVERY_SENT_MESSAGE = 'Wenn zu dieser E-Mail-Adresse ein Konto existiert, haben wir dir einen Link zum Zurücksetzen des Passworts gesendet.'
 
 function AuthScreen({ onAuthenticated, initialMessage = '' }) {
+  const { markSeen } = useNewFeatures()
   const [mode, setMode] = useState('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -145,8 +147,8 @@ function AuthScreen({ onAuthenticated, initialMessage = '' }) {
           </label>
           {mode !== 'forgot' && <label>Passwort<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /></label>}
           {mode === 'login' && (
-            <button className="auth-forgot" type="button" onClick={openForgotPassword} disabled={busy}>
-              Passwort vergessen?
+            <button className="auth-forgot" type="button" onClick={() => { markSeen('password-recovery'); openForgotPassword() }} disabled={busy}>
+              Passwort vergessen? <NewBadge featureId="password-recovery" />
             </button>
           )}
           {mode === 'register' && <label>Passwort wiederholen<input type="password" value={repeatPassword} onChange={(event) => setRepeatPassword(event.target.value)} autoComplete="new-password" required /></label>}

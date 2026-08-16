@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import StandardGame from '../standardGames/StandardGame'
+import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 import './Singleplayer.css'
 
 const modes = [
@@ -20,19 +23,26 @@ const modes = [
     icon: '🎮',
     title: 'Standardspiele',
     description:
-      '501 und weitere Dartspiele',
+      '501 mit Double Out',
   },
 ]
 
 function Singleplayer({
   onBack,
   onOpenCampaign,
+  activeProfile,
 }) {
+  const [standardOpen, setStandardOpen] = useState(false)
+  const { markSeen } = useNewFeatures()
+
   function openMode(modeId) {
     if (modeId === 'campaign') {
       onOpenCampaign?.()
     }
+    if (modeId === 'standard') { markSeen('standard-games'); setStandardOpen(true) }
   }
+
+  if (standardOpen) return <StandardGame initialPlayers={[activeProfile?.name || 'Spieler 1']} activeProfile={activeProfile} onBack={() => setStandardOpen(false)} />
 
   return (
     <main className="singleplayer-screen">
@@ -85,7 +95,7 @@ function Singleplayer({
             </span>
 
             <span className="singleplayer-mode-content">
-              <strong>{mode.title}</strong>
+              <strong>{mode.title} {mode.id === 'standard' && <NewBadge featureId="standard-games" />}</strong>
               <small>{mode.description}</small>
             </span>
 
