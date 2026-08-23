@@ -1,0 +1,8 @@
+.checkout-play .campaign-result .result-stars {
+  color: #ffd34c;
+  letter-spacing: 3px;
+  text-shadow: 0 0 7px rgba(255, 211, 76, .5);
+}
+
+.checkout-play .campaign-result .result-rewards { color: #d5e4de; }
+.campaign-level-grid small { color: #ffd34c; }

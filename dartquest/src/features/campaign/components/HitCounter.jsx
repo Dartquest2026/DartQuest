@@ -23,7 +23,7 @@ function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, comp
       <DartSlots values={dartValues} />
 
       <div className="hit-counter-visit-actions">
-        <button className="hit-counter-previous-visit" type="button" onClick={onPreviousVisit} disabled={interactionDisabled || attempt.visits <= 1}>↶ Aufnahme</button>
+        <button className="hit-counter-previous-visit" type="button" onClick={onPreviousVisit} disabled={interactionDisabled || attempt.totalDarts === 0}>↶ Letzten Dart</button>
         <button className="hit-counter-next-visit" type="button" onClick={onNextVisit} disabled={interactionDisabled}>
           {completionPending ? 'Nicht getroffen · +1 Dart' : 'Nicht getroffen'}
         </button>

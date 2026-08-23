@@ -186,6 +186,13 @@ export function previousVisit(attempt) {
   return { ...attempt, visits: Math.floor(totalDarts / 3) + 1, totalDarts, hitHistory: attempt.hitHistory.slice(0, -1) }
 }
 
+export function undoLastDart(attempt) {
+  const last = attempt.hitHistory.at(-1)
+  if (!last) return attempt
+  if (last.miss) return previousVisit(attempt)
+  return undoTargetHit(attempt, last.targetId)
+}
+
 export function undoTargetHit(attempt, targetId) {
   const index = attempt.hitHistory.findLastIndex((hit) => hit.targetId === targetId)
   if (index < 0) return attempt

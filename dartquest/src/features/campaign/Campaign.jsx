@@ -31,6 +31,9 @@ import { getAutomaticWorldTransition } from './worldTransition'
 import { createConfirmedCoinAnimation } from './coinAnimation'
 import CampaignCoinCounter from './components/CampaignCoinCounter'
 import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
+import { grantFreePack } from '../cards/cardStorage'
+import RivalCampaign from '../campaignModes/RivalCampaign'
+import { loadChallenge, saveChallenge, scheduleChallenge } from './challengeStorage'
 
 import './Campaign.css'
 
@@ -198,6 +201,8 @@ function Campaign({
 
   const [campaignMenuOpen, setCampaignMenuOpen] = useState(false)
   const [campaignSettingsOpen, setCampaignSettingsOpen] = useState(false)
+  const [challengeState, setChallengeState] = useState(() => loadChallenge(activeProfile?.id, settings.difficulty))
+  const [activeChallenge, setActiveChallenge] = useState(null)
   const menuButtonRef = useRef(null)
   const settingsReturnFocusRef = useRef(null)
 
@@ -223,6 +228,26 @@ function Campaign({
   const unlockTo = unlockAnimation?.to
   const unlockCrossWorld = unlockAnimation?.crossWorld
   const autoAdvanceWorld = unlockAnimation?.autoAdvanceWorld === true
+
+  useEffect(() => {
+    if (settings.multiplayer) return
+    const completedLevels = Object.values(progress.results).filter((entry) => (entry?.stars ?? 0) > 0).length
+    setChallengeState((current) => scheduleChallenge(activeProfile?.id, settings.difficulty, completedLevels, current))
+  }, [activeProfile?.id, progress.results, settings.difficulty, settings.multiplayer])
+
+  function deferChallenge() {
+    setChallengeState((current) => saveChallenge(activeProfile?.id, settings.difficulty, { ...current, pending: { ...current.pending, status: 'deferred' } }))
+  }
+
+  function finishChallenge(completedChallenge = activeChallenge) {
+    setChallengeState((current) => {
+      const completedId = completedChallenge?.id ?? current.pending?.id
+      if (!completedId) return saveChallenge(activeProfile?.id, settings.difficulty, { ...current, pending: null })
+      const completed = current.completed.includes(completedId) ? current.completed : [...current.completed, completedId]
+      return saveChallenge(activeProfile?.id, settings.difficulty, { ...current, completed, pending: null })
+    })
+    setActiveChallenge(null)
+  }
 
   useEffect(() => {
     if (!autoAdvanceWorld) return undefined
@@ -929,6 +954,16 @@ function Campaign({
     }, queuedUnlock ? 1000 : 700)
   }
 
+  function playNextLevel(nextLevelId) {
+    const nextLevel = levels.find((candidate) => candidate.id === nextLevelId)
+    if (!nextLevel) { closeLevel(); return }
+    setPendingReturnLevelId(null)
+    setPendingUnlockAnimation(null)
+    setPendingCoinAnimation(null)
+    setPreviewLevelId(nextLevel.id)
+    setSelectedLevel(nextLevel)
+  }
+
 
   /* =======================================================
      LEVEL ABSCHLIESSEN
@@ -952,7 +987,7 @@ function Campaign({
     const isFirstCompletion = !previousResult
     const isBetterResult = bestStars > previousStars
     const coinRewardAllowed = isFirstCompletion || isBetterResult
-    const earnedXP = successfulAttempt ? level.rewardXP ?? 0 : 0
+    const earnedXP = successfulAttempt && isFirstCompletion ? level.rewardXP ?? 0 : 0
     const earnedCoins = successfulAttempt && coinRewardAllowed
       ? level.rewardCoins ?? 0
       : 0
@@ -1026,6 +1061,10 @@ function Campaign({
       localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(updatedProgress))
     }
 
+    const cardPackGranted = successfulAttempt && isFirstCompletion && level.boss === true
+      ? grantFreePack(activeProfile?.id, `boss-${settings.difficulty}-${level.id}`)
+      : false
+
     setPreviewLevelId(Math.min(level.id + 1, levels.length))
 
     return {
@@ -1040,6 +1079,7 @@ function Campaign({
         ? worldNames[automaticWorldTransition.targetWorld - 1]
         : null,
       campaignCompleted: successfulAttempt && level.boss === true && level.id === levels.length,
+      cardPackGranted,
     }
 
   }
@@ -1085,6 +1125,8 @@ function Campaign({
   const displayedMapPathProgress = unlockVisible && unlockAnimation.phase !== 'arrived'
     ? unlockPathStart
     : mapPathProgress
+
+  if (activeChallenge) return <RivalCampaign activeProfile={activeProfile} onProfileRewards={onProfileRewards} challenge={activeChallenge} onChallengeComplete={finishChallenge} onBack={() => setActiveChallenge(null)} />
 
   return (
     <main className={`dq-campaign${autoAdvanceWorld ? ' is-world-transitioning' : ''}`}>
@@ -1980,6 +2022,8 @@ function Campaign({
       )}
 
 
+      {challengeState.pending && !selectedLevel && !levelEnterTransition && <aside className={`campaign-challenge ${challengeState.pending.status === 'deferred' ? 'is-deferred' : ''}`} role={challengeState.pending.status === 'offered' ? 'dialog' : undefined} aria-label="Zufällige Herausforderung"><span>⚔ ZUFÄLLIGE HERAUSFORDERUNG</span><strong>{challengeState.pending.startScore} · First to 1</strong><p>Gewinne gegen den Herausforderer und erhalte Bonus-XP, Coins und ein 5er-Kartenpaket.</p><button type="button" onClick={() => setActiveChallenge(challengeState.pending)}>HERAUSFORDERUNG ANNEHMEN</button>{challengeState.pending.status === 'offered' && <button type="button" className="secondary" onClick={deferChallenge}>SPÄTER SPIELEN</button>}</aside>}
+
       {/* LEVEL MODAL */}
 
       {levelEnterTransition && (
@@ -2025,6 +2069,7 @@ function Campaign({
         onComplete={
           completeLevel
         }
+        onPlayNext={playNextLevel}
         onOpenSettings={(returnFocus) => { settingsReturnFocusRef.current = returnFocus; setCampaignSettingsOpen(true) }}
         onExitCampaign={() => setLeaveModalOpen(true)}
       />

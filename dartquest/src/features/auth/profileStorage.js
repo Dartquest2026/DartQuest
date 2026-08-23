@@ -193,6 +193,25 @@ export async function addProfileRewards({ xp = 0, coins = 0 }) {
   throw new Error('Das Profil wurde gleichzeitig geändert. Bitte versuche es erneut.')
 }
 
+export async function spendProfileCoins(amount) {
+  const cost = Math.max(0, Math.trunc(Number(amount) || 0))
+  if (!cost) throw new Error('Ungültiger Kaufpreis.')
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+  const userId = authData.user?.id
+  if (authError || !userId) throw new Error('Das Profil konnte nicht aktualisiert werden.')
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data: current, error: loadError } = await supabase.from('profiles').select('id, created_at, profile_name, xp, coins, player_level, avatar_path').eq('id', userId).single()
+    if (loadError) throw new Error(authErrorMessage(loadError, 'profile'))
+    const coins = Number(current.coins) || 0
+    if (coins < cost) throw new Error('Nicht genügend Coins.')
+    const { data: updated, error: updateError } = await supabase.from('profiles').update({ coins: coins - cost }).eq('id', userId).eq('coins', coins).select('id, created_at, profile_name, xp, coins, player_level, avatar_path').maybeSingle()
+    if (updateError) throw new Error(authErrorMessage(updateError, 'profile'))
+    if (!updated) continue
+    const profile = mapProfile(updated, authData.user); cacheProfile(profile); return profile
+  }
+  throw new Error('Das Profil wurde gleichzeitig geändert. Bitte versuche es erneut.')
+}
+
 export function subscribeToAuthChanges(callback) {
   const { data } = supabase.auth.onAuthStateChange((event, session) => {
     window.setTimeout(async () => {

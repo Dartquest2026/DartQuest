@@ -36,7 +36,7 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
     const noMotion = animationMode === 'off'
     const zoomTimer = window.setTimeout(() => setPhase(isBoss ? 'revealing' : 'zooming'), noMotion ? 0 : limitedMotion ? 20 : 300)
     const readyTimer = isBoss ? window.setTimeout(() => setPhase('ready'), noMotion ? 20 : limitedMotion ? 180 : 1050) : null
-    const completeTimer = window.setTimeout(isBoss ? requestFinish : finishOnce, isBoss ? noMotion ? 650 : limitedMotion ? 950 : 2700 : reducedMotion ? 140 : 1500)
+    const completeTimer = isBoss ? null : window.setTimeout(finishOnce, reducedMotion ? 140 : 1500)
     document.body.style.overflow = 'hidden'
 
     if (isBoss && !hapticPlayed.current) {
@@ -58,7 +58,7 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
     return () => {
       window.clearTimeout(zoomTimer)
       if (readyTimer) window.clearTimeout(readyTimer)
-      window.clearTimeout(completeTimer)
+      if (completeTimer) window.clearTimeout(completeTimer)
       if (focusTimer) window.clearTimeout(focusTimer)
       if (seenTimer) window.clearTimeout(seenTimer)
       window.removeEventListener('keydown', finishOnEscape)
@@ -87,7 +87,7 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
         <span>{level.boss ? 'BOSS-LEVEL' : 'LEVEL'} {isBoss && <><NewBadge featureId="boss-intro" /> <NewBadge featureId="boss-variants" /></>}</span>
         <strong>{level.id}</strong>
       </div>
-      {isBoss && <section className="boss-intro" role="dialog" aria-modal="true" aria-labelledby="boss-intro-title"><div className="boss-intro__effect" aria-hidden="true"><i /><i /><i /></div><div className="boss-intro__emblem" aria-hidden="true">{bossPresentation.symbol || '◆'}</div><p>BOSS-LEVEL · WELT {bossContent.world} · LEVEL {bossContent.levelId}</p><h2 id="boss-intro-title">{bossContent.bossName}</h2><strong>{bossContent.worldLabel}</strong><div><span>DEINE AUFGABE</span><b>{bossContent.task}</b>{bossContent.target && <small>{bossContent.target}</small>}</div><h3>BEREIT?</h3><button ref={skipButton} type="button" onClick={requestFinish}>INTRO ÜBERSPRINGEN</button></section>}
+      {isBoss && <section className="boss-intro" role="dialog" aria-modal="true" aria-labelledby="boss-intro-title"><div className="boss-intro__effect" aria-hidden="true"><i /><i /><i /></div><div className="boss-intro__emblem" aria-hidden="true">{bossPresentation.symbol || '◆'}</div><p>BOSS-LEVEL · WELT {bossContent.world} · LEVEL {bossContent.levelId}</p><h2 id="boss-intro-title">{bossContent.bossName}</h2><strong>{bossContent.worldLabel}</strong><div><span>DEINE AUFGABE</span><b>{bossContent.task}</b>{bossContent.target && <small>{bossContent.target}</small>}</div><button ref={skipButton} className="boss-intro__ready" type="button" onClick={requestFinish}>BEREIT</button></section>}
     </div>
   )
 }

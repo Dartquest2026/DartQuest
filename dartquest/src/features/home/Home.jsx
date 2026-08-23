@@ -3,6 +3,7 @@ import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
 import { NewBadge, useNewFeatures, useVisibleFeature } from '../releases/NewFeatures'
 import PlayerAvatar from '../../shared/components/PlayerAvatar'
+import CardCollection from '../cards/CardCollection'
 
 import './Home.css'
 
@@ -15,6 +16,7 @@ function Home({
   onOpenMultiplayer,
   onOpenProfile,
   onOpenSettings,
+  onSpendCoins,
 }) {
   const { markSeen } = useNewFeatures()
   const versionRef = useVisibleFeature('version-display')
@@ -41,6 +43,8 @@ function Home({
       </section>
     )
   }
+
+  if (homeView === 'cards') return <CardCollection activeProfile={activeProfile} onSpendCoins={onSpendCoins} onBack={() => setHomeView('home')} />
 
   return (
     <section className="home-screen">
@@ -118,19 +122,22 @@ function Home({
           </button>
         </div>
 
+        <button className="home-season-card" type="button" onClick={() => setHomeView('season')}>
+          <span className="home-season-icon" aria-hidden="true">🎯</span>
+          <span className="home-season-copy"><small>SAISONALE AUFGABEN</small><strong>Aktuelle Saison</strong><em>Schließe Aufgaben ab und sichere dir Belohnungen.</em></span>
+          <span className="home-season-arrow" aria-hidden="true">›</span>
+        </button>
+
         <div className="home-options-grid">
           <button className="home-settings-card" type="button" onClick={() => { markSeen('settings-home-entry'); onOpenSettings() }}>
             <span aria-hidden="true">⚙</span>
             <strong>Einstellungen <NewBadge featureId="settings-home-entry" /></strong>
             <small>Sound, Bedienung &amp; Geräte</small>
           </button>
+          <button className="home-settings-card" type="button" onClick={() => setHomeView('cards')}>
+            <span aria-hidden="true">🎴</span><strong>Sammelkarten</strong><small>Sammlung &amp; Kartenpakete</small>
+          </button>
         </div>
-
-        <button className="home-season-card" type="button" onClick={() => setHomeView('season')}>
-          <span className="home-season-icon" aria-hidden="true">🎯</span>
-          <span className="home-season-copy"><small>SAISONALE AUFGABEN</small><strong>Aktuelle Saison</strong><em>Schließe Aufgaben ab und sichere dir Belohnungen.</em></span>
-          <span className="home-season-arrow" aria-hidden="true">›</span>
-        </button>
       </main>
       <footer ref={versionRef} className="home-version" aria-label={`DartQuest Version ${APP_VERSION}`}>
         v{APP_VERSION} <NewBadge featureId="version-display" />

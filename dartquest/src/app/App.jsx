@@ -23,6 +23,7 @@ import {
   getSessionProfile,
   logoutProfile,
   subscribeToAuthChanges,
+  spendProfileCoins,
 } from '../features/auth/profileStorage'
 import BottomNav from '../shared/components/BottomNav'
 import { NewFeaturesProvider } from '../features/releases/NewFeatures'
@@ -340,6 +341,12 @@ function App() {
     return profile
   }
 
+  async function applyCoinPurchase(amount) {
+    const profile = await spendProfileCoins(amount)
+    setActiveProfile(profile)
+    return profile
+  }
+
   function openRoot(destination) {
     setRootNavigationKeys((current) => ({
       ...current,
@@ -431,6 +438,7 @@ function App() {
           }
           onOpenProfile={() => setActivePage('profile')}
           onOpenSettings={() => setActivePage('settings')}
+          onSpendCoins={applyCoinPurchase}
         />
       )}
 
@@ -464,11 +472,11 @@ function App() {
       )}
 
       {activePage === 'checkoutCampaign' && (
-        <CheckoutCampaign activeProfile={activeProfile} onBack={() => setActivePage('campaignModes')} />
+        <CheckoutCampaign activeProfile={activeProfile} onProfileRewards={applyProfileRewards} onBack={() => setActivePage('campaignModes')} />
       )}
 
       {activePage === 'rivalCampaign' && (
-        <RivalCampaign activeProfile={activeProfile} onBack={() => setActivePage('campaignModes')} />
+        <RivalCampaign activeProfile={activeProfile} onProfileRewards={applyProfileRewards} onBack={() => setActivePage('campaignModes')} />
       )}
 
 

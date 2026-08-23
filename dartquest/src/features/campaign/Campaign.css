@@ -2,6 +2,8 @@
    DARTQUEST CAMPAIGN – CLEAN VERSION
    ========================================================= */
 
+.campaign-challenge{position:fixed;z-index:35;right:14px;bottom:88px;left:14px;width:min(430px,calc(100% - 28px));margin:auto;padding:16px;border:1px solid #ffd34c;border-radius:17px;background:radial-gradient(circle at top,#3b2d0d,#071a14 72%);color:#fff;text-align:center;box-shadow:0 0 25px rgba(255,205,65,.22)}.campaign-challenge>span{display:block;color:#ffd34c;font-size:11px;font-weight:950;letter-spacing:1px}.campaign-challenge>strong{display:block;margin:6px;font-size:22px}.campaign-challenge p{margin:6px 0 12px;color:#bdcbc6;font-size:13px}.campaign-challenge button{width:100%;min-height:45px;margin-top:6px;border:1px solid #42e695;border-radius:10px;background:#1bb271;color:#03130e;font-weight:950}.campaign-challenge button.secondary{background:#10382c;color:#eafff5}.campaign-challenge.is-deferred{right:12px;bottom:92px;left:auto;width:min(310px,calc(100% - 24px));padding:11px}.campaign-challenge.is-deferred p,.campaign-challenge.is-deferred .secondary{display:none}
+
 .dq-campaign {
   width: 100%;
   max-width: 760px;

@@ -1,0 +1,39 @@
+.boss-defeated-pack {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  max-width: 340px;
+  margin: 0 !important;
+  padding: 10px 13px !important;
+  border: 1px solid rgba(255, 207, 76, .45);
+  border-radius: 11px;
+  background: rgba(255, 190, 55, .1) !important;
+  color: #ffe18c !important;
+  font-size: 12px !important;
+}
+
+.boss-defeated-pack span { font-size: 23px; }
+.boss-defeated-pack strong { color: #ffd34c; }
+.boss-defeated-actions { display: grid; width: min(100%, 350px); gap: 8px; }
+.boss-defeated-actions button { width: 100%; min-height: 49px; border: 1px solid rgba(66,230,149,.55); border-radius: 13px; background: #10382c; color: #eafff5; font-weight: 950; }
+.boss-defeated-actions button:first-child { background: linear-gradient(135deg,#42e695,#20cdae); color: #03110d; }
+
+.level-success-stars { display: block; margin: 3px 0 10px; color: #ffd34c; font-size: 27px; letter-spacing: 3px; filter: drop-shadow(0 0 6px rgba(255,207,60,.5)); }
+.level-success-rewards { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+.level-success-rewards b { padding: 8px 11px; border: 1px solid rgba(66,230,149,.28); border-radius: 10px; background: rgba(0,0,0,.18); color: #63efb2; font-size: 13px; }
+.level-success-rewards b:last-child { border-color: rgba(255,207,76,.32); color: #ffd76c; }
+.level-success-actions button.primary { background: linear-gradient(135deg,#42e695,#20cdae) !important; color: #03110d !important; }
+
+@media (max-width: 560px) {
+  .level-modal.is-boss-level { max-height: calc(100dvh - max(12px, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important; overflow: hidden !important; }
+  .level-modal.is-boss-level .level-gameplay-layer { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
+  .level-modal.is-boss-level .level-modal-title { font-size: 18px; line-height: 1.05; }
+  .level-modal.is-boss-level .hit-counter { min-height: 0; gap: 4px; }
+  .level-modal.is-boss-level .attempt-dartboard { width: min(55vw, 23dvh, 178px); }
+  .level-modal.is-boss-level .hit-counter-targets { gap: 4px; }
+  .level-modal.is-boss-level .hit-target { min-height: 64px; padding: 3px 7px; gap: 3px; }
+  .level-modal.is-boss-level .hit-target > button { min-height: 29px; }
+  .level-modal.is-boss-level .hit-target-label { font-size: 15px; }
+  .level-modal.is-boss-level .hit-target-progress { font-size: 14px; }
+  .level-modal.is-boss-level .level-giveup-button { min-height: 32px; margin-top: 4px; padding: 4px; }
+}

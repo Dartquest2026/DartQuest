@@ -1,0 +1,86 @@
+.rival-levels header h1 {
+  font-size: 30px;
+}
+
+.rival-level-result {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #000c;
+}
+
+.rival-level-result section {
+  width: min(390px, 100%);
+  padding: 20px;
+  border: 1px solid #42e695;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #0b2c22, #04130f);
+  text-align: center;
+  box-shadow: 0 0 30px #42e69522;
+}
+
+.rival-level-result span {
+  color: #42e695;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 1px;
+}
+
+.rival-level-result h2 {
+  margin: 6px 0 8px;
+  font-size: 24px;
+}
+
+.rival-level-result strong {
+  display: block;
+  color: #ffd34c;
+  font-size: 25px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 14px rgba(255, 211, 76, .35);
+}
+
+.rival-level-result dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: 14px 0;
+}
+
+.rival-level-result dl div {
+  padding: 10px;
+  border: 1px solid #42e69522;
+  border-radius: 10px;
+  background: #ffffff09;
+}
+
+.rival-level-result dt {
+  color: #9fb3ab;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rival-level-result dd {
+  margin: 3px 0 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.rival-level-result button {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 7px;
+  border: 1px solid #42e69566;
+  border-radius: 11px;
+  background: #123b2f;
+  color: #fff;
+  font-weight: 950;
+}
+
+.rival-level-result button:first-of-type {
+  background: #1bb271;
+  color: #03130e;
+}

@@ -13,15 +13,17 @@ import {
   isAutoPerfectAttempt,
   isAttemptComplete,
   nextVisit,
-  previousVisit,
   registerTargetHit,
   undoTargetHit,
+  undoLastDart,
 } from './utils/levelAttempt'
 import './LevelModal.css'
+import './CampaignPolish.css'
 import { confirmInputModeHint, hasConfirmedInputModeHint } from '../settings/tutorialStorage'
 import { shouldShowBossDefeated } from './bossDefeated'
 import { getReturnTransitionTiming, RETURN_TRANSITION_PHASES } from './returnTransition'
 import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
+import { vibrate } from '../settings/settingsStorage'
 
 const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
 
@@ -34,6 +36,15 @@ function joinTargetLabels(labels) {
   return labels.slice(0, -1).join(', ') + ' und ' + labels.at(-1)
 }
 
+function expandTargetLabel(label) {
+  const value = String(label ?? '')
+  if (/^S\d+$/i.test(value)) return `Single ${value.slice(1)}`
+  if (/^D\d+$/i.test(value)) return `Doppel ${value.slice(1)}`
+  if (/^T\d+$/i.test(value)) return `Triple ${value.slice(1)}`
+  if (/^S?BULL$/i.test(value)) return value.toUpperCase() === 'BULL' ? 'Bull' : 'Single Bull'
+  return value
+}
+
 function formatAttemptTitle(level, attempt) {
   const targets = attempt.targets
   if (!targets.length || targets.some((target) => target.targetType === 'task')) {
@@ -44,6 +55,10 @@ function formatAttemptTitle(level, attempt) {
   const requiredHits = targets.map((target) => target.requiredHits)
   const equalRequirements = requiredHits.every((hits) => hits === requiredHits[0])
   const numberTargets = targets.every((target) => target.targetType === 'number')
+
+  if (attempt.ordered) {
+    return 'Triff nacheinander folgende Felder: ' + labels.map(expandTargetLabel).join(', ')
+  }
 
   if (targets.length === 1) {
     const targetName = numberTargets ? 'das ' + labels[0] + 'er-Feld' : labels[0]
@@ -63,7 +78,7 @@ function formatAttemptTitle(level, attempt) {
   return 'Ziele: ' + targets.map((target) => target.label + ' (' + target.requiredHits + ')').join(' · ')
 }
 
-function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintEligible = false, multiplayer = false, playerCount = 1, players = [], onClose, onComplete, onOpenSettings, onExitCampaign }) {
+function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintEligible = false, multiplayer = false, playerCount = 1, players = [], onClose, onComplete, onPlayNext, onOpenSettings, onExitCampaign }) {
   const [attempt, setAttempt] = useState(() => createLevelAttempt(level))
   const minimumDarts = getMinimumDarts(level)
   const [inputMode, setInputMode] = useState(() => {
@@ -87,6 +102,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   const completionStarted = useRef(false)
   const resultDelivered = useRef(false)
   const returnStarted = useRef(false)
+  const transitionTimers = useRef([])
   const onCompleteRef = useRef(onComplete)
   const onCloseRef = useRef(onClose)
   const { markSeen } = useNewFeatures()
@@ -137,10 +153,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
       try {
         const confirmation = await onCompleteRef.current(level, result)
         if (shouldShowBossDefeated({ level, result, confirmation })) setBossConfirmation(confirmation)
-        else {
-  setNormalConfirmation(confirmation)
-  beginReturnToMap()
-}
+        else setNormalConfirmation(confirmation)
       } catch (error) {
         setProfileSyncError(error?.message || 'XP und Coins konnten nicht gespeichert werden.')
       }
@@ -154,12 +167,21 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     setReturnTransition(RETURN_TRANSITION_PHASES.fadingOutGame)
   }
 
+  function returnToAttempt() {
+    completionStarted.current = false
+    resultDelivered.current = false
+    returnStarted.current = false
+    setNormalConfirmation(null)
+    setProfileSyncError('')
+    setResult(null)
+  }
+
   useEffect(() => {
     if (returnTransition !== RETURN_TRANSITION_PHASES.fadingOutGame) return undefined
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const animationMode = document.documentElement.dataset.animations
     const timing = getReturnTransitionTiming(animationMode, reducedMotion)
-    const timers = [
+    transitionTimers.current = [
       window.setTimeout(() => setReturnTransition(RETURN_TRANSITION_PHASES.switchingView), timing.switchAt),
       window.setTimeout(() => { setReturnTransition(RETURN_TRANSITION_PHASES.fadingInMap); markSeen('game-map-crossfade') }, timing.revealAt),
       window.setTimeout(() => {
@@ -169,6 +191,11 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     ]
     return undefined
   }, [markSeen, returnTransition])
+
+  useEffect(() => () => {
+    const timers = transitionTimers.current
+    timers.forEach((timer) => window.clearTimeout(timer))
+  }, [])
 
   useEffect(() => {
     if (!autoPerfectPending || !isAutoPerfectAttempt(attempt)) return undefined
@@ -195,9 +222,11 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     const nextAttempt = registerTargetHit(attempt, targetId)
     if (nextAttempt === attempt) return
     setAttempt(nextAttempt)
-
-    if (isAutoPerfectAttempt(nextAttempt) && !completionStarted.current) {
-      setAutoPerfectPending(true)
+    vibrate(12)
+    if (isAttemptComplete(nextAttempt) && !completionStarted.current) {
+      completionStarted.current = true
+      vibrate([18, 35, 18])
+      setResult(createAttemptResult(level, nextAttempt, Date.now()))
     }
   }
 
@@ -210,6 +239,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
 
   function addVisit() {
     setAutoPerfectPending(false)
+    vibrate(8)
     setAttempt((current) => nextVisit(current))
   }
 
@@ -229,6 +259,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     setInputMode(nextMode)
     setPendingInputMode(null)
     localStorage.setItem(INPUT_MODE_STORAGE_KEY, nextMode)
+    vibrate(8)
   }
 
   function requestInputMode(nextMode) {
@@ -286,7 +317,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   return (
     <div className={`level-modal-backdrop return-${returnTransition}`} data-return-transition={returnTransition} onClick={result ? undefined : beginReturnToMap}>
       {returnTransition !== RETURN_TRANSITION_PHASES.idle && <div className="level-crossfade-new" aria-hidden="true"><NewBadge featureId="game-map-crossfade" /></div>}
-      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${result ? ' is-completing' : ''} return-${returnTransition}`} aria-hidden={returnTransition !== RETURN_TRANSITION_PHASES.idle ? 'true' : undefined} inert={returnTransition !== RETURN_TRANSITION_PHASES.idle ? '' : undefined} onClick={(event) => event.stopPropagation()}>
+      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${level.boss ? ' is-boss-level' : ''}${result ? ' is-completing' : ''} return-${returnTransition}`} aria-hidden={returnTransition !== RETURN_TRANSITION_PHASES.idle ? 'true' : undefined} inert={returnTransition !== RETURN_TRANSITION_PHASES.idle ? '' : undefined} onClick={(event) => event.stopPropagation()}>
         {!result && <button className="level-modal-close" type="button" onClick={beginReturnToMap} aria-label="Level schließen">×</button>}
         {!result && <button ref={menuButtonRef} className="level-modal-menu" type="button" onClick={openPauseMenu} disabled={!introReady || autoPerfectPending || completionStarted.current} aria-label="Kampagnenmenü öffnen" aria-expanded={menuOpen}>☰ <NewBadge featureId="campaign-burger-menu" /></button>}
 
@@ -325,9 +356,9 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
                 attempt={attempt}
                 onHit={applyHit}
                 onNextVisit={addVisit}
-                onPreviousVisit={() => setAttempt((current) => previousVisit(current))}
+                onPreviousVisit={() => setAttempt((current) => undoLastDart(current))}
                 onUndo={undoHit}
-                completionPending={isAttemptComplete(attempt)}
+                completionPending={false}
                 autoPerfectPending={autoPerfectPending}
                 onFinish={finishAttempt}
                 interactionDisabled={!introReady || Boolean(result)}
@@ -373,8 +404,9 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
             {profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
           </>
         )}
+        {normalConfirmation && !level.boss && <div className="level-success-actions" role="dialog" aria-modal="true" aria-labelledby="level-success-title"><section><span>DARTQUEST</span><h3 id="level-success-title">Aufgabe erfüllt</h3><p>{result.totalDarts} Darts</p><strong className="level-success-stars" aria-label={`${result.stars} Sterne`}>{'★'.repeat(result.stars)}</strong><div className="level-success-rewards"><b>+{normalConfirmation.awardedXP ?? 0} XP</b><b>🪙 +{normalConfirmation.awardedCoins ?? 0} Coins</b></div><button type="button" onClick={returnToAttempt}>ZURÜCK ZUM SPIEL</button><button type="button" onClick={beginReturnToMap}>WEITER ZUR KARTE</button>{normalConfirmation.nextLevelId&&<button className="primary" type="button" onClick={()=>onPlayNext(normalConfirmation.nextLevelId)}>NÄCHSTE AUFGABE</button>}</section></div>}
         {result && level.boss && !bossConfirmation && !profileSyncError && <p className="level-profile-sync-status" role="status">Boss-Abschluss wird gespeichert …</p>}
-        {bossConfirmation && <BossDefeatedSequence confirmation={bossConfirmation} onContinue={beginReturnToMap} />}
+        {bossConfirmation && <BossDefeatedSequence confirmation={bossConfirmation} onContinue={beginReturnToMap} onPlayNext={onPlayNext} />}
         {result && level.boss && profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
       </article>
     </div>

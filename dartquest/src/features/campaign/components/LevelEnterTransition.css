@@ -1,3 +1,6 @@
+.boss-intro>button.boss-intro__ready{min-width:min(100%,230px);min-height:52px;margin-top:10px;padding:0 24px;border:1px solid var(--boss-secondary,#42e695);border-radius:13px;background:rgba(3,25,18,.8);color:var(--boss-secondary,#63ffb5);font-size:18px;font-weight:1000;letter-spacing:2.4px;text-shadow:0 0 6px currentColor,0 0 16px currentColor;box-shadow:0 0 10px color-mix(in srgb,var(--boss-secondary,#42e695) 48%,transparent),inset 0 0 15px color-mix(in srgb,var(--boss-secondary,#42e695) 13%,transparent);animation:bossReadyNeon 1.35s ease-in-out infinite alternate}
+@keyframes bossReadyNeon{from{filter:brightness(.88);box-shadow:0 0 7px color-mix(in srgb,var(--boss-secondary,#42e695) 34%,transparent),inset 0 0 10px color-mix(in srgb,var(--boss-secondary,#42e695) 10%,transparent)}to{filter:brightness(1.2);box-shadow:0 0 17px color-mix(in srgb,var(--boss-secondary,#42e695) 68%,transparent),0 0 32px color-mix(in srgb,var(--boss-secondary,#42e695) 22%,transparent),inset 0 0 18px color-mix(in srgb,var(--boss-secondary,#42e695) 19%,transparent)}}
+
 .level-enter-transition {
   position: fixed;
   z-index: 9998;
