@@ -3,6 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import Home from '../features/home/Home'
 import Singleplayer from '../features/singleplayer/Singleplayer'
 import Campaign from '../features/campaign/Campaign'
+import CampaignModes from '../features/campaignModes/CampaignModes'
+import CheckoutCampaign from '../features/campaignModes/CheckoutCampaign'
+import RivalCampaign from '../features/campaignModes/RivalCampaign'
 import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
 import PasswordRecoveryScreen from '../features/auth/PasswordRecoveryScreen'
@@ -445,10 +448,27 @@ function App() {
 
           onOpenCampaign={() =>
             setActivePage(
-              'singleplayerDifficulty',
+              'campaignModes',
             )
           }
         />
+      )}
+
+      {activePage === 'campaignModes' && (
+        <CampaignModes
+          onBack={() => setActivePage('singleplayer')}
+          onSelect={(mode) => setActivePage(
+            mode === 'standard' ? 'singleplayerDifficulty' : `${mode}Campaign`,
+          )}
+        />
+      )}
+
+      {activePage === 'checkoutCampaign' && (
+        <CheckoutCampaign activeProfile={activeProfile} onBack={() => setActivePage('campaignModes')} />
+      )}
+
+      {activePage === 'rivalCampaign' && (
+        <RivalCampaign activeProfile={activeProfile} onBack={() => setActivePage('campaignModes')} />
       )}
 
 
@@ -466,7 +486,7 @@ function App() {
               className="multiplayer-back"
               onClick={() =>
                 setActivePage(
-                  'singleplayer',
+                  'campaignModes',
                 )
               }
             >

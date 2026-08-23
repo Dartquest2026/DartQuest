@@ -18,6 +18,7 @@
     "test:return-transition": "node --test scripts/return-transition.test.mjs",
     "test:standard-games": "node --test scripts/standard-games.test.mjs",
     "test:release-new-features": "node --test scripts/release-new-features.test.mjs",
+    "test:campaign-modes": "node --test scripts/campaign-modes.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
