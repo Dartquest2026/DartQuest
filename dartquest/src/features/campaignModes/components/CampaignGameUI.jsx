@@ -1,3 +1,5 @@
+import './CampaignGameUI.css'
+
 export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'] }) {
   return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? 'Noch nicht geworfen' : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
 }

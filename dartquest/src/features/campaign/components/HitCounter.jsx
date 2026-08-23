@@ -1,8 +1,15 @@
 import Dartboard from './Dartboard'
+import { DartSlots } from '../../campaignModes/components/CampaignGameUI'
 import './HitCounter.css'
 
 function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, completionPending, autoPerfectPending = false, onFinish, interactionDisabled = false }) {
   const expectedTarget = attempt.sequence[attempt.sequenceIndex]
+  const currentVisitCount = attempt.totalDarts === 0 ? 0 : (attempt.totalDarts % 3 || 3)
+  const currentVisit = attempt.hitHistory.slice(-currentVisitCount)
+  const dartValues = Array.from({ length: 3 }, (_, index) => {
+    const entry = currentVisit[index]
+    return entry ? entry.miss ? 0 : attempt.targets.find((target) => target.id === entry.targetId)?.label : null
+  })
 
   return (
     <section className="hit-counter" aria-label="Trefferzähler">
@@ -13,10 +20,12 @@ function HitCounter({ attempt, onHit, onNextVisit, onPreviousVisit, onUndo, comp
         <div><span>Darts gesamt</span><strong>{attempt.totalDarts}</strong></div>
       </header>
 
+      <DartSlots values={dartValues} />
+
       <div className="hit-counter-visit-actions">
         <button className="hit-counter-previous-visit" type="button" onClick={onPreviousVisit} disabled={interactionDisabled || attempt.visits <= 1}>↶ Aufnahme</button>
         <button className="hit-counter-next-visit" type="button" onClick={onNextVisit} disabled={interactionDisabled}>
-          {completionPending ? 'Aufnahme nachtragen · +3 Darts' : 'Nächste Aufnahme'}
+          {completionPending ? 'Nicht getroffen · +1 Dart' : 'Nicht getroffen'}
         </button>
       </div>
 

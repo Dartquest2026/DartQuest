@@ -153,7 +153,7 @@ export function createLevelAttempt(level, startedAt = Date.now()) {
     hitCounters: Object.fromEntries(parsed.targets.map((target) => [target.id, 0])),
     hitHistory: [],
     visits: 1,
-    totalDarts: 3,
+    totalDarts: 0,
     sequenceIndex: 0,
     startedAt,
     playerId: null,
@@ -171,17 +171,19 @@ export function registerTargetHit(attempt, targetId) {
     hitCounters: { ...attempt.hitCounters, [targetId]: attempt.hitCounters[targetId] + 1 },
     hitHistory: [...attempt.hitHistory, { targetId, playerId: attempt.playerId }],
     sequenceIndex: attempt.sequenceIndex + (attempt.ordered ? 1 : 0),
+    totalDarts: attempt.totalDarts + 1,
+    visits: Math.floor(attempt.totalDarts / 3) + 1,
   }
 }
 
 export function nextVisit(attempt) {
-  const visits = attempt.visits + 1
-  return { ...attempt, visits, totalDarts: visits * 3 }
+  const totalDarts = attempt.totalDarts + 1
+  return { ...attempt, visits: Math.floor(totalDarts / 3) + 1, totalDarts, hitHistory: [...attempt.hitHistory, { targetId: null, miss: true }] }
 }
 
 export function previousVisit(attempt) {
-  const visits = Math.max(1, attempt.visits - 1)
-  return { ...attempt, visits, totalDarts: visits * 3 }
+  const totalDarts = Math.max(0, attempt.totalDarts - 1)
+  return { ...attempt, visits: Math.floor(totalDarts / 3) + 1, totalDarts, hitHistory: attempt.hitHistory.slice(0, -1) }
 }
 
 export function undoTargetHit(attempt, targetId) {
@@ -199,6 +201,8 @@ export function undoTargetHit(attempt, targetId) {
     hitCounters: { ...attempt.hitCounters, [targetId]: attempt.hitCounters[targetId] - 1 },
     hitHistory,
     sequenceIndex: attempt.sequenceIndex - (attempt.ordered ? 1 : 0),
+    totalDarts: Math.max(0, attempt.totalDarts - 1),
+    visits: Math.floor(Math.max(0, attempt.totalDarts - 1) / 3) + 1,
   }
 }
 
@@ -250,7 +254,7 @@ export function getExactTotalDarts(visits, finishingDart) {
 }
 
 export function createAttemptResult(level, attempt, completedAt = Date.now(), finishingDart = 3) {
-  const totalDarts = getExactTotalDarts(attempt.visits, finishingDart)
+  const totalDarts = Math.max(1, attempt.totalDarts || getExactTotalDarts(attempt.visits, finishingDart))
   const stars = calculateLevelStars(level, totalDarts)
   return {
     success: true,

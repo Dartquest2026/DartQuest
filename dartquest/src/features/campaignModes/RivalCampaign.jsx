@@ -51,7 +51,7 @@ export default function RivalCampaign({ activeProfile, onBack }) {
 
   if (!match) return <RivalLevels progress={progress} onBack={onBack} onStart={(level) => setMatch(createRivalMatch(activeProfile?.name, level))} />
   const human = match.players[0], ai = match.players[1]
-  const rounds = Array.from({ length: Math.ceil(match.visits.length / 2) }, (_, index) => ({ human: match.visits[index * 2], ai: match.visits[index * 2 + 1] }))
+  const rounds = buildVisitRows(match.visits)
   const stats = playerMatchStats(human)
   const nextUnlocked = match.level < 40 && isCampaignLevelUnlocked(progress, match.level + 1)
   return <main className="rival-game"><header><button type="button" onClick={() => setMatch(null)}>‹</button><div><span>RIVALEN-LEVEL {match.level} · Ø {match.targetAverage}</span><h1>First to 3</h1></div><button type="button" className="rival-undo" disabled={!match.history.length || aiThinking} onClick={() => { setMatch((current) => undoPlayerRound(current)); setInput('') }}>↶ Undo</button></header>
@@ -65,6 +65,16 @@ export default function RivalCampaign({ activeProfile, onBack }) {
 }
 
 function formatVisit(visit) { return visit ? `${visit.points}${visit.bust ? ' · Bust' : visit.checkout ? ' · Checkout' : ''}` : '' }
+function buildVisitRows(visits) {
+  const rows = []
+  for (const visit of visits) {
+    const side = visit.player === 0 ? 'human' : 'ai'
+    let row = rows.at(-1)
+    if (!row || row[side]) { row = {}; rows.push(row) }
+    row[side] = visit
+  }
+  return rows
+}
 
 function RivalLevels({ progress, onBack, onStart }) {
   const levels = Array.from({ length: 40 }, (_, index) => index + 1)

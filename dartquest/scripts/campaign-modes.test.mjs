@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { applyVisit, createAiVisit, createRivalMatch, rivalAverageForLevel, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
+import { applyVisit, createAiVisit, createRivalMatch, playerMatchStats, rivalAverageForLevel, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
 
 test('Rivalen-Average folgt der Levelkurve', () => {
   assert.equal(rivalAverageForLevel(1), 25)
@@ -42,4 +42,15 @@ test('KI-Aufnahme bleibt gültig und schwankt mit Zufall', () => {
   const high = createAiVisit(match, () => 0.9)
   assert.ok(low.points >= 0 && low.points <= 180)
   assert.notEqual(low.points, high.points)
+})
+
+test('Statistik verwendet echte Punkte und Checkout-Darts', () => {
+  let match = createRivalMatch('Daniel', 1, 40)
+  match = applyVisit(match, 40, true, 2)
+  const stats = playerMatchStats(match.players[0])
+  assert.equal(stats.darts, 2)
+  assert.equal(stats.visits, 1)
+  assert.equal(stats.average, 60)
+  assert.equal(stats.bestCheckout, 40)
+  assert.equal(stats.checkoutRate, 100)
 })
