@@ -30,7 +30,6 @@ import Settings from '../settings/Settings'
 import { getAutomaticWorldTransition } from './worldTransition'
 import { createConfirmedCoinAnimation } from './coinAnimation'
 import CampaignCoinCounter from './components/CampaignCoinCounter'
-import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 import { grantFreePack } from '../cards/cardStorage'
 import RivalCampaign from '../campaignModes/RivalCampaign'
 import { loadChallenge, saveChallenge, scheduleChallenge } from './challengeStorage'
@@ -112,8 +111,6 @@ function Campaign({
   onOpenProfile = () => {},
   onLogout = () => {},
 }) {
-  const { markSeen } = useNewFeatures()
-
   const baseLevels =
     getLevelsByDifficulty(
       settings.difficulty,
@@ -248,12 +245,6 @@ function Campaign({
     })
     setActiveChallenge(null)
   }
-
-  useEffect(() => {
-    if (!autoAdvanceWorld) return undefined
-    const timer = window.setTimeout(() => markSeen('automatic-world-switch'), 500)
-    return () => window.clearTimeout(timer)
-  }, [autoAdvanceWorld, markSeen])
 
   useEffect(() => () => {
     if (playActivationTimer.current) window.clearTimeout(playActivationTimer.current)
@@ -1131,7 +1122,7 @@ function Campaign({
   return (
     <main className={`dq-campaign${autoAdvanceWorld ? ' is-world-transitioning' : ''}`}>
 
-      {autoAdvanceWorld && <div className="dq-world-unlock-notice" role="status" aria-live="polite"><span>NEUE WELT FREIGESCHALTET <NewBadge featureId="automatic-world-switch" /></span><strong>{worldNames[Math.ceil(unlockTo / 10) - 1]}</strong></div>}
+      {autoAdvanceWorld && <div className="dq-world-unlock-notice" role="status" aria-live="polite"><span>NEUE WELT FREIGESCHALTET</span><strong>{worldNames[Math.ceil(unlockTo / 10) - 1]}</strong></div>}
 
       {/* HEADER */}
 

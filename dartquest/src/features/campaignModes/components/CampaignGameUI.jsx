@@ -5,8 +5,42 @@ export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'] }) {
   return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? 'Noch nicht geworfen' : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
 }
 
-export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,41,45,60,81,83,100,140] }) {
-  return <section className="score-keypad"><div className="score-display">{value || '0'}</div><div className="score-quick">{quick.map((item) => <button type="button" key={item} disabled={disabled} onClick={() => onChange(String(item))}>{item}</button>)}</div><div className="score-numbers">{[1,2,3,4,5,6,7,8,9].map((number) => <button type="button" key={number} disabled={disabled} onClick={() => onChange((value + number).slice(0,3))}>{number}</button>)}<button type="button" onClick={() => onChange('')}>C</button><button type="button" disabled={disabled} onClick={() => onChange((value + '0').slice(0,3))}>0</button><button type="button" onClick={() => onChange(value.slice(0,-1))}>⌫</button></div><button className="score-confirm" type="button" disabled={disabled || value === '' || Number(value) > 180} onClick={onConfirm}>✓ BESTÄTIGEN</button></section>
+export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false }) {
+  const [pressedKey, setPressedKey] = useState(null)
+  const feedbackTimer = useRef(null)
+  const confirmDisabled = disabled || value === '' || Number(value) > 180
+
+  function press(key, action) {
+    setPressedKey(key)
+    if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current)
+    feedbackTimer.current = window.setTimeout(() => setPressedKey(null), 820)
+    action()
+  }
+
+  function keyClass(key, extra = '') {
+    return `${extra}${pressedKey === key ? `${extra ? ' ' : ''}is-pressed` : ''}`
+  }
+
+  const numberButton = (number) => <button type="button" key={number} className={keyClass(`number-${number}`)} disabled={disabled} onClick={() => press(`number-${number}`, () => onChange((value + number).slice(0, 3)))}>{number}</button>
+
+  return <section className={`score-keypad${fill ? ' is-fill' : ''}`}>
+    <div className="score-display">{value || '0'}</div>
+    <div className="score-quick">{quick.map((item) => <button type="button" key={item} className={keyClass(`quick-${item}`)} disabled={disabled} onClick={() => press(`quick-${item}`, () => onChange(String(item)))}>{item}</button>)}</div>
+    <div className="score-numbers">
+      {numberButton(1)}
+      {numberButton(2)}
+      {numberButton(3)}
+      {numberButton(4)}
+      {numberButton(5)}
+      {numberButton(6)}
+      {numberButton(7)}
+      {numberButton(8)}
+      {numberButton(9)}
+      <button type="button" className={keyClass('backspace')} disabled={disabled} onClick={() => press('backspace', () => onChange(value.slice(0, -1)))} aria-label="Letzte Ziffer löschen">⌫</button>
+      <button type="button" className={keyClass('number-0', 'score-zero')} disabled={disabled} onClick={() => press('number-0', () => onChange((value + '0').slice(0, 3)))}>0</button>
+      <button className={keyClass('confirm', 'score-confirm')} type="button" disabled={confirmDisabled} onClick={() => press('confirm', onConfirm)} aria-label="Eingabe bestätigen">✓ <span>OK</span></button>
+    </div>
+  </section>
 }
 
 export function DartFieldInput({ value, onChange, disabled }) {

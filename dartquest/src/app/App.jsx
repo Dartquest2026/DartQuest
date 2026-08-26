@@ -26,7 +26,6 @@ import {
   spendProfileCoins,
 } from '../features/auth/profileStorage'
 import BottomNav from '../shared/components/BottomNav'
-import { NewFeaturesProvider } from '../features/releases/NewFeatures'
 
 import './App.css'
 import '../shared/styles/BottomNav.css'
@@ -402,17 +401,14 @@ function App() {
 
   if (!activeProfile) {
     return (
-      <NewFeaturesProvider profileId={null}>
       <>
         <AuthScreen initialMessage={loginMessage} onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError(''); setLoginMessage('') }} />
         {authError && <p className="app-auth-error">{authError}</p>}
       </>
-      </NewFeaturesProvider>
     )
   }
 
   return (
-    <NewFeaturesProvider profileId={activeProfile.id}>
     <div className="app-shell">
 
       {/* HOME */}
@@ -685,7 +681,6 @@ function App() {
       />
 
     </div>
-    </NewFeaturesProvider>
   )
 }
 

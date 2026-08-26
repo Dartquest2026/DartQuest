@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { NewBadge, useNewFeatures } from '../../releases/NewFeatures'
 
 function CampaignCoinCounter({ confirmedCoins, animation, onAnimationComplete }) {
   const safeConfirmedCoins = Number.isSafeInteger(Number(confirmedCoins)) ? Number(confirmedCoins) : 0
@@ -9,7 +8,6 @@ function CampaignCoinCounter({ confirmedCoins, animation, onAnimationComplete })
   const completionTimer = useRef(null)
   const handledAnimation = useRef(null)
   const onCompleteRef = useRef(onAnimationComplete)
-  const { markSeen } = useNewFeatures()
 
   useEffect(() => {
     onCompleteRef.current = onAnimationComplete
@@ -31,7 +29,6 @@ function CampaignCoinCounter({ confirmedCoins, animation, onAnimationComplete })
     const duration = mode === 'off' || reducedMotion ? 0 : mode === 'reduced' ? 180 : 900
     const startedAt = performance.now()
     setAnnouncement(`${animation.awarded} Coins erhalten, neuer Stand ${animation.to}`)
-    const seenTimer = window.setTimeout(() => markSeen('coin-return-animation'), 400)
 
     const finish = () => {
       animationFrame.current = null
@@ -43,7 +40,7 @@ function CampaignCoinCounter({ confirmedCoins, animation, onAnimationComplete })
     }
     if (duration === 0) {
       finish()
-      return () => { if (completionTimer.current) window.clearTimeout(completionTimer.current); window.clearTimeout(seenTimer) }
+      return () => { if (completionTimer.current) window.clearTimeout(completionTimer.current) }
     }
     const tick = (now) => {
       const progress = Math.min(1, (now - startedAt) / duration)
@@ -55,19 +52,17 @@ function CampaignCoinCounter({ confirmedCoins, animation, onAnimationComplete })
     animationFrame.current = window.requestAnimationFrame(tick)
     return () => {
       if (animationFrame.current) window.cancelAnimationFrame(animationFrame.current)
-      window.clearTimeout(seenTimer)
       if (completionTimer.current) window.clearTimeout(completionTimer.current)
       animationFrame.current = null
       completionTimer.current = null
     }
-  }, [animation, markSeen])
+  }, [animation])
 
   return <div className={`dq-coins${animation ? ' is-rewarding' : ''}`}>
     <span className="dq-coin-icon" aria-hidden="true">🪙</span>
     <strong>{displayCoins.toLocaleString('de-DE')}</strong>
     <span>Coins</span>
     {animation && <b className="dq-coin-gain" aria-hidden="true">+{animation.awarded}</b>}
-    {animation && <NewBadge featureId="coin-return-animation" />}
     <span className="dq-sr-only" aria-live="polite" aria-atomic="true">{announcement}</span>
   </div>
 }

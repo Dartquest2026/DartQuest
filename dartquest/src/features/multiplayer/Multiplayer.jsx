@@ -5,7 +5,6 @@ import {
   MAX_MULTIPLAYER_SAVES,
 } from './multiplayerSaves'
 import StandardGame from '../standardGames/StandardGame'
-import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 
 import './Multiplayer.css'
 
@@ -16,6 +15,8 @@ const difficultyNames = {
   4: 'SCHWER',
   5: 'PROFI',
 }
+
+const SHOW_DEFERRED_GAME_MODES = false
 
 const difficulties = [
   {
@@ -61,7 +62,6 @@ function Multiplayer({
   onStartCampaign,
   onContinueCampaign,
 }) {
-  const { markSeen } = useNewFeatures()
   const [players, setPlayers] = useState([
     {
       id: 1,
@@ -570,7 +570,7 @@ function Multiplayer({
                 </button>
 
 
-                <button
+                {SHOW_DEFERRED_GAME_MODES && <button
                   type="button"
                   className="multiplayer-mode-card"
                 >
@@ -593,13 +593,13 @@ function Multiplayer({
                     ›
                   </span>
 
-                </button>
+                </button>}
 
 
-                <button
+                {SHOW_DEFERRED_GAME_MODES && <button
                   type="button"
                   className="multiplayer-mode-card"
-                  onClick={() => { markSeen('standard-games'); setSelectedMode('standard') }}
+                  onClick={() => setSelectedMode('standard')}
                 >
 
                   <span className="multiplayer-mode-icon">
@@ -608,7 +608,7 @@ function Multiplayer({
 
                   <div>
                     <strong>
-                      Standardspiele <NewBadge featureId="standard-games" />
+                      Standardspiele
                     </strong>
 
                     <small>
@@ -620,7 +620,7 @@ function Multiplayer({
                     ›
                   </span>
 
-                </button>
+                </button>}
 
               </div>
 

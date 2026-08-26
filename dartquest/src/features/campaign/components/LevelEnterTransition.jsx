@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { getBossIntroContent } from '../bossIntro'
 import { getBossHapticPattern, getBossPresentation, getBossPresentationStyle } from '../bossPresentation'
 import { loadSettings, vibrate } from '../../settings/settingsStorage'
-import { NewBadge, useNewFeatures } from '../../releases/NewFeatures'
 
 import './LevelEnterTransition.css'
 
@@ -15,7 +14,6 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
   const isBoss = level.boss === true
   const bossContent = isBoss ? getBossIntroContent(level, worldName) : null
   const bossPresentation = isBoss ? getBossPresentation(level) : null
-  const { markSeen } = useNewFeatures()
 
   const finishOnce = useCallback(() => {
     if (completed.current) return
@@ -48,7 +46,6 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
       historyPushed.current = true
     }
     const focusTimer = isBoss ? window.setTimeout(() => skipButton.current?.focus(), noMotion ? 0 : 320) : null
-    const seenTimer = isBoss ? window.setTimeout(() => { markSeen('boss-intro'); markSeen('boss-variants') }, noMotion ? 200 : 700) : null
     const finishOnEscape = (event) => { if (event.key === 'Escape') requestFinish() }
     if (isBoss) {
       window.addEventListener('keydown', finishOnEscape)
@@ -60,13 +57,12 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
       if (readyTimer) window.clearTimeout(readyTimer)
       if (completeTimer) window.clearTimeout(completeTimer)
       if (focusTimer) window.clearTimeout(focusTimer)
-      if (seenTimer) window.clearTimeout(seenTimer)
       window.removeEventListener('keydown', finishOnEscape)
       window.removeEventListener('popstate', finishOnce)
       if (window.history.state?.dartQuestOverlay === 'boss-intro') window.history.replaceState(null, '')
       document.body.style.overflow = previousOverflow
     }
-  }, [bossPresentation?.hapticKey, finishOnce, isBoss, markSeen, requestFinish])
+  }, [bossPresentation?.hapticKey, finishOnce, isBoss, requestFinish])
 
   const centerX = sourceRect ? sourceRect.x + sourceRect.width / 2 : window.innerWidth / 2
   const centerY = sourceRect ? sourceRect.y + sourceRect.height / 2 : window.innerHeight / 2
@@ -84,7 +80,7 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
       <div className="level-enter-transition__veil" />
       <div className="level-enter-transition__world" />
       <div className="level-enter-transition__node">
-        <span>{level.boss ? 'BOSS-LEVEL' : 'LEVEL'} {isBoss && <><NewBadge featureId="boss-intro" /> <NewBadge featureId="boss-variants" /></>}</span>
+        <span>{level.boss ? 'BOSS-LEVEL' : 'LEVEL'}</span>
         <strong>{level.id}</strong>
       </div>
       {isBoss && <section className="boss-intro" role="dialog" aria-modal="true" aria-labelledby="boss-intro-title"><div className="boss-intro__effect" aria-hidden="true"><i /><i /><i /></div><div className="boss-intro__emblem" aria-hidden="true">{bossPresentation.symbol || '◆'}</div><p>BOSS-LEVEL · WELT {bossContent.world} · LEVEL {bossContent.levelId}</p><h2 id="boss-intro-title">{bossContent.bossName}</h2><strong>{bossContent.worldLabel}</strong><div><span>DEINE AUFGABE</span><b>{bossContent.task}</b>{bossContent.target && <small>{bossContent.target}</small>}</div><button ref={skipButton} className="boss-intro__ready" type="button" onClick={requestFinish}>BEREIT</button></section>}

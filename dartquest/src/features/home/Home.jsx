@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
-import { NewBadge, useNewFeatures, useVisibleFeature } from '../releases/NewFeatures'
 import PlayerAvatar from '../../shared/components/PlayerAvatar'
 import CardCollection from '../cards/CardCollection'
 
@@ -18,8 +17,6 @@ function Home({
   onOpenSettings,
   onSpendCoins,
 }) {
-  const { markSeen } = useNewFeatures()
-  const versionRef = useVisibleFeature('version-display')
   const [homeView, setHomeView] = useState('home')
   const xp = Number(activeProfile?.xp) || 0
   const coins = Number(activeProfile?.coins) || 0
@@ -129,9 +126,9 @@ function Home({
         </button>
 
         <div className="home-options-grid">
-          <button className="home-settings-card" type="button" onClick={() => { markSeen('settings-home-entry'); onOpenSettings() }}>
+          <button className="home-settings-card" type="button" onClick={onOpenSettings}>
             <span aria-hidden="true">⚙</span>
-            <strong>Einstellungen <NewBadge featureId="settings-home-entry" /></strong>
+            <strong>Einstellungen</strong>
             <small>Sound, Bedienung &amp; Geräte</small>
           </button>
           <button className="home-settings-card" type="button" onClick={() => setHomeView('cards')}>
@@ -139,8 +136,8 @@ function Home({
           </button>
         </div>
       </main>
-      <footer ref={versionRef} className="home-version" aria-label={`DartQuest Version ${APP_VERSION}`}>
-        v{APP_VERSION} <NewBadge featureId="version-display" />
+      <footer className="home-version" aria-label={`DartQuest Version ${APP_VERSION}`}>
+        v{APP_VERSION}
       </footer>
     </section>
   )

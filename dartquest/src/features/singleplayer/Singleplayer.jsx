@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import StandardGame from '../standardGames/StandardGame'
-import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 import './Singleplayer.css'
 
 const modes = [
@@ -13,6 +12,7 @@ const modes = [
   },
   {
     id: 'training',
+    visible: false,
     icon: '🎯',
     title: 'Training',
     description:
@@ -20,6 +20,7 @@ const modes = [
   },
   {
     id: 'standard',
+    visible: false,
     icon: '🎮',
     title: 'Standardspiele',
     description:
@@ -33,13 +34,12 @@ function Singleplayer({
   activeProfile,
 }) {
   const [standardOpen, setStandardOpen] = useState(false)
-  const { markSeen } = useNewFeatures()
 
   function openMode(modeId) {
     if (modeId === 'campaign') {
       onOpenCampaign?.()
     }
-    if (modeId === 'standard') { markSeen('standard-games'); setStandardOpen(true) }
+    if (modeId === 'standard') setStandardOpen(true)
   }
 
   if (standardOpen) return <StandardGame initialPlayers={[activeProfile?.name || 'Spieler 1']} activeProfile={activeProfile} onBack={() => setStandardOpen(false)} />
@@ -82,7 +82,7 @@ function Singleplayer({
 
       <section className="singleplayer-mode-grid">
 
-        {modes.map((mode) => (
+        {modes.filter((mode) => mode.visible !== false).map((mode) => (
           <button
             key={mode.id}
             type="button"
@@ -95,7 +95,7 @@ function Singleplayer({
             </span>
 
             <span className="singleplayer-mode-content">
-              <strong>{mode.title} {mode.id === 'standard' && <NewBadge featureId="standard-games" />}</strong>
+              <strong>{mode.title}</strong>
               <small>{mode.description}</small>
             </span>
 

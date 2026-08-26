@@ -22,7 +22,6 @@ import './CampaignPolish.css'
 import { confirmInputModeHint, hasConfirmedInputModeHint } from '../settings/tutorialStorage'
 import { shouldShowBossDefeated } from './bossDefeated'
 import { getReturnTransitionTiming, RETURN_TRANSITION_PHASES } from './returnTransition'
-import { NewBadge, useNewFeatures } from '../releases/NewFeatures'
 import { vibrate } from '../settings/settingsStorage'
 
 const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
@@ -105,7 +104,6 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   const transitionTimers = useRef([])
   const onCompleteRef = useRef(onComplete)
   const onCloseRef = useRef(onClose)
-  const { markSeen } = useNewFeatures()
   onCompleteRef.current = onComplete
   onCloseRef.current = onClose
 
@@ -183,14 +181,14 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     const timing = getReturnTransitionTiming(animationMode, reducedMotion)
     transitionTimers.current = [
       window.setTimeout(() => setReturnTransition(RETURN_TRANSITION_PHASES.switchingView), timing.switchAt),
-      window.setTimeout(() => { setReturnTransition(RETURN_TRANSITION_PHASES.fadingInMap); markSeen('game-map-crossfade') }, timing.revealAt),
+      window.setTimeout(() => setReturnTransition(RETURN_TRANSITION_PHASES.fadingInMap), timing.revealAt),
       window.setTimeout(() => {
         setReturnTransition(RETURN_TRANSITION_PHASES.complete)
         onCloseRef.current()
       }, timing.completeAt),
     ]
     return undefined
-  }, [markSeen, returnTransition])
+  }, [returnTransition])
 
   useEffect(() => () => {
     const timers = transitionTimers.current
@@ -300,7 +298,6 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
 
   function openPauseMenu() {
     if (!introReady || autoPerfectPending || completionStarted.current || menuOpen) return
-    markSeen('campaign-burger-menu')
     window.history.pushState({ dartQuestOverlay: 'level-pause' }, '')
     setMenuOpen(true)
   }
@@ -316,26 +313,27 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
 
   return (
     <div className={`level-modal-backdrop return-${returnTransition}`} data-return-transition={returnTransition} onClick={result ? undefined : beginReturnToMap}>
-      {returnTransition !== RETURN_TRANSITION_PHASES.idle && <div className="level-crossfade-new" aria-hidden="true"><NewBadge featureId="game-map-crossfade" /></div>}
       <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${level.boss ? ' is-boss-level' : ''}${result ? ' is-completing' : ''} return-${returnTransition}`} aria-hidden={returnTransition !== RETURN_TRANSITION_PHASES.idle ? 'true' : undefined} inert={returnTransition !== RETURN_TRANSITION_PHASES.idle ? '' : undefined} onClick={(event) => event.stopPropagation()}>
         {!result && <button className="level-modal-close" type="button" onClick={beginReturnToMap} aria-label="Level schließen">×</button>}
-        {!result && <button ref={menuButtonRef} className="level-modal-menu" type="button" onClick={openPauseMenu} disabled={!introReady || autoPerfectPending || completionStarted.current} aria-label="Kampagnenmenü öffnen" aria-expanded={menuOpen}>☰ <NewBadge featureId="campaign-burger-menu" /></button>}
+        {!result && <div className="level-modal-header-actions">
+          <button ref={menuButtonRef} className="level-modal-menu" type="button" onClick={openPauseMenu} disabled={!introReady || autoPerfectPending || completionStarted.current} aria-label="Kampagnenmenü öffnen" aria-expanded={menuOpen}>☰</button>
+          <button
+            type="button"
+            className={`level-input-mode-switch is-${inputMode}${showInputModeHint ? ' is-coachmark-target' : ''}`}
+            onClick={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
+            disabled={!introReady || Boolean(result)}
+            aria-label={inputMode === 'counter' ? 'Zur Schnelleingabe wechseln' : 'Zum Trefferzähler wechseln'}
+            aria-describedby={showInputModeHint ? 'input-mode-hint' : undefined}
+            title={inputMode === 'counter' ? 'Treffer zählen' : 'Schnelleingabe'}
+          >
+            <span aria-hidden="true"><i /></span>
+            <small>{inputMode === 'counter' ? 'Zähler' : 'Schnell'}</small>
+          </button>
+        </div>}
 
         <div className={`level-gameplay-layer${result ? ' is-finished' : ''}`} aria-hidden={result ? 'true' : undefined}>
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
             <h2 className="level-modal-title">{displayedTask}</h2>
-            <button
-              type="button"
-              className={`level-input-mode-switch is-${inputMode}${showInputModeHint ? ' is-coachmark-target' : ''}`}
-              onClick={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
-              disabled={!introReady || Boolean(result)}
-              aria-label={inputMode === 'counter' ? 'Zur Schnelleingabe wechseln' : 'Zum Trefferzähler wechseln'}
-              aria-describedby={showInputModeHint ? 'input-mode-hint' : undefined}
-              title={inputMode === 'counter' ? 'Treffer zählen' : 'Schnelleingabe'}
-            >
-              <span aria-hidden="true"><i /></span>
-              <small>{inputMode === 'counter' ? 'Zähler' : 'Schnell'}</small>
-            </button>
             {showInputModeHint && !result && (
               <aside className="level-input-mode-hint" id="input-mode-hint" role="status">
                 <strong>Du kannst hier jederzeit wechseln.</strong>

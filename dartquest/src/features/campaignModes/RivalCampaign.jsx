@@ -210,7 +210,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       </section>
 
       {aiThinking && <div className="rival-thinking" aria-live="polite">Rivale wirft …</div>}
-      {match.winner == null && <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} />}
+      {match.winner == null && <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} fill />}
       {match.winner != null && (
         <CampaignResult title={match.winner === 0 ? 'Du hast gewonnen!' : 'Du hast verloren'}>
           <strong className="result-score">{human.legs}:{ai.legs} Legs</strong>
