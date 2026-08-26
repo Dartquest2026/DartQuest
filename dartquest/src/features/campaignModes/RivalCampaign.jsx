@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { applyVisit, checkoutDartOptions, createAiVisit, createChallengeRivalMatch, createRivalMatch, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, undoPlayerRound } from './rivalEngine'
+import { applyVisit, canCheckout, checkoutDartOptions, createAiVisit, createChallengeRivalMatch, createRivalMatch, getAvailableCheckoutDartCounts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, undoPlayerRound } from './rivalEngine'
 import { isCampaignLevelUnlocked, loadCampaignProgress, saveCampaignProgress } from './campaignModeStorage'
 import { CampaignResult, ScoreKeypad } from './components/CampaignGameUI'
 import { grantFreePack } from '../cards/cardStorage'
@@ -38,6 +38,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   const [match, setMatch] = useState(() => challenge ? createChallengeRivalMatch(activeProfile?.name, challenge) : savedDraft?.match ?? null)
   const [input, setInput] = useState(() => savedDraft?.input ?? '')
   const [checkoutPrompt, setCheckoutPrompt] = useState(() => savedDraft?.checkoutPrompt ?? null)
+  const [doubleAttempts, setDoubleAttempts] = useState(() => savedDraft?.doubleAttempts ?? 0)
   const [reward, setReward] = useState(null)
   const [selectedResultLevel, setSelectedResultLevel] = useState(null)
   const confirming = useRef(false)
@@ -51,11 +52,20 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       setMatch((current) => {
         if (current?.active !== 1) return current
         const visit = createAiVisit(current)
-        return applyVisit(current, visit.points, visit.validCheckout, visit.dartsUsed)
+        const next = applyVisit(current, visit.points, visit.validCheckout, visit.dartsUsed)
+        if (next.winner === 1 && !challenge) {
+          setProgress((currentProgress) => {
+            const old = currentProgress.levels[next.level] || {}
+            const saved = { ...currentProgress, levels: { ...currentProgress.levels, [next.level]: { ...old, lastMatch: rivalMatchResult(next) } } }
+            saveCampaignProgress(activeProfile?.id, 'rival', saved)
+            return saved
+          })
+        }
+        return next
       })
     }, 650)
     return () => window.clearTimeout(timer)
-  }, [match])
+  }, [activeProfile?.id, challenge, match])
 
   useEffect(() => {
     if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight
@@ -64,15 +74,17 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   useEffect(() => {
     if (challenge) return
     if (match && match.winner == null) {
-      saveRivalDraft(activeProfile?.id, { match, input, checkoutPrompt })
+      saveRivalDraft(activeProfile?.id, { match, input, checkoutPrompt, doubleAttempts })
       return
     }
     clearRivalDraft(activeProfile?.id)
-  }, [activeProfile?.id, challenge, checkoutPrompt, input, match])
+  }, [activeProfile?.id, challenge, checkoutPrompt, doubleAttempts, input, match])
 
-  async function storeWin(nextMatch) {
-    if (nextMatch.winner !== 0) return
+  async function storeResult(nextMatch) {
+    if (nextMatch.winner == null) return
+    const matchResult = rivalMatchResult(nextMatch)
     if (challenge) {
+      if (nextMatch.winner !== 0) return
       if (challengeRewardGranted.current) return
       challengeRewardGranted.current = true
       const delta = { xp: 75, coins: 35 }
@@ -82,10 +94,17 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       return
     }
 
+    const old = progress.levels[nextMatch.level] || {}
+    if (nextMatch.winner !== 0) {
+      const next = { ...progress, levels: { ...progress.levels, [nextMatch.level]: { ...old, lastMatch: matchResult } } }
+      setProgress(next)
+      saveCampaignProgress(activeProfile?.id, 'rival', next)
+      return
+    }
+
     const stars = nextMatch.players[1].legs === 0 ? 3 : nextMatch.players[1].legs === 1 ? 2 : 1
     const factor = stars === 3 ? 1.5 : stars === 2 ? 1.25 : 1
     const full = { xp: Math.round((35 + nextMatch.level * 5) * factor), coins: Math.round((15 + nextMatch.level * 3) * factor) }
-    const old = progress.levels[nextMatch.level] || {}
     const paid = old.reward || { xp: 0, coins: 0 }
     const delta = { xp: Math.max(0, full.xp - paid.xp), coins: Math.max(0, full.coins - paid.coins) }
     if ((delta.xp || delta.coins) && onProfileRewards) await onProfileRewards(delta)
@@ -106,6 +125,9 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
           highestVisit: Math.max(old.highestVisit || 0, stats.highestVisit),
           bestCheckout: Math.max(old.bestCheckout || 0, stats.bestCheckout || 0),
           checkoutRate: stats.checkoutRate ?? old.checkoutRate ?? null,
+          checkoutAttempts: stats.checkoutAttempts,
+          checkouts: stats.checkouts,
+          lastMatch: matchResult,
           reward: { xp: Math.max(paid.xp, full.xp), coins: Math.max(paid.coins, full.coins) },
           packGranted: true,
         },
@@ -116,36 +138,55 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     setReward({ ...delta, stars, pack: firstPack })
   }
 
-  function commit(validCheckout = false, checkoutDart = 3) {
+  function commit(validCheckout = false, checkoutDart = 3, actualDoubleAttempts = 0) {
     if (confirming.current || !match || match.active !== 0) return
     const points = Number(input)
     if (!Number.isInteger(points) || points < 0 || points > 180) return
-    if (match.players[0].score - points === 0 && !validCheckout && checkoutDartOptions(points).length > 0) {
-      setCheckoutPrompt(points)
+    const finishableVisit = canCheckout(match.players[0].score)
+    if (finishableVisit && !validCheckout) {
+      setCheckoutPrompt({ points, checkout: match.players[0].score - points === 0 && checkoutDartOptions(points).length > 0 })
+      setDoubleAttempts(match.players[0].score - points === 0 ? 1 : 0)
       return
     }
 
     const checkedCheckout = validCheckout && isValidCheckoutAttempt(points, checkoutDart)
     confirming.current = true
     setMatch((current) => {
-      const next = applyVisit(current, points, checkedCheckout, checkoutDart)
-      void storeWin(next)
+      const next = applyVisit(current, points, checkedCheckout, checkoutDart, actualDoubleAttempts)
+      void storeResult(next)
       return next
     })
     setInput('')
     setCheckoutPrompt(null)
+    setDoubleAttempts(0)
     window.setTimeout(() => { confirming.current = false }, 250)
   }
 
   function rejectCheckout() {
-    const points = checkoutPrompt
+    const points = typeof checkoutPrompt === 'object' ? checkoutPrompt.points : checkoutPrompt
     setMatch((current) => {
-      const next = applyVisit(current, points, false)
-      void storeWin(next)
+      const next = applyVisit(current, points, false, 3, doubleAttempts)
+      void storeResult(next)
       return next
     })
     setCheckoutPrompt(null)
     setInput('')
+    setDoubleAttempts(0)
+  }
+
+  function confirmCheckoutWithAttempts(attempts) {
+    const points = typeof checkoutPrompt === 'object' ? checkoutPrompt.points : checkoutPrompt
+    const validDarts = checkoutDartOptions(points)
+    const checkoutDart = checkoutPrompt?.checkoutDart ?? (validDarts.includes(attempts) ? attempts : validDarts[0] ?? 3)
+    if (attempts < 1 || attempts > checkoutDart) return
+    commit(true, checkoutDart, attempts)
+  }
+
+  function requestCheckoutByLongPress(dartsUsed) {
+    if (!match || match.active !== 0 || !getAvailableCheckoutDartCounts(match.players[0].score).includes(dartsUsed)) return
+    setInput(String(match.players[0].score))
+    setDoubleAttempts(1)
+    setCheckoutPrompt({ points: match.players[0].score, checkout: true, checkoutDart: dartsUsed })
   }
 
   function closeChallenge() {
@@ -158,6 +199,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     setMatch(null)
     setInput('')
     setCheckoutPrompt(null)
+    setDoubleAttempts(0)
   }
 
   function startMatch(level) {
@@ -165,6 +207,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     setSelectedResultLevel(null)
     setInput('')
     setCheckoutPrompt(null)
+    setDoubleAttempts(0)
     setReward(null)
     setMatch(createRivalMatch(activeProfile?.name, level))
   }
@@ -184,7 +227,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   const human = match.players[0]
   const ai = match.players[1]
   const rounds = buildVisitRows(match.legVisits ?? []).slice(-5)
-  const stats = playerMatchStats(human)
+  const availableCheckoutDarts = match.active === 0 ? getAvailableCheckoutDartCounts(human.score) : []
   const nextUnlocked = match.level < 40 && isCampaignLevelUnlocked(progress, match.level + 1)
 
   return (
@@ -210,10 +253,10 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       </section>
 
       {aiThinking && <div className="rival-thinking" aria-live="polite">Rivale wirft …</div>}
-      {match.winner == null && <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} fill />}
+      {match.winner == null && <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} fill checkoutDartCounts={availableCheckoutDarts} onCheckoutLongPress={requestCheckoutByLongPress} />}
       {match.winner != null && (
         <CampaignResult title={match.winner === 0 ? 'Du hast gewonnen!' : 'Du hast verloren'}>
-          <strong className="result-score">{human.legs}:{ai.legs} Legs</strong>
+          <RivalResultDetails result={rivalMatchResult(match)} />
           {reward && (
             <>
               <strong className="result-stars">{'★'.repeat(reward.stars)}</strong>
@@ -221,14 +264,6 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
               {reward.pack && <p>Fünfer-Kartenpaket erhalten</p>}
             </>
           )}
-          <dl>
-            <div><dt>3-Dart-Average</dt><dd>{stats.average.toFixed(1)}</dd></div>
-            <div><dt>Darts</dt><dd>{stats.darts}</dd></div>
-            <div><dt>Aufnahmen</dt><dd>{stats.visits}</dd></div>
-            <div><dt>Höchste Aufnahme</dt><dd>{stats.highestVisit}</dd></div>
-            <div><dt>Bestes Checkout</dt><dd>{stats.bestCheckout ?? '–'}</dd></div>
-            <div><dt>Checkoutquote</dt><dd>{stats.checkoutRate == null ? '–' : `${stats.checkoutRate.toFixed(0)} %`}</dd></div>
-          </dl>
           <button type="button" onClick={() => { setReward(null); challenge ? setMatch(createChallengeRivalMatch(activeProfile?.name, challenge)) : startMatch(match.level) }}>ERNEUT SPIELEN</button>
           <button type="button" onClick={() => { setReward(null); challenge ? closeChallenge() : closeMatchSelection() }}>{challenge ? 'ZURÜCK ZUR KARTE' : 'ZUR RIVALENAUSWAHL'}</button>
           {!challenge && <button type="button" disabled={!nextUnlocked} onClick={() => { setReward(null); startMatch(match.level + 1) }}>NÄCHSTER GEGNER</button>}
@@ -236,14 +271,17 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       )}
       {checkoutPrompt != null && (
         <div className="checkout-dialog dq-checkout-dialog">
-          <section role="dialog" aria-modal="true">
+          <section className={`rival-checkout-confirm${checkoutPrompt?.checkout ? ' is-checkout' : ''}`} role="dialog" aria-modal="true" aria-labelledby="rival-checkout-title">
+            <div className="rival-checkout-emblem" aria-hidden="true"><span>♦</span><i /></div>
             <span className="dialog-eyebrow">DARTQUEST CHECKOUT</span>
-            <h2>Regelkonform über Doppel ausgecheckt?</h2>
-            <p>Wähle den Checkout-Dart. Unmögliche Checkouts werden als Bust gewertet.</p>
-            <div className="checkout-dart-choice">
-              {[1, 2, 3].map((dart) => <button type="button" key={dart} onClick={() => commit(true, dart)}>{dart} Dart{dart > 1 ? 's' : ''} · BESTÄTIGEN</button>)}
+            <h2 id="rival-checkout-title">{checkoutPrompt?.checkout ? 'Checkout bestätigen' : 'Doppelversuche erfassen'}</h2>
+            <div className="rival-checkout-divider" aria-hidden="true"><i /></div>
+            <p>Wie viele Darts wurden auf Doppel geworfen?</p>
+            <div className="checkout-attempt-choice" aria-label="Tatsächliche Doppelversuche">
+              {(checkoutPrompt?.checkout ? [1, 2, 3].filter((attempts) => attempts <= (checkoutPrompt?.checkoutDart ?? 3)) : [0, 1, 2, 3]).map((attempts) => <button className={doubleAttempts === attempts ? 'selected' : ''} type="button" key={attempts} onClick={() => checkoutPrompt?.checkout ? confirmCheckoutWithAttempts(attempts) : setDoubleAttempts(attempts)}><strong>{attempts}</strong><span className="checkout-card-darts" aria-hidden="true">{Array.from({ length: Math.max(1, attempts) }, (_, index) => <i key={index} />)}</span><small>{attempts === 1 ? 'Dart' : 'Darts'}</small></button>)}
             </div>
-            <button className="checkout-bust" type="button" onClick={rejectCheckout}>NEIN · ALS BUST WIEDERHOLEN</button>
+            {checkoutPrompt?.checkout && <div className="rival-checkout-divider" aria-hidden="true"><i /></div>}
+            <button className="checkout-bust" type="button" onClick={rejectCheckout}><span aria-hidden="true">↶</span>{checkoutPrompt?.checkout ? 'BUST – AUFNAHME WIEDERHOLEN' : 'AUFNAHME SPEICHERN'}</button>
           </section>
         </div>
       )}
@@ -305,12 +343,7 @@ function RivalLevels({ progress, selectedLevel, onSelect, onBack, onStart }) {
             <span>RIVALE {selectedLevel}</span>
             <h2>Altes Ergebnis</h2>
             <strong>{result.stars ? '★'.repeat(result.stars) : '✓'}</strong>
-            <dl>
-              <div><dt>3-Dart-Average</dt><dd>{(result.bestAverage ?? result.average ?? 0).toFixed(1)}</dd></div>
-              <div><dt>Darts</dt><dd>{result.darts ?? '–'}</dd></div>
-              <div><dt>Höchste Aufnahme</dt><dd>{result.highestVisit ?? '–'}</dd></div>
-              <div><dt>Bestes Checkout</dt><dd>{result.bestCheckout || '–'}</dd></div>
-            </dl>
+            <RivalResultDetails result={result.lastMatch} legacy={result} />
             <button type="button" onClick={() => onStart(selectedLevel)}>LEVEL SPIELEN</button>
             <button type="button" onClick={() => onSelect(null)}>SCHLIESSEN</button>
           </section>
@@ -318,4 +351,32 @@ function RivalLevels({ progress, selectedLevel, onSelect, onBack, onStart }) {
       )}
     </main>
   )
+}
+
+function checkoutText(checkouts, attempts, rate) {
+  if (!attempts) return '– (keine Doppelversuche)'
+  return `${Number(rate ?? (checkouts / attempts) * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 })} % (${checkouts}/${attempts})`
+}
+
+function RivalResultDetails({ result, legacy = null }) {
+  const legacyAverage = legacy?.bestAverage ?? legacy?.average
+  if (!result) return <div className="rival-result-details is-legacy"><p>Match- und Leg-Statistiken: Nicht verfügbar</p><dl><div><dt>3-Dart-Average</dt><dd>{legacyAverage != null ? Number(legacyAverage).toFixed(1) : '–'}</dd></div><div><dt>Darts</dt><dd>{legacy?.darts ?? '–'}</dd></div><div><dt>Höchste Aufnahme</dt><dd>{legacy?.highestVisit ?? '–'}</dd></div><div><dt>Bestes Checkout</dt><dd>{legacy?.bestCheckout || '–'}</dd></div></dl></div>
+
+  return <div className="rival-result-details">
+    <header><span>{result.won ? 'MATCH GEWONNEN' : 'MATCH VERLOREN'}</span><strong>{result.playerLegs}:{result.opponentLegs}</strong></header>
+    <dl>
+      <div><dt>Gesamt-Average</dt><dd>{Number(result.average ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</dd></div>
+      <div><dt>Checkoutquote</dt><dd>{checkoutText(result.checkouts ?? 0, result.checkoutAttempts ?? 0, result.checkoutRate)}</dd></div>
+      <div><dt>Darts</dt><dd>{result.darts ?? '–'}</dd></div>
+      <div><dt>Höchste Aufnahme</dt><dd>{result.highestVisit ?? '–'}</dd></div>
+    </dl>
+    <section className="rival-leg-results">
+      {!Array.isArray(result.legs) || result.legs.length === 0 ? <p>Leg-Statistiken: Nicht verfügbar</p> : result.legs.map((leg, index) => <article key={leg.number ?? index}>
+        <div><strong>Leg {leg.number ?? index + 1}</strong><b className={leg.winner === 0 ? 'won' : 'lost'}>{leg.winner === 0 ? 'Gewonnen' : 'Verloren'}</b></div>
+        <span>Average: {Number(leg.average ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+        <span>Checkout: {checkoutText(leg.checkouts ?? 0, leg.checkoutAttempts ?? 0, leg.checkoutAttempts ? undefined : null)}</span>
+        <em>{leg.winner === 0 ? `Gewonnen mit ${leg.darts} Darts` : `Verloren – ${leg.remaining} Punkte Rest`}</em>
+      </article>)}
+    </section>
+  </div>
 }

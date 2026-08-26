@@ -5,9 +5,13 @@ export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'] }) {
   return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? 'Noch nicht geworfen' : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
 }
 
-export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false }) {
+export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false, checkoutDartCounts = [], onCheckoutLongPress }) {
   const [pressedKey, setPressedKey] = useState(null)
+  const [holdingKey, setHoldingKey] = useState(null)
   const feedbackTimer = useRef(null)
+  const holdTimer = useRef(null)
+  const holdStart = useRef(null)
+  const suppressClick = useRef(false)
   const confirmDisabled = disabled || value === '' || Number(value) > 180
 
   function press(key, action) {
@@ -21,7 +25,55 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
     return `${extra}${pressedKey === key ? `${extra ? ' ' : ''}is-pressed` : ''}`
   }
 
-  const numberButton = (number) => <button type="button" key={number} className={keyClass(`number-${number}`)} disabled={disabled} onClick={() => press(`number-${number}`, () => onChange((value + number).slice(0, 3)))}>{number}</button>
+  function cancelHold() {
+    if (holdTimer.current) window.clearTimeout(holdTimer.current)
+    holdTimer.current = null
+    holdStart.current = null
+    setHoldingKey(null)
+  }
+
+  function endHold() {
+    cancelHold()
+    if (suppressClick.current) window.setTimeout(() => { suppressClick.current = false }, 0)
+  }
+
+  function startHold(number, event) {
+    if (!checkoutDartCounts.includes(number) || disabled || !onCheckoutLongPress) return
+    cancelHold()
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    holdStart.current = { x: event.clientX, y: event.clientY }
+    setHoldingKey(number)
+    holdTimer.current = window.setTimeout(() => {
+      holdTimer.current = null
+      holdStart.current = null
+      suppressClick.current = true
+      setHoldingKey(null)
+      navigator.vibrate?.(35)
+      onCheckoutLongPress(number)
+    }, 600)
+  }
+
+  function moveHold(event) {
+    if (!holdStart.current) return
+    if (Math.hypot(event.clientX - holdStart.current.x, event.clientY - holdStart.current.y) > 12) {
+      suppressClick.current = true
+      cancelHold()
+    }
+  }
+
+  function clickNumber(number) {
+    if (suppressClick.current) {
+      suppressClick.current = false
+      return
+    }
+    press(`number-${number}`, () => onChange((value + number).slice(0, 3)))
+  }
+
+  const numberButton = (number) => {
+    const checkoutAvailable = checkoutDartCounts.includes(number)
+    const classes = [keyClass(`number-${number}`), checkoutAvailable ? 'is-checkout-available' : '', holdingKey === number ? 'is-holding' : ''].filter(Boolean).join(' ')
+    return <button type="button" key={number} className={classes} disabled={disabled} onPointerDown={(event) => startHold(number, event)} onPointerMove={moveHold} onPointerUp={endHold} onPointerCancel={() => { cancelHold(); suppressClick.current = false }} onContextMenu={(event) => checkoutAvailable && event.preventDefault()} onClick={() => clickNumber(number)}>{number}</button>
+  }
 
   return <section className={`score-keypad${fill ? ' is-fill' : ''}`}>
     <div className="score-display">{value || '0'}</div>

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { applyVisit, createAiVisit, createChallengeRivalMatch, createRivalMatch, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
+import { applyVisit, canCheckoutWithDarts, CHECKOUT_FINISH_VALUES, createAiVisit, createChallengeRivalMatch, createRivalMatch, DARTBOARD_HIT_VALUES, findCheckoutRoute, getAvailableCheckoutDartCounts, getMinimumCheckoutDarts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
 import { checkoutDartOptions, checkoutRewards, checkoutStarsForDarts } from '../src/features/campaignModes/checkoutRules.js'
 import { openFiveCardPack, RARITIES } from '../src/features/cards/cardCatalog.js'
 import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setupSuggestion } from '../src/features/checkout/checkoutGuide.js'
@@ -10,6 +10,75 @@ test('Rivalen-Average folgt der Levelkurve', () => {
   assert.equal(rivalAverageForLevel(1), 25)
   assert.equal(rivalAverageForLevel(4), 37.5)
   assert.equal(rivalAverageForLevel(8), 47.5)
+})
+
+test('Checkout-Dartanzahlen folgen echten Double-Out-Routen', () => {
+  const cases = [
+    [2, 1, [1, 2, 3]],
+    [3, 2, [2, 3]],
+    [40, 1, [1, 2, 3]],
+    [41, 2, [2, 3]],
+    [50, 1, [1, 2, 3]],
+    [52, 2, [2, 3]],
+    [99, 3, [3]],
+    [100, 2, [2, 3]],
+    [110, 2, [2, 3]],
+    [111, 3, [3]],
+    [130, 3, [3]],
+    [141, 3, [3]],
+    [158, 3, [3]],
+    [170, 3, [3]],
+    [159, null, []],
+    [160, 3, [3]],
+    [161, 3, [3]],
+    [162, null, []],
+    [163, null, []],
+    [164, 3, [3]],
+    [165, null, []],
+    [166, null, []],
+    [167, 3, [3]],
+    [168, null, []],
+    [169, null, []],
+    [171, null, []],
+  ]
+
+  for (const [score, minimum, available] of cases) {
+    assert.equal(getMinimumCheckoutDarts(score), minimum, `Minimum bei ${score}`)
+    assert.deepEqual(getAvailableCheckoutDartCounts(score), available, `Tasten bei ${score}`)
+    for (const darts of [1, 2, 3]) assert.equal(canCheckoutWithDarts(score, darts), available.includes(darts), `${score} mit ${darts} Darts`)
+  }
+})
+
+test('jede Checkout-Markierung von 2 bis 170 besitzt eine echte Boardroute mit gültigem Abschluss', () => {
+  const finishValues = new Set(CHECKOUT_FINISH_VALUES)
+  const hitValues = new Set(DARTBOARD_HIT_VALUES)
+  const bogeys = new Set([159, 162, 163, 165, 166, 168, 169])
+
+  for (let score = 2; score <= 170; score += 1) {
+    const available = getAvailableCheckoutDartCounts(score)
+    assert.equal(available.includes(1), finishValues.has(score), `Ein-Dart-Markierung bei ${score}`)
+    if (bogeys.has(score)) assert.deepEqual(available, [], `Bogey ${score}`)
+
+    for (const darts of [1, 2, 3]) {
+      const route = findCheckoutRoute(score, darts)
+      assert.equal(route !== null, available.includes(darts), `${score} mit ${darts} Darts`)
+      if (!route) continue
+      assert.equal(route.length, darts)
+      assert.equal(route.reduce((sum, hit) => sum + hit, 0), score)
+      assert.ok(route.slice(0, -1).every((hit) => hitValues.has(hit)), `Ungültiger Eröffnungsdart bei ${score}`)
+      assert.ok(finishValues.has(route.at(-1)), `Ungültiger Abschlussdart bei ${score}`)
+    }
+  }
+})
+
+test('Rivalen-Keypad trennt kurzen Klick und 600-ms-Long-Press', () => {
+  const source = readFileSync(new URL('../src/features/campaignModes/components/CampaignGameUI.jsx', import.meta.url), 'utf8')
+  assert.match(source, /setTimeout\(\(\) => \{[\s\S]*?onCheckoutLongPress\(number\)[\s\S]*?\}, 600\)/)
+  assert.match(source, /is-checkout-available/)
+  assert.match(source, /is-holding/)
+  assert.match(source, /suppressClick/)
+  assert.match(source, /Math\.hypot/)
+  assert.match(source, /onContextMenu/)
 })
 
 test('Bust lässt den Restscore stehen und wechselt den Spieler', () => {
@@ -194,4 +263,47 @@ test('Beginner challenge keeps 101 First-to-1 and does not auto-checkout', () =>
   assert.equal(setup.players[1].score, 40)
   assert.equal(missedCheckout.validCheckout, false)
   assert.notEqual(missedCheckout.points, 40)
+})
+
+test('gewonnenes Leg speichert Average, echte Doppelversuche und benötigte Darts', () => {
+  const finished = applyVisit(createRivalMatch('Daniel', 1, 52, 1), 52, true, 2, 2)
+  const result = rivalMatchResult(finished)
+  assert.equal(result.won, true)
+  assert.equal(result.checkoutRate, 50)
+  assert.deepEqual(result.legs, [{ number: 1, winner: 0, average: 78, checkoutAttempts: 2, checkouts: 1, darts: 2, remaining: null }])
+})
+
+test('Doppelversuche können die verwendeten Checkout-Darts nicht überschreiten', () => {
+  const finished = applyVisit(createRivalMatch('Daniel', 1, 40, 1), 40, true, 1, 3)
+  const result = rivalMatchResult(finished)
+  assert.equal(result.darts, 1)
+  assert.equal(result.checkoutAttempts, 1)
+  assert.equal(result.legs[0].checkoutAttempts, 1)
+})
+
+test('verlorenes Leg speichert null erfolgreiche Checkouts und den Restscore', () => {
+  let match = createRivalMatch('Daniel', 1, 40, 1)
+  match = applyVisit(match, 0, false, 3, 3)
+  match = applyVisit(match, 40, true, 1, 1)
+  const result = rivalMatchResult(match)
+  assert.equal(result.won, false)
+  assert.equal(result.checkoutRate, 0)
+  assert.deepEqual(result.legs[0], { number: 1, winner: 1, average: 0, checkoutAttempts: 3, checkouts: 0, darts: null, remaining: 40 })
+})
+
+test('Match-Checkoutquote verwendet Summen aller Doppel-Darts', () => {
+  let match = createRivalMatch('Daniel', 1, 40, 2)
+  match = applyVisit(match, 40, true, 2, 2)
+  match = applyVisit(match, 40, true, 1, 1)
+  match = applyVisit(match, 40, true, 1, 1)
+  const result = rivalMatchResult(match)
+  assert.equal(result.checkouts, 2)
+  assert.equal(result.checkoutAttempts, 3)
+  assert.ok(Math.abs(result.checkoutRate - (2 / 3) * 100) < 0.001)
+})
+
+test('alte Rivalenergebnisse ohne Legdaten erhalten einen sicheren Fallback', () => {
+  const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
+  assert.match(source, /Match- und Leg-Statistiken: Nicht verfügbar/)
+  assert.match(source, /result\.lastMatch/)
 })
