@@ -32,7 +32,9 @@ import { createConfirmedCoinAnimation } from './coinAnimation'
 import CampaignCoinCounter from './components/CampaignCoinCounter'
 import { grantFreePack } from '../cards/cardStorage'
 import RivalCampaign from '../campaignModes/RivalCampaign'
-import { completeChallenge, loadChallenge, saveChallenge, scheduleChallenge } from './challengeStorage'
+import { checkAndCreateChallengeAfterLevel, completeChallenge, loadChallenge, saveChallenge, scheduleChallenge } from './challengeStorage'
+import { getNextStandardLevelId } from './campaignNavigation'
+import { syncStandardCampaignProgress } from './standardCampaignSync.js'
 
 import './Campaign.css'
 
@@ -202,6 +204,7 @@ function Campaign({
   const [activeChallenge, setActiveChallenge] = useState(null)
   const [challengeOfferOpen, setChallengeOfferOpen] = useState(false)
   const [challengeNextLevelId, setChallengeNextLevelId] = useState(null)
+  const [challengeNextEntry, setChallengeNextEntry] = useState('direct')
   const menuButtonRef = useRef(null)
   const settingsReturnFocusRef = useRef(null)
 
@@ -232,22 +235,28 @@ function Campaign({
     setChallengeState((current) => saveChallenge(activeProfile?.id, settings.difficulty, { ...current, pending: { ...current.pending, status: 'deferred' } }))
     setChallengeOfferOpen(false)
     const nextLevelId = challengeNextLevelId
+    const nextEntry = challengeNextEntry
     setChallengeNextLevelId(null)
-    if (nextLevelId) openNextLevel(nextLevelId)
+    setChallengeNextEntry('direct')
+    if (nextLevelId) continueStandardLevelStart(nextLevelId, nextEntry)
   }
 
   function acceptChallenge() {
     if (!challengeState.pending) return
     setChallengeOfferOpen(false)
-    setChallengeNextLevelId(null)
     setActiveChallenge(challengeState.pending)
   }
 
   function finishChallenge(completedChallenge = activeChallenge) {
+    const nextLevelId = challengeNextLevelId
+    const nextEntry = challengeNextEntry
     setChallengeState((current) =>
       completeChallenge(activeProfile?.id, settings.difficulty, current, completedChallenge),
     )
     setActiveChallenge(null)
+    setChallengeNextLevelId(null)
+    setChallengeNextEntry('direct')
+    if (nextLevelId) continueStandardLevelStart(nextLevelId, nextEntry)
   }
 
   useEffect(() => () => {
@@ -883,19 +892,7 @@ function Campaign({
   }
 
 
-  function startSelectedLevel() {
-
-    if (
-      !selectedPreviewLevel ||
-      !isLevelUnlocked(
-        selectedPreviewLevel,
-      ) ||
-      levelEnterLocked.current
-    ) {
-      return
-    }
-
-    const levelToStart = selectedPreviewLevel
+  function startSelectedLevelOnMap(levelToStart) {
     const sourceNode = document.querySelector(
       `[data-campaign-level-id="${levelToStart.id}"]`,
     )
@@ -916,6 +913,26 @@ function Campaign({
           : null,
       })
     }, 300)
+  }
+
+  function highestCompletedStandardLevel() {
+    return Object.entries(progress.results).reduce((highest, [levelId, result]) =>
+      (result?.stars ?? 0) > 0 ? Math.max(highest, Number(levelId)) : highest, 0)
+  }
+
+  function startSelectedLevel() {
+
+    if (
+      !selectedPreviewLevel ||
+      !isLevelUnlocked(
+        selectedPreviewLevel,
+      ) ||
+      levelEnterLocked.current
+    ) {
+      return
+    }
+
+    requestStartStandardLevel(selectedPreviewLevel.id, 'map', highestCompletedStandardLevel())
   }
 
   function finishLevelEnter() {
@@ -959,21 +976,33 @@ function Campaign({
     setSelectedLevel(nextLevel)
   }
 
-  function checkForPendingChallengeAfterLevel(completedLevelId) {
-    if (settings.multiplayer) return null
-    const nextState = scheduleChallenge(activeProfile?.id, settings.difficulty, completedLevelId, challengeState)
-    if (nextState !== challengeState) setChallengeState(nextState)
-    return nextState.pending?.status === 'offered' ? nextState.pending : null
+  function continueStandardLevelStart(targetLevelId, entry = 'direct') {
+    const targetLevel = levels.find((candidate) => candidate.id === targetLevelId)
+    if (!targetLevel) { closeLevel(); return }
+    if (entry === 'map') startSelectedLevelOnMap(targetLevel)
+    else openNextLevel(targetLevelId)
   }
 
-  function playNextLevel(nextLevelId) {
-    const challenge = checkForPendingChallengeAfterLevel(pendingReturnLevelId ?? nextLevelId - 1)
+  function checkForPendingChallengeAfterLevel(completedLevelId) {
+    if (settings.multiplayer) return null
+    const result = checkAndCreateChallengeAfterLevel(activeProfile?.id, settings.difficulty, completedLevelId)
+    setChallengeState(result.state)
+    return result.shouldShowChallenge ? result.challenge : null
+  }
+
+  function requestStartStandardLevel(targetLevelId, entry = 'direct', completedLevelId = highestCompletedStandardLevel()) {
+    const challenge = checkForPendingChallengeAfterLevel(completedLevelId)
     if (challenge) {
-      setChallengeNextLevelId(nextLevelId)
+      setChallengeNextLevelId(targetLevelId)
+      setChallengeNextEntry(entry)
       setChallengeOfferOpen(true)
       return
     }
-    openNextLevel(nextLevelId)
+    continueStandardLevelStart(targetLevelId, entry)
+  }
+
+  function playNextLevel(nextLevelId) {
+    requestStartStandardLevel(nextLevelId, 'direct', pendingReturnLevelId ?? nextLevelId - 1)
   }
 
 
@@ -1075,6 +1104,13 @@ function Campaign({
 
     if (!settings.multiplayer) {
       localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(updatedProgress))
+      if (successfulAttempt) {
+        try {
+          await syncStandardCampaignProgress(settings.difficulty, updatedProgress.results)
+        } catch (syncError) {
+          console.warn(syncError.message)
+        }
+      }
     }
 
     const cardPackGranted = successfulAttempt && isFirstCompletion && level.boss === true
@@ -1090,7 +1126,7 @@ function Campaign({
       awardedXP: earnedXP,
       awardedCoins: confirmedCoinAnimation?.awarded ?? 0,
       newlyUnlocked,
-      nextLevelId: newlyUnlocked && level.id < levels.length ? updatedProgress.unlockedLevel : null,
+      nextLevelId: getNextStandardLevelId(level.id, levels.length, successfulAttempt),
       newWorldName: automaticWorldTransition
         ? worldNames[automaticWorldTransition.targetWorld - 1]
         : null,

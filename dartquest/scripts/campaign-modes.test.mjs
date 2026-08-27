@@ -116,7 +116,7 @@ test('Rivalen-Keypad trennt kurzen Klick und 600-ms-Long-Press', () => {
   assert.match(source, /setTimeout\(\(\) => \{ suppressClick\.current = false \}, 1000\)/)
 })
 
-test('Rivalen-Long-Press bestätigt Checkout direkt ohne zusätzliche Frage', () => {
+test('Rivalen- und Challenge-Long-Press bestätigt genau einmal ohne Dartanzahl-Modal', () => {
   const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
   const longPressHandler = source.match(/function requestCheckoutByLongPress\(dartsUsed\) \{([\s\S]*?)\n  \}/)?.[1] ?? ''
 
@@ -124,6 +124,20 @@ test('Rivalen-Long-Press bestätigt Checkout direkt ohne zusätzliche Frage', ()
   assert.match(longPressHandler, /storeResult\(next\)/)
   assert.match(longPressHandler, /setCheckoutPrompt\(null\)/)
   assert.doesNotMatch(longPressHandler, /setCheckoutPrompt\(\{/)
+})
+
+test('Long-Press-Dartanzahlen validieren Checkout und Challenge-Abschluss exakt einmal', () => {
+  for (const [score, darts, valid] of [[40, 1, true], [80, 2, true], [80, 3, true], [141, 3, true], [141, 2, false]]) {
+    assert.equal(isValidCheckoutAttempt(score, darts), valid, `${score} mit ${darts} Darts`)
+  }
+
+  const challenge = createChallengeRivalMatch('Daniel', { id: 'long-press-once', startScore: 80 })
+  const finished = applyVisit(challenge, 80, true, 3, 1)
+  assert.equal(finished.players[0].legs, 1)
+  assert.equal(finished.visits.length, 1)
+  assert.equal(finished.legResults.length, 1)
+  assert.equal(finished.legResults[0].darts, 3)
+  assert.equal(finished.legResults[0].average, 80)
 })
 
 test('normale Rivalen-Eingabe fragt nur bei tatsaechlich erreichtem Checkout nach', () => {
@@ -394,6 +408,27 @@ test('Beginner challenge keeps 101 First-to-1 and does not auto-checkout', () =>
   assert.equal(setup.players[1].score, 40)
   assert.equal(missedCheckout.validCheckout, false)
   assert.notEqual(missedCheckout.points, 40)
+})
+
+test('zufällige Herausforderung speichert 1 Checkout bei 3 Checkout-Darts als 33,3 Prozent', () => {
+  const challenge = createChallengeRivalMatch('Daniel', { id: 'checkout-raw-values', startScore: 40 })
+  const finished = applyVisit(challenge, 40, true, 1, 3)
+  const result = rivalMatchResult(finished)
+
+  assert.equal(result.successfulCheckouts, 1)
+  assert.equal(result.checkoutDarts, 3)
+  assert.ok(Math.abs(result.checkoutRate - (1 / 3) * 100) < 0.001)
+  assert.deepEqual(result.legs[0], {
+    number: 1,
+    winner: 0,
+    average: 120,
+    checkoutDarts: 3,
+    successfulCheckouts: 1,
+    darts: 1,
+    remaining: null,
+  })
+  assert.equal(formatCheckoutStats(result.successfulCheckouts, result.checkoutDarts), '33,3 % (1/3)')
+  assert.equal(formatCheckoutStats(result.legs[0].successfulCheckouts, result.legs[0].checkoutDarts), '33,3 % (1/3)')
 })
 
 test('gewonnenes Leg speichert Average, echte Checkout-Darts und benötigte Darts', () => {

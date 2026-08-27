@@ -1,9 +1,9 @@
 const BASE_KEY = 'dartquest-campaign-challenge'
 
-export const FIRST_CHALLENGE_MIN_LEVEL = 12
-export const FIRST_CHALLENGE_MAX_LEVEL = 20
-export const CHALLENGE_DISTANCE_MIN = 12
-export const CHALLENGE_DISTANCE_MAX = 20
+export const FIRST_CHALLENGE_MIN_LEVEL = 8
+export const FIRST_CHALLENGE_MAX_LEVEL = 12
+export const CHALLENGE_DISTANCE_MIN = 8
+export const CHALLENGE_DISTANCE_MAX = 12
 
 function key(profileId, difficulty) {
   return `${BASE_KEY}-${profileId || 'guest'}-${difficulty || 1}`
@@ -51,11 +51,25 @@ export function scheduleChallenge(profileId, difficulty, completedLevels, curren
   const pending = {
     id: `challenge-${Date.now()}`,
     status: 'offered',
+    autoShown: false,
     triggerLevel: current.nextAt,
     startScore: difficulty === 1 ? 101 : 201,
     opponent: 'DartQuest Herausforderer',
   }
   return saveChallenge(profileId, difficulty, { ...current, pending })
+}
+
+export function checkAndCreateChallengeAfterLevel(profileId, difficulty, completedLevel) {
+  const current = loadChallenge(profileId, difficulty)
+  const scheduled = scheduleChallenge(profileId, difficulty, completedLevel, current)
+  const shouldShowChallenge = scheduled.pending?.status === 'offered' && scheduled.pending.autoShown !== true
+  if (!shouldShowChallenge) return { state: scheduled, shouldShowChallenge: false, challenge: null }
+
+  const state = saveChallenge(profileId, difficulty, {
+    ...scheduled,
+    pending: { ...scheduled.pending, autoShown: true },
+  })
+  return { state, shouldShowChallenge: true, challenge: state.pending }
 }
 
 export function completeChallenge(profileId, difficulty, current, completedChallenge, random = Math.random) {

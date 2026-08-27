@@ -95,9 +95,14 @@ begin
   end if;
 
   return query
-  with standard as (
-    select progress.user_id, count(*)::bigint as levels, sum(progress.stars)::bigint as stars
+  with standard_best as (
+    select progress.user_id, progress.level_id, max(progress.stars)::bigint as stars
     from public.campaign_progress progress
+    group by progress.user_id, progress.level_id
+  ),
+  standard as (
+    select progress.user_id, count(*)::bigint as levels, sum(progress.stars)::bigint as stars
+    from standard_best progress
     group by progress.user_id
   ),
   checkout as (

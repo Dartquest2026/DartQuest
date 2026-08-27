@@ -113,9 +113,10 @@ test('wrong account, corruption and excessive input are rejected without writes'
   assert.equal(target.data.size, 0)
 })
 
-test('client remains local-only, reset has no campaign RPC and settings entry stays wired', async () => {
-  const [campaign, reset, profileStorage, home, vite, settings, profile, app, bottomNav] = await Promise.all([
+test('lokaler Spielstand bleibt erhalten, Ranglisten-Sync ist angebunden und Settings bleiben verdrahtet', async () => {
+  const [campaign, sync, reset, profileStorage, home, vite, settings, profile, app, bottomNav] = await Promise.all([
     readFile(new URL('../src/features/campaign/Campaign.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/features/campaign/standardCampaignSync.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/features/profile/progressReset.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/features/auth/profileStorage.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/features/home/Home.jsx', import.meta.url), 'utf8'),
@@ -127,6 +128,8 @@ test('client remains local-only, reset has no campaign RPC and settings entry st
   ])
   assert.doesNotMatch(campaign + reset, /complete_campaign_level|reset_own_campaign_progress|merge_campaign_progress|campaign_progress/)
   assert.match(campaign, /localStorage\.setItem\(CAMPAIGN_STORAGE_KEY/)
+  assert.match(campaign, /syncStandardCampaignProgress/)
+  assert.match(sync, /sync_standard_campaign_progress/)
   assert.match(reset, /localStorage\.removeItem/)
   assert.match(profileStorage, /resetProfileProgressFields/)
   assert.match(home, /home-version/)
