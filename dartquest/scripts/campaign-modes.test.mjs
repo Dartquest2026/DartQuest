@@ -5,11 +5,44 @@ import { applyVisit, canCheckoutWithDarts, CHECKOUT_FINISH_VALUES, createAiVisit
 import { checkoutDartOptions, checkoutRewards, checkoutStarsForDarts } from '../src/features/campaignModes/checkoutRules.js'
 import { openFiveCardPack, RARITIES } from '../src/features/cards/cardCatalog.js'
 import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setupSuggestion } from '../src/features/checkout/checkoutGuide.js'
+import { isBogeyNumber, isCheckoutScore } from '../src/features/checkout/checkoutGuide.js'
+import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
+import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
 
 test('Rivalen-Average folgt der Levelkurve', () => {
   assert.equal(rivalAverageForLevel(1), 25)
   assert.equal(rivalAverageForLevel(4), 37.5)
   assert.equal(rivalAverageForLevel(8), 47.5)
+})
+
+test('Rivalen-Historie koppelt Score, kumulierte Darts und Rest je Aufnahme', () => {
+  let match = createRivalMatch('Daniel', 1)
+  match = applyVisit(match, 55)
+  match = applyVisit(match, 60)
+  match = applyVisit(match, 55)
+  const rows = buildVisitRows(match.legVisits, 501)
+  assert.deepEqual(rows.map((row) => row.darts), [3, 6])
+  assert.deepEqual(rows.map((row) => row.human && [row.human.points, row.human.cumulativeDarts, row.human.rest]), [[55, 3, 446], [55, 6, 391]])
+  assert.deepEqual([rows[0].ai.points, rows[0].ai.cumulativeDarts, rows[0].ai.rest], [60, 3, 441])
+  const restored = undoPlayerRound(match)
+  assert.equal(buildVisitRows(restored.legVisits, 501).length, 1)
+  assert.equal(restored.players[0].score, 446)
+})
+
+test('Checkout-Status unterscheidet Finish, Bogey und normalen Rest', () => {
+  for (const score of [80, 141, 170]) assert.equal(isCheckoutScore(score), true)
+  for (const score of [159, 162, 163, 165, 166, 168, 169]) {
+    assert.equal(isBogeyNumber(score), true)
+    assert.equal(isCheckoutScore(score), false)
+  }
+  assert.equal(isCheckoutScore(171), false)
+})
+
+test('Live-Averages stehen in den Scorekarten und nicht unter der Historie', () => {
+  const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
+  assert.match(source, /rival-player-average[^\n]*humanLegStats\.average/)
+  assert.match(source, /rival-player-average[^\n]*aiLegStats\.average/)
+  assert.doesNotMatch(source, /<footer><span>Ø/)
 })
 
 test('Checkout-Dartanzahlen folgen echten Double-Out-Routen', () => {
@@ -83,15 +116,13 @@ test('Rivalen-Keypad trennt kurzen Klick und 600-ms-Long-Press', () => {
   assert.match(source, /setTimeout\(\(\) => \{ suppressClick\.current = false \}, 1000\)/)
 })
 
-test('Rivalen-Long-Press schliesst Checkout direkt und ohne Dialog ab', () => {
+test('Rivalen-Long-Press bestätigt Checkout direkt ohne zusätzliche Frage', () => {
   const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
   const longPressHandler = source.match(/function requestCheckoutByLongPress\(dartsUsed\) \{([\s\S]*?)\n  \}/)?.[1] ?? ''
 
-  assert.match(longPressHandler, /confirming\.current = true/)
-  assert.match(longPressHandler, /setCheckoutPrompt\(null\)/)
-  assert.match(longPressHandler, /applyVisit\(match, points, true, dartsUsed, 1\)/)
-  assert.match(longPressHandler, /setMatch\(next\)/)
+  assert.match(longPressHandler, /applyVisit\(match, points, true, dartsUsed, recordedCheckoutDarts\(match\) \+ 1\)/)
   assert.match(longPressHandler, /storeResult\(next\)/)
+  assert.match(longPressHandler, /setCheckoutPrompt\(null\)/)
   assert.doesNotMatch(longPressHandler, /setCheckoutPrompt\(\{/)
 })
 
@@ -131,7 +162,7 @@ test('normale Nicht-Checkout-Aufnahmen ziehen Punkte ab oder werden als Bust gew
     const next = applyVisit(createRivalMatch('Daniel', 1, remaining), entered)
     assert.equal(next.players[0].score, expectedRest, `${remaining} Rest, ${entered} Punkte`)
     assert.equal(next.visits[0].bust, expectedBust, `${remaining} Rest, ${entered} Punkte Bust`)
-    assert.equal(next.players[0].checkoutAttempts, 0)
+    assert.equal(next.players[0].checkoutDarts, 0)
   }
 })
 
@@ -206,6 +237,17 @@ test('Undo setzt Spielerzug samt folgendem KI-Zug zurück', () => {
   assert.equal(restored.players[0].score, 501)
   assert.equal(restored.players[1].score, 501)
   assert.equal(restored.active, 0)
+})
+
+test('Undo entfernt Checkout-Rohwerte vollständig aus dem Match-State', () => {
+  const start = createRivalMatch('Daniel', 1, 40, 1)
+  const finished = applyVisit(start, 40, true, 1, 5)
+  const restored = undoPlayerRound(finished)
+  const result = rivalMatchResult(restored)
+  assert.equal(result.successfulCheckouts, 0)
+  assert.equal(result.checkoutDarts, 0)
+  assert.equal(result.checkoutRate, null)
+  assert.deepEqual(result.legs, [])
 })
 
 test('KI-Aufnahme bleibt gültig und schwankt mit Zufall', () => {
@@ -354,20 +396,32 @@ test('Beginner challenge keeps 101 First-to-1 and does not auto-checkout', () =>
   assert.notEqual(missedCheckout.points, 40)
 })
 
-test('gewonnenes Leg speichert Average, echte Doppelversuche und benötigte Darts', () => {
-  const finished = applyVisit(createRivalMatch('Daniel', 1, 52, 1), 52, true, 2, 2)
+test('gewonnenes Leg speichert Average, echte Checkout-Darts und benötigte Darts', () => {
+  const finished = applyVisit(createRivalMatch('Daniel', 1, 52, 1), 52, true, 2, 4)
   const result = rivalMatchResult(finished)
   assert.equal(result.won, true)
-  assert.equal(result.checkoutRate, 50)
-  assert.deepEqual(result.legs, [{ number: 1, winner: 0, average: 78, checkoutAttempts: 2, checkouts: 1, darts: 2, remaining: null }])
+  assert.equal(result.checkoutRate, 25)
+  assert.deepEqual(result.legs, [{ number: 1, winner: 0, average: 78, checkoutDarts: 4, successfulCheckouts: 1, darts: 2, remaining: null }])
 })
 
-test('Doppelversuche können die verwendeten Checkout-Darts nicht überschreiten', () => {
-  const finished = applyVisit(createRivalMatch('Daniel', 1, 40, 1), 40, true, 1, 3)
+test('Checkout-Darts sind unabhängig von den finalen Aufnahmedarts und dürfen größer als drei sein', () => {
+  const finished = applyVisit(createRivalMatch('Daniel', 1, 40, 1), 40, true, 1, 5)
   const result = rivalMatchResult(finished)
   assert.equal(result.darts, 1)
-  assert.equal(result.checkoutAttempts, 1)
-  assert.equal(result.legs[0].checkoutAttempts, 1)
+  assert.equal(result.checkoutDarts, 5)
+  assert.equal(result.legs[0].checkoutDarts, 5)
+  assert.equal(result.checkoutRate, 20)
+})
+
+test('kumulierte Checkout-Darts eines Legs werden beim Treffer nicht doppelt gezählt', () => {
+  let match = createRivalMatch('Daniel', 1, 40, 1)
+  match = applyVisit(match, 40, false, 3, 3)
+  match = applyVisit(match, 0)
+  match = applyVisit(match, 40, true, 2, 5)
+  const result = rivalMatchResult(match)
+  assert.equal(result.checkoutDarts, 5)
+  assert.equal(result.successfulCheckouts, 1)
+  assert.equal(result.checkoutRate, 20)
 })
 
 test('verlorenes Leg speichert null erfolgreiche Checkouts und den Restscore', () => {
@@ -377,18 +431,35 @@ test('verlorenes Leg speichert null erfolgreiche Checkouts und den Restscore', (
   const result = rivalMatchResult(match)
   assert.equal(result.won, false)
   assert.equal(result.checkoutRate, 0)
-  assert.deepEqual(result.legs[0], { number: 1, winner: 1, average: 0, checkoutAttempts: 3, checkouts: 0, darts: null, remaining: 40 })
+  assert.deepEqual(result.legs[0], { number: 1, winner: 1, average: 0, checkoutDarts: 3, successfulCheckouts: 0, darts: null, remaining: 40 })
 })
 
 test('Match-Checkoutquote verwendet Summen aller Doppel-Darts', () => {
   let match = createRivalMatch('Daniel', 1, 40, 2)
-  match = applyVisit(match, 40, true, 2, 2)
+  match = applyVisit(match, 40, true, 2, 4)
   match = applyVisit(match, 40, true, 1, 1)
-  match = applyVisit(match, 40, true, 1, 1)
+  match = applyVisit(match, 40, true, 1, 5)
   const result = rivalMatchResult(match)
-  assert.equal(result.checkouts, 2)
-  assert.equal(result.checkoutAttempts, 3)
-  assert.ok(Math.abs(result.checkoutRate - (2 / 3) * 100) < 0.001)
+  assert.equal(result.successfulCheckouts, 2)
+  assert.equal(result.checkoutDarts, 9)
+  assert.ok(Math.abs(result.checkoutRate - (2 / 9) * 100) < 0.001)
+})
+
+test('Checkout-Helfer berechnet und formatiert die geforderten Rohwerte zentral', () => {
+  for (const [successful, darts, expected] of [[1, 1, '100 % (1/1)'], [1, 2, '50 % (1/2)'], [1, 3, '33,3 % (1/3)'], [1, 5, '20 % (1/5)'], [3, 11, '27,3 % (3/11)'], [0, 5, '0 % (0/5)'], [0, 0, '–']]) {
+    assert.equal(formatCheckoutStats(successful, darts), expected)
+  }
+  assert.equal(calculateCheckoutRate(0, 0), null)
+})
+
+test('drei Legs werden aus Rohwerten addiert und nicht als Prozentwerte gemittelt', () => {
+  const legs = [
+    { successfulCheckouts: 1, checkoutDarts: 4 },
+    { successfulCheckouts: 1, checkoutDarts: 2 },
+    { successfulCheckouts: 1, checkoutDarts: 5 },
+  ]
+  assert.deepEqual(aggregateCheckoutStats(legs), { successfulCheckouts: 3, checkoutDarts: 11 })
+  assert.equal(formatCheckoutStats(3, 11), '27,3 % (3/11)')
 })
 
 test('alte Rivalenergebnisse ohne Legdaten erhalten einen sicheren Fallback', () => {

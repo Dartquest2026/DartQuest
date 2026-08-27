@@ -14,6 +14,15 @@ const OPENING_FIELDS = [
 const FIELD_BY_NOTATION = new Map([...OPENING_FIELDS, ...FINISHERS].map((field) => [field.notation, field]))
 export const BOGEY_NUMBERS = Object.freeze([159, 162, 163, 165, 166, 168, 169])
 
+export function isBogeyNumber(score) {
+  return BOGEY_NUMBERS.includes(Number(score))
+}
+
+export function isCheckoutScore(score) {
+  const target = Number(score)
+  return Number.isInteger(target) && target >= 2 && target <= 170 && !isBogeyNumber(target)
+}
+
 function parsePreferredRoutes(source) {
   return Object.freeze(Object.fromEntries(source.trim().split('\n').map((line) => {
     const [score, route] = line.trim().split(':')

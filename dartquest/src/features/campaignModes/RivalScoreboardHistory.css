@@ -1,0 +1,98 @@
+.rival-game .rival-history header,
+.rival-game .rival-history > div {
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1fr) 40px minmax(0, .8fr) minmax(0, 1fr);
+  padding: 0;
+}
+
+.rival-game .rival-history header {
+  min-height: 29px;
+  border-bottom: 1px solid var(--dq-border);
+  background: linear-gradient(180deg, var(--dq-panel-2), var(--dq-panel));
+  color: var(--dq-green);
+  font-size: 10px;
+}
+
+.rival-game .rival-history header span,
+.rival-game .rival-history header b,
+.rival-game .rival-history > div > * {
+  display: grid;
+  height: 100%;
+  min-width: 0;
+  place-items: center;
+  border-right: 1px solid var(--dq-border-soft);
+}
+
+.rival-game .rival-history header b,
+.rival-game .rival-history > div > b {
+  background: #0b211a;
+}
+
+.rival-game .rival-history > div > b {
+  color: var(--dq-green);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.rival-game .rival-history .rival-visit-score {
+  overflow: hidden;
+  color: var(--dq-text);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rival-game .rival-history .rival-visit-rest,
+.rival-game .rival-history .rival-history-start strong {
+  color: var(--dq-text);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.rival-game .rival-history .rival-history-start { min-height: 36px; }
+.rival-game .rival-history > div:last-child:not(.rival-history-start) {
+  background: linear-gradient(90deg, transparent, var(--dq-green-soft), transparent);
+}
+
+.rival-game .rival-scoreboard article {
+  border-color: var(--dq-border);
+  background: linear-gradient(145deg, var(--dq-panel), var(--dq-bg-soft));
+}
+
+.rival-game .rival-scoreboard article > span {
+  color: var(--dq-text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rival-game .rival-scoreboard article > strong {
+  color: #fff;
+  line-height: 1;
+}
+
+.rival-player-average {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--dq-muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .7px;
+}
+
+.rival-player-average b {
+  color: var(--dq-green);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.rival-game .rival-legs { color: var(--dq-muted); }
+.rival-game .rival-legs small { color: var(--dq-green); }
+.rival-game .rival-legs strong { color: var(--dq-text); }
+
+@media (max-width: 380px) {
+  .rival-game .rival-history header,
+  .rival-game .rival-history > div {
+    grid-template-columns: minmax(0, .75fr) minmax(0, 1fr) 34px minmax(0, .75fr) minmax(0, 1fr);
+  }
+}

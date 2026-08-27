@@ -1,3 +1,5 @@
+import { aggregateCheckoutStats, calculateCheckoutRate } from './checkoutStatistics.js'
+
 export function rivalAverageForLevel(level) {
   if (level === 1) return 25
   if (level === 2) return 30
@@ -8,7 +10,7 @@ export function rivalAverageForLevel(level) {
 export function createRivalMatch(playerName, level, startScore = 501, firstTo = 3) {
   return {
     level, targetAverage: rivalAverageForLevel(level), startScore, firstTo,
-    players: [playerName || 'Spieler', `Rivale ${level}`].map((name) => ({ name, score: startScore, legs: 0, dartsThrown: 0, visits: 0, totalScored: 0, highestVisit: 0, checkouts: 0, checkoutAttempts: 0, bestCheckout: 0 })),
+    players: [playerName || 'Spieler', `Rivale ${level}`].map((name) => ({ name, score: startScore, legs: 0, dartsThrown: 0, visits: 0, totalScored: 0, highestVisit: 0, successfulCheckouts: 0, checkoutDarts: 0, bestCheckout: 0 })),
     active: 0, startingPlayer: 0, history: [], visits: [], legVisits: [], legResults: [], winner: null,
   }
 }
@@ -32,7 +34,7 @@ function plainSnapshot(match) {
   return structuredClone({ ...match, history: [] })
 }
 
-export function applyVisit(match, points, validCheckout = false, dartsUsed = 3, doubleAttempts = 0) {
+export function applyVisit(match, points, validCheckout = false, dartsUsed = 3, checkoutDartsForLeg = 0) {
   if (match.winner != null || !Number.isInteger(points) || points < 0 || points > 180) return match
   const history = [...match.history, plainSnapshot(match)]
   const players = match.players.map((player) => ({ ...player }))
@@ -42,7 +44,13 @@ export function applyVisit(match, points, validCheckout = false, dartsUsed = 3, 
   const checkoutAttempt = remainder === 0
   const checkoutDarts = Math.max(1, Math.min(3, dartsUsed))
   const checkoutValid = checkoutAttempt && validCheckout && isValidCheckoutAttempt(points, checkoutDarts)
-  const actualDoubleAttempts = Math.max(checkoutValid ? 1 : 0, Math.min(checkoutDarts, Number.isInteger(doubleAttempts) ? doubleAttempts : 0))
+  const previousLegCheckoutDarts = (match.legVisits ?? [])
+    .filter((visit) => visit.player === match.active)
+    .reduce((total, visit) => total + (visit.checkoutDarts ?? visit.doubleAttempts ?? 0), 0)
+  const requestedCheckoutDarts = Number.isInteger(checkoutDartsForLeg) ? Math.max(0, checkoutDartsForLeg) : 0
+  const visitCheckoutDarts = checkoutValid
+    ? Math.max(0, Math.max(1, requestedCheckoutDarts) - previousLegCheckoutDarts)
+    : Math.min(3, requestedCheckoutDarts)
   const bust = remainder < 0 || remainder === 1 || (checkoutAttempt && !checkoutValid)
   if (!bust) player.score = remainder
   const safeDarts = checkoutValid ? checkoutDarts : 3
@@ -50,9 +58,12 @@ export function applyVisit(match, points, validCheckout = false, dartsUsed = 3, 
   player.visits += 1
   player.totalScored += bust ? 0 : points
   player.highestVisit = Math.max(player.highestVisit, bust ? 0 : points)
-  player.checkoutAttempts = (player.checkoutAttempts ?? 0) + actualDoubleAttempts
-  if (checkoutValid) { player.checkouts += 1; player.bestCheckout = Math.max(player.bestCheckout, points) }
-  const visit = { player: match.active, points, darts: safeDarts, bust, checkout: checkoutValid, doubleAttempts: actualDoubleAttempts }
+  player.checkoutDarts = (player.checkoutDarts ?? player.checkoutAttempts ?? 0) + visitCheckoutDarts
+  if (checkoutValid) {
+    player.successfulCheckouts = (player.successfulCheckouts ?? player.checkouts ?? 0) + 1
+    player.bestCheckout = Math.max(player.bestCheckout, points)
+  }
+  const visit = { player: match.active, points, darts: safeDarts, before, rest: player.score, bust, checkout: checkoutValid, checkoutDarts: visitCheckoutDarts }
   const visits = [...match.visits, visit]
   const legVisits = [...(match.legVisits ?? []), visit]
 
@@ -152,15 +163,18 @@ export function createAiVisit(match, random = Math.random) {
 }
 
 export function playerMatchStats(player) {
+  const successfulCheckouts = player.successfulCheckouts ?? player.checkouts ?? 0
+  const checkoutDarts = player.checkoutDarts ?? player.checkoutAttempts ?? 0
+  const checkout = calculateCheckoutRate(successfulCheckouts, checkoutDarts)
   return {
     average: player.dartsThrown ? (player.totalScored / player.dartsThrown) * 3 : 0,
     darts: player.dartsThrown,
     visits: player.visits,
     highestVisit: player.highestVisit,
     bestCheckout: player.bestCheckout || null,
-    checkoutAttempts: player.checkoutAttempts ?? 0,
-    checkouts: player.checkouts ?? 0,
-    checkoutRate: player.checkoutAttempts ? (player.checkouts / player.checkoutAttempts) * 100 : null,
+    checkoutDarts,
+    successfulCheckouts,
+    checkoutRate: checkout?.percentage ?? null,
   }
 }
 
@@ -175,14 +189,14 @@ function createLegResult(match, players, visits, winner) {
   const humanVisits = visits.filter((visit) => visit.player === 0)
   const darts = humanVisits.reduce((total, visit) => total + visit.darts, 0)
   const scored = humanVisits.reduce((total, visit) => total + (visit.bust ? 0 : visit.points), 0)
-  const checkoutAttempts = humanVisits.reduce((total, visit) => total + (visit.doubleAttempts ?? 0), 0)
-  const checkouts = winner === 0 ? 1 : 0
+  const checkoutDarts = humanVisits.reduce((total, visit) => total + (visit.checkoutDarts ?? visit.doubleAttempts ?? 0), 0)
+  const successfulCheckouts = winner === 0 ? 1 : 0
   return {
     number: (match.legResults?.length ?? 0) + 1,
     winner,
     average: darts ? (scored / darts) * 3 : 0,
-    checkoutAttempts,
-    checkouts,
+    checkoutDarts,
+    successfulCheckouts,
     darts: winner === 0 ? darts : null,
     remaining: winner === 1 ? players[0].score : null,
   }
@@ -192,19 +206,25 @@ export function rivalMatchResult(match) {
   const human = match.players[0]
   const opponent = match.players[1]
   const stats = playerMatchStats(human)
+  const legs = Array.isArray(match.legResults) ? match.legResults.map((leg) => ({ ...leg })) : null
+  const totals = legs ? aggregateCheckoutStats(legs) : {
+    successfulCheckouts: stats.successfulCheckouts,
+    checkoutDarts: stats.checkoutDarts,
+  }
+  const checkout = calculateCheckoutRate(totals.successfulCheckouts, totals.checkoutDarts)
   return {
     won: match.winner === 0,
     playerLegs: human.legs,
     opponentLegs: opponent.legs,
     average: stats.average,
-    checkoutAttempts: human.checkoutAttempts ?? 0,
-    checkouts: human.checkouts ?? 0,
-    checkoutRate: stats.checkoutRate,
+    checkoutDarts: totals.checkoutDarts,
+    successfulCheckouts: totals.successfulCheckouts,
+    checkoutRate: checkout?.percentage ?? null,
     darts: stats.darts,
     visits: stats.visits,
     highestVisit: stats.highestVisit,
     bestCheckout: stats.bestCheckout,
-    legs: Array.isArray(match.legResults) ? match.legResults.map((leg) => ({ ...leg })) : null,
+    legs,
   }
 }
 

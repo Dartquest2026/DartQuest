@@ -18,6 +18,8 @@
     "test:return-transition": "node --test scripts/return-transition.test.mjs",
     "test:standard-games": "node --test scripts/standard-games.test.mjs",
     "test:campaign-modes": "node --test scripts/campaign-modes.test.mjs",
+    "test:challenges": "node --test scripts/challenge-storage.test.mjs",
+    "test:leaderboard": "node --test scripts/leaderboard.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

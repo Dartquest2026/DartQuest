@@ -32,7 +32,7 @@ import { createConfirmedCoinAnimation } from './coinAnimation'
 import CampaignCoinCounter from './components/CampaignCoinCounter'
 import { grantFreePack } from '../cards/cardStorage'
 import RivalCampaign from '../campaignModes/RivalCampaign'
-import { loadChallenge, saveChallenge, scheduleChallenge } from './challengeStorage'
+import { completeChallenge, loadChallenge, saveChallenge, scheduleChallenge } from './challengeStorage'
 
 import './Campaign.css'
 
@@ -200,6 +200,8 @@ function Campaign({
   const [campaignSettingsOpen, setCampaignSettingsOpen] = useState(false)
   const [challengeState, setChallengeState] = useState(() => loadChallenge(activeProfile?.id, settings.difficulty))
   const [activeChallenge, setActiveChallenge] = useState(null)
+  const [challengeOfferOpen, setChallengeOfferOpen] = useState(false)
+  const [challengeNextLevelId, setChallengeNextLevelId] = useState(null)
   const menuButtonRef = useRef(null)
   const settingsReturnFocusRef = useRef(null)
 
@@ -226,23 +228,25 @@ function Campaign({
   const unlockCrossWorld = unlockAnimation?.crossWorld
   const autoAdvanceWorld = unlockAnimation?.autoAdvanceWorld === true
 
-  useEffect(() => {
-    if (settings.multiplayer) return
-    const completedLevels = Object.values(progress.results).filter((entry) => (entry?.stars ?? 0) > 0).length
-    setChallengeState((current) => scheduleChallenge(activeProfile?.id, settings.difficulty, completedLevels, current))
-  }, [activeProfile?.id, progress.results, settings.difficulty, settings.multiplayer])
-
   function deferChallenge() {
     setChallengeState((current) => saveChallenge(activeProfile?.id, settings.difficulty, { ...current, pending: { ...current.pending, status: 'deferred' } }))
+    setChallengeOfferOpen(false)
+    const nextLevelId = challengeNextLevelId
+    setChallengeNextLevelId(null)
+    if (nextLevelId) openNextLevel(nextLevelId)
+  }
+
+  function acceptChallenge() {
+    if (!challengeState.pending) return
+    setChallengeOfferOpen(false)
+    setChallengeNextLevelId(null)
+    setActiveChallenge(challengeState.pending)
   }
 
   function finishChallenge(completedChallenge = activeChallenge) {
-    setChallengeState((current) => {
-      const completedId = completedChallenge?.id ?? current.pending?.id
-      if (!completedId) return saveChallenge(activeProfile?.id, settings.difficulty, { ...current, pending: null })
-      const completed = current.completed.includes(completedId) ? current.completed : [...current.completed, completedId]
-      return saveChallenge(activeProfile?.id, settings.difficulty, { ...current, completed, pending: null })
-    })
+    setChallengeState((current) =>
+      completeChallenge(activeProfile?.id, settings.difficulty, current, completedChallenge),
+    )
     setActiveChallenge(null)
   }
 
@@ -945,7 +949,7 @@ function Campaign({
     }, queuedUnlock ? 1000 : 700)
   }
 
-  function playNextLevel(nextLevelId) {
+  function openNextLevel(nextLevelId) {
     const nextLevel = levels.find((candidate) => candidate.id === nextLevelId)
     if (!nextLevel) { closeLevel(); return }
     setPendingReturnLevelId(null)
@@ -953,6 +957,23 @@ function Campaign({
     setPendingCoinAnimation(null)
     setPreviewLevelId(nextLevel.id)
     setSelectedLevel(nextLevel)
+  }
+
+  function checkForPendingChallengeAfterLevel(completedLevelId) {
+    if (settings.multiplayer) return null
+    const nextState = scheduleChallenge(activeProfile?.id, settings.difficulty, completedLevelId, challengeState)
+    if (nextState !== challengeState) setChallengeState(nextState)
+    return nextState.pending?.status === 'offered' ? nextState.pending : null
+  }
+
+  function playNextLevel(nextLevelId) {
+    const challenge = checkForPendingChallengeAfterLevel(pendingReturnLevelId ?? nextLevelId - 1)
+    if (challenge) {
+      setChallengeNextLevelId(nextLevelId)
+      setChallengeOfferOpen(true)
+      return
+    }
+    openNextLevel(nextLevelId)
   }
 
 
@@ -1047,6 +1068,10 @@ function Campaign({
       : null)
 
     setProgress(updatedProgress)
+
+    if (successfulAttempt && !settings.multiplayer) {
+      setChallengeState((current) => scheduleChallenge(activeProfile?.id, settings.difficulty, level.id, current))
+    }
 
     if (!settings.multiplayer) {
       localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(updatedProgress))
@@ -1471,6 +1496,8 @@ function Campaign({
       {/* MAP */}
 
       <section className="dq-map">
+
+        {challengeState.pending && !selectedLevel && !levelEnterTransition && <button type="button" className="campaign-challenge-mini" onClick={() => setChallengeOfferOpen(true)} aria-label="Offene Herausforderung ansehen"><span>⚔ HERAUSFORDERUNG</span><strong>{challengeState.pending.startScore} · FT1</strong><small>ANSEHEN</small></button>}
 
         <svg
           className="dq-path"
@@ -2013,7 +2040,7 @@ function Campaign({
       )}
 
 
-      {challengeState.pending && !selectedLevel && !levelEnterTransition && <aside className={`campaign-challenge ${challengeState.pending.status === 'deferred' ? 'is-deferred' : ''}`} role={challengeState.pending.status === 'offered' ? 'dialog' : undefined} aria-label="Zufällige Herausforderung"><span>⚔ ZUFÄLLIGE HERAUSFORDERUNG</span><strong>{challengeState.pending.startScore} · First to 1</strong><p>Gewinne gegen den Herausforderer und erhalte Bonus-XP, Coins und ein 5er-Kartenpaket.</p><button type="button" onClick={() => setActiveChallenge(challengeState.pending)}>HERAUSFORDERUNG ANNEHMEN</button>{challengeState.pending.status === 'offered' && <button type="button" className="secondary" onClick={deferChallenge}>SPÄTER SPIELEN</button>}</aside>}
+      {challengeOfferOpen && challengeState.pending && <div className="campaign-challenge-backdrop" onClick={() => setChallengeOfferOpen(false)}><aside className="campaign-challenge" role="dialog" aria-modal="true" aria-label="Zufällige Herausforderung" onClick={(event) => event.stopPropagation()}><span>⚔ ZUFÄLLIGE HERAUSFORDERUNG</span><strong>{challengeState.pending.startScore} · First to 1</strong><p>Gewinne gegen den Herausforderer und erhalte Bonus-XP, Coins und ein 5er-Kartenpaket.</p><button type="button" onClick={acceptChallenge}>HERAUSFORDERUNG ANNEHMEN</button>{challengeState.pending.status === 'offered' ? <button type="button" className="secondary" onClick={deferChallenge}>SPÄTER SPIELEN</button> : <button type="button" className="secondary" onClick={() => setChallengeOfferOpen(false)}>SCHLIESSEN</button>}</aside></div>}
 
       {/* LEVEL MODAL */}
 
