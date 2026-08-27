@@ -113,6 +113,13 @@ export function canCheckout(score) {
   return checkoutDartOptions(score).length > 0
 }
 
+export function shouldRequestCheckoutConfirmation(remainingBefore, enteredScore) {
+  return Number.isInteger(remainingBefore)
+    && Number.isInteger(enteredScore)
+    && remainingBefore - enteredScore === 0
+    && checkoutDartOptions(remainingBefore).length > 0
+}
+
 export function getMinimumCheckoutDarts(score) {
   return checkoutDartOptions(score)[0] ?? null
 }
@@ -155,6 +162,13 @@ export function playerMatchStats(player) {
     checkouts: player.checkouts ?? 0,
     checkoutRate: player.checkoutAttempts ? (player.checkouts / player.checkoutAttempts) * 100 : null,
   }
+}
+
+export function currentLegStats(match, playerIndex) {
+  const visits = (match?.legVisits ?? []).filter((visit) => visit.player === playerIndex)
+  const darts = visits.reduce((total, visit) => total + visit.darts, 0)
+  const points = visits.reduce((total, visit) => total + (visit.bust ? 0 : visit.points), 0)
+  return { points, darts, average: darts ? (points / darts) * 3 : null }
 }
 
 function createLegResult(match, players, visits, winner) {

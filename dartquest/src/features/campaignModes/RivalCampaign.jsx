@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { applyVisit, canCheckout, checkoutDartOptions, createAiVisit, createChallengeRivalMatch, createRivalMatch, getAvailableCheckoutDartCounts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, undoPlayerRound } from './rivalEngine'
+import { applyVisit, checkoutDartOptions, createAiVisit, createChallengeRivalMatch, createRivalMatch, currentLegStats, getAvailableCheckoutDartCounts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, shouldRequestCheckoutConfirmation, undoPlayerRound } from './rivalEngine'
 import { isCampaignLevelUnlocked, loadCampaignProgress, saveCampaignProgress } from './campaignModeStorage'
 import { CampaignResult, ScoreKeypad } from './components/CampaignGameUI'
 import { grantFreePack } from '../cards/cardStorage'
@@ -142,10 +142,10 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     if (confirming.current || !match || match.active !== 0) return
     const points = Number(input)
     if (!Number.isInteger(points) || points < 0 || points > 180) return
-    const finishableVisit = canCheckout(match.players[0].score)
-    if (finishableVisit && !validCheckout) {
-      setCheckoutPrompt({ points, checkout: match.players[0].score - points === 0 && checkoutDartOptions(points).length > 0 })
-      setDoubleAttempts(match.players[0].score - points === 0 ? 1 : 0)
+    const checkoutCompleted = shouldRequestCheckoutConfirmation(match.players[0].score, points)
+    if (checkoutCompleted && !validCheckout) {
+      setCheckoutPrompt({ points, checkout: true })
+      setDoubleAttempts(1)
       return
     }
 
@@ -183,10 +183,20 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   }
 
   function requestCheckoutByLongPress(dartsUsed) {
-    if (!match || match.active !== 0 || !getAvailableCheckoutDartCounts(match.players[0].score).includes(dartsUsed)) return
-    setInput(String(match.players[0].score))
-    setDoubleAttempts(1)
-    setCheckoutPrompt({ points: match.players[0].score, checkout: true, checkoutDart: dartsUsed })
+    if (confirming.current || !match || match.active !== 0) return
+    const points = match.players[0].score
+    if (!getAvailableCheckoutDartCounts(points).includes(dartsUsed)) return
+
+    // A valid long-press is the confirmation. Keep it separate from commit(),
+    // whose unconfirmed zero-score path must continue to open the dialog.
+    confirming.current = true
+    setCheckoutPrompt(null)
+    setDoubleAttempts(0)
+    setInput('')
+    const next = applyVisit(match, points, true, dartsUsed, 1)
+    setMatch(next)
+    void storeResult(next)
+    window.setTimeout(() => { confirming.current = false }, 250)
   }
 
   function closeChallenge() {
@@ -226,6 +236,8 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
 
   const human = match.players[0]
   const ai = match.players[1]
+  const humanLegStats = currentLegStats(match, 0)
+  const aiLegStats = currentLegStats(match, 1)
   const rounds = buildVisitRows(match.legVisits ?? []).slice(-5)
   const availableCheckoutDarts = match.active === 0 ? getAvailableCheckoutDartCounts(human.score) : []
   const nextUnlocked = match.level < 40 && isCampaignLevelUnlocked(progress, match.level + 1)
@@ -248,7 +260,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       </section>
 
       <section ref={historyRef} className="rival-history" aria-label="Aufnahmeverlauf">
-        <header><span>{human.visits} Aufnahmen · {human.dartsThrown} Darts</span><b>DARTS</b><span>{ai.visits} Aufnahmen · {ai.dartsThrown} Darts</span></header>
+        <header><span>LEG-AVERAGE {formatLegAverage(humanLegStats.average)}</span><b>DARTS</b><span>LEG-AVERAGE {formatLegAverage(aiLegStats.average)}</span></header>
         {rounds.map((round, index) => <div key={index}><span>{formatVisit(round.human)}</span><b>{(index + 1) * 3}</b><span>{formatVisit(round.ai)}</span></div>)}
       </section>
 
@@ -291,6 +303,10 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
 
 function formatVisit(visit) {
   return visit ? `${visit.points}${visit.bust ? ' · Bust' : visit.checkout ? ' · Checkout' : ''}` : ''
+}
+
+function formatLegAverage(average) {
+  return average == null ? '–' : average.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 }
 
 function buildVisitRows(visits) {

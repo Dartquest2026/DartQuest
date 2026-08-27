@@ -12,6 +12,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
   const holdTimer = useRef(null)
   const holdStart = useRef(null)
   const suppressClick = useRef(false)
+  const suppressClickTimer = useRef(null)
   const confirmDisabled = disabled || value === '' || Number(value) > 180
 
   function press(key, action) {
@@ -34,7 +35,6 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
 
   function endHold() {
     cancelHold()
-    if (suppressClick.current) window.setTimeout(() => { suppressClick.current = false }, 0)
   }
 
   function startHold(number, event) {
@@ -46,17 +46,23 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
     holdTimer.current = window.setTimeout(() => {
       holdTimer.current = null
       holdStart.current = null
-      suppressClick.current = true
+      suppressNextClick()
       setHoldingKey(null)
       navigator.vibrate?.(35)
       onCheckoutLongPress(number)
     }, 600)
   }
 
+  function suppressNextClick() {
+    suppressClick.current = true
+    if (suppressClickTimer.current) window.clearTimeout(suppressClickTimer.current)
+    suppressClickTimer.current = window.setTimeout(() => { suppressClick.current = false }, 1000)
+  }
+
   function moveHold(event) {
     if (!holdStart.current) return
     if (Math.hypot(event.clientX - holdStart.current.x, event.clientY - holdStart.current.y) > 12) {
-      suppressClick.current = true
+      suppressNextClick()
       cancelHold()
     }
   }
@@ -64,6 +70,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
   function clickNumber(number) {
     if (suppressClick.current) {
       suppressClick.current = false
+      if (suppressClickTimer.current) window.clearTimeout(suppressClickTimer.current)
       return
     }
     press(`number-${number}`, () => onChange((value + number).slice(0, 3)))
@@ -72,7 +79,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
   const numberButton = (number) => {
     const checkoutAvailable = checkoutDartCounts.includes(number)
     const classes = [keyClass(`number-${number}`), checkoutAvailable ? 'is-checkout-available' : '', holdingKey === number ? 'is-holding' : ''].filter(Boolean).join(' ')
-    return <button type="button" key={number} className={classes} disabled={disabled} onPointerDown={(event) => startHold(number, event)} onPointerMove={moveHold} onPointerUp={endHold} onPointerCancel={() => { cancelHold(); suppressClick.current = false }} onContextMenu={(event) => checkoutAvailable && event.preventDefault()} onClick={() => clickNumber(number)}>{number}</button>
+    return <button type="button" key={number} className={classes} disabled={disabled} onPointerDown={(event) => startHold(number, event)} onPointerMove={moveHold} onPointerUp={endHold} onPointerCancel={cancelHold} onContextMenu={(event) => checkoutAvailable && event.preventDefault()} onClick={() => clickNumber(number)}>{number}</button>
   }
 
   return <section className={`score-keypad${fill ? ' is-fill' : ''}`}>

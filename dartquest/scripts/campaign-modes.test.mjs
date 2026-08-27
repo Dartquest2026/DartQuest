@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { applyVisit, canCheckoutWithDarts, CHECKOUT_FINISH_VALUES, createAiVisit, createChallengeRivalMatch, createRivalMatch, DARTBOARD_HIT_VALUES, findCheckoutRoute, getAvailableCheckoutDartCounts, getMinimumCheckoutDarts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
+import { applyVisit, canCheckoutWithDarts, CHECKOUT_FINISH_VALUES, createAiVisit, createChallengeRivalMatch, createRivalMatch, currentLegStats, DARTBOARD_HIT_VALUES, findCheckoutRoute, getAvailableCheckoutDartCounts, getMinimumCheckoutDarts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, shouldRequestCheckoutConfirmation, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
 import { checkoutDartOptions, checkoutRewards, checkoutStarsForDarts } from '../src/features/campaignModes/checkoutRules.js'
 import { openFiveCardPack, RARITIES } from '../src/features/cards/cardCatalog.js'
 import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setupSuggestion } from '../src/features/checkout/checkoutGuide.js'
@@ -79,6 +79,60 @@ test('Rivalen-Keypad trennt kurzen Klick und 600-ms-Long-Press', () => {
   assert.match(source, /suppressClick/)
   assert.match(source, /Math\.hypot/)
   assert.match(source, /onContextMenu/)
+  assert.match(source, /suppressNextClick/)
+  assert.match(source, /setTimeout\(\(\) => \{ suppressClick\.current = false \}, 1000\)/)
+})
+
+test('Rivalen-Long-Press schliesst Checkout direkt und ohne Dialog ab', () => {
+  const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
+  const longPressHandler = source.match(/function requestCheckoutByLongPress\(dartsUsed\) \{([\s\S]*?)\n  \}/)?.[1] ?? ''
+
+  assert.match(longPressHandler, /confirming\.current = true/)
+  assert.match(longPressHandler, /setCheckoutPrompt\(null\)/)
+  assert.match(longPressHandler, /applyVisit\(match, points, true, dartsUsed, 1\)/)
+  assert.match(longPressHandler, /setMatch\(next\)/)
+  assert.match(longPressHandler, /storeResult\(next\)/)
+  assert.doesNotMatch(longPressHandler, /setCheckoutPrompt\(\{/)
+})
+
+test('normale Rivalen-Eingabe fragt nur bei tatsaechlich erreichtem Checkout nach', () => {
+  const cases = [
+    [141, 43, false],
+    [141, 100, false],
+    [141, 139, false],
+    [141, 140, false],
+    [141, 141, true],
+    [66, 5, false],
+    [66, 60, false],
+    [66, 65, false],
+    [66, 66, true],
+    [170, 60, false],
+    [170, 170, true],
+  ]
+
+  for (const [remaining, entered, expected] of cases) {
+    assert.equal(shouldRequestCheckoutConfirmation(remaining, entered), expected, `${remaining} Rest, ${entered} Punkte`)
+  }
+})
+
+test('normale Nicht-Checkout-Aufnahmen ziehen Punkte ab oder werden als Bust gewertet', () => {
+  const cases = [
+    [141, 43, 98, false],
+    [141, 100, 41, false],
+    [141, 139, 2, false],
+    [141, 140, 141, true],
+    [66, 5, 61, false],
+    [66, 60, 6, false],
+    [66, 65, 66, true],
+    [170, 60, 110, false],
+  ]
+
+  for (const [remaining, entered, expectedRest, expectedBust] of cases) {
+    const next = applyVisit(createRivalMatch('Daniel', 1, remaining), entered)
+    assert.equal(next.players[0].score, expectedRest, `${remaining} Rest, ${entered} Punkte`)
+    assert.equal(next.visits[0].bust, expectedBust, `${remaining} Rest, ${entered} Punkte Bust`)
+    assert.equal(next.players[0].checkoutAttempts, 0)
+  }
 })
 
 test('Bust lässt den Restscore stehen und wechselt den Spieler', () => {
@@ -107,6 +161,41 @@ test('sichtbarer Rivalenverlauf startet nach jedem Leg neu', () => {
   match = applyVisit(match, 40, true, 1)
   assert.equal(match.players[0].legs, 1)
   assert.deepEqual(match.legVisits, [])
+})
+
+test('laufender Leg-Average verwendet nur aktuelle Punkte und tatsaechliche Darts', () => {
+  let match = createRivalMatch('Daniel', 1, 501)
+  assert.deepEqual(currentLegStats(match, 0), { points: 0, darts: 0, average: null })
+  assert.deepEqual(currentLegStats(match, 1), { points: 0, darts: 0, average: null })
+  match = applyVisit(match, 60)
+  assert.deepEqual(currentLegStats(match, 0), { points: 60, darts: 3, average: 60 })
+  assert.equal(currentLegStats(match, 1).average, null)
+  match = applyVisit(match, 45)
+  assert.equal(currentLegStats(match, 1).average, 45)
+  match = applyVisit(match, 45)
+  assert.deepEqual(currentLegStats(match, 0), { points: 105, darts: 6, average: 52.5 })
+})
+
+test('Leg-Average zaehlt Checkout-Darts, Bust und Undo konsistent', () => {
+  let match = createRivalMatch('Daniel', 1, 160, 2)
+  match = applyVisit(match, 60)
+  match = applyVisit(match, 0)
+  const beforeBust = match
+  match = applyVisit(match, 99)
+  assert.deepEqual(currentLegStats(match, 0), { points: 60, darts: 6, average: 30 })
+  match = undoPlayerRound(match)
+  assert.deepEqual(currentLegStats(match, 0), currentLegStats(beforeBust, 0))
+  match = applyVisit({ ...match, firstTo: 1 }, 100, true, 2, 1)
+  assert.deepEqual(currentLegStats(match, 0), { points: 160, darts: 5, average: 96 })
+})
+
+test('neues Leg setzt beide laufenden Leg-Averages zurueck', () => {
+  let match = createRivalMatch('Daniel', 1, 40, 2)
+  match = applyVisit(match, 0)
+  match = applyVisit(match, 0)
+  match = applyVisit(match, 40, true, 1, 1)
+  assert.deepEqual(currentLegStats(match, 0), { points: 0, darts: 0, average: null })
+  assert.deepEqual(currentLegStats(match, 1), { points: 0, darts: 0, average: null })
 })
 
 test('Undo setzt Spielerzug samt folgendem KI-Zug zurück', () => {
@@ -306,4 +395,11 @@ test('alte Rivalenergebnisse ohne Legdaten erhalten einen sicheren Fallback', ()
   const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
   assert.match(source, /Match- und Leg-Statistiken: Nicht verfügbar/)
   assert.match(source, /result\.lastMatch/)
+})
+
+test('Rivalen-Ergebnis passt auf kleine Displays ohne internen Scrollbereich', () => {
+  const css = readFileSync(new URL('../src/features/campaignModes/RivalLevels.css', import.meta.url), 'utf8')
+  assert.match(css, /@media\(max-height:700px\)/)
+  assert.match(css, /campaign-result:has\(\.rival-result-details\)\{place-items:start center/)
+  assert.match(css, /section:has\(\.rival-result-details\)\{max-height:calc\(100dvh - 8px\);overflow:hidden/)
 })
