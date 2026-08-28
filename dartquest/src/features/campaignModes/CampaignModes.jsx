@@ -4,6 +4,7 @@ const modes = [
   ['standard', '🗺️', 'Standard-Kampagne', 'Die bisherige DartQuest-Reise mit fünf Schwierigkeitsstufen.'],
   ['checkout', '🎯', 'Checkout-Kampagne', '169 Checkouts – von 2 bis 170.'],
   ['rival', '🤖', 'Rivalen-Kampagne', 'First to 3 gegen immer stärkere KI-Gegner.'],
+  ['cameraTest', '📷', 'Testversion Kamera', 'Kamera-Prototyp auf Basis der Rivalen-Kampagne.'],
 ]
 
 export default function CampaignModes({ onBack, onSelect }) {
@@ -12,4 +13,3 @@ export default function CampaignModes({ onBack, onSelect }) {
     <section className="campaign-modes__grid">{modes.map(([id, icon, title, description]) => <button type="button" key={id} onClick={() => onSelect(id)}><i>{icon}</i><span><strong>{title}</strong><small>{description}</small></span><b>›</b></button>)}</section>
   </main>
 }
-

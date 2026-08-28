@@ -4,6 +4,7 @@ import { buildVisitRows } from './rivalHistory'
 import { formatCheckoutStats } from './checkoutStatistics.js'
 import { isCampaignLevelUnlocked, loadCampaignProgress, saveCampaignProgress } from './campaignModeStorage'
 import { CampaignResult, ScoreKeypad } from './components/CampaignGameUI'
+import CameraPreview from './components/CameraPreview'
 import { grantFreePack } from '../cards/cardStorage'
 import { explainField, getCheckoutAdvice, isBogeyNumber, isCheckoutScore } from '../checkout/checkoutGuide'
 import './CampaignModes.css'
@@ -43,8 +44,8 @@ function recordedCheckoutDarts(match, playerIndex = 0) {
     .reduce((total, visit) => total + (visit.checkoutDarts ?? visit.doubleAttempts ?? 0), 0)
 }
 
-export default function RivalCampaign({ activeProfile, onProfileRewards, onBack, challenge = null, onChallengeComplete = null }) {
-  const savedDraft = challenge ? null : loadRivalDraft(activeProfile?.id)
+export default function RivalCampaign({ activeProfile, onProfileRewards, onBack, challenge = null, onChallengeComplete = null, cameraTest = false }) {
+  const savedDraft = challenge || cameraTest ? null : loadRivalDraft(activeProfile?.id)
   const [progress, setProgress] = useState(() => loadCampaignProgress(activeProfile?.id, 'rival'))
   const [match, setMatch] = useState(() => challenge ? createChallengeRivalMatch(activeProfile?.name, challenge) : savedDraft?.match ?? null)
   const [input, setInput] = useState(() => savedDraft?.input ?? '')
@@ -53,6 +54,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   const [checkoutHelpOpen, setCheckoutHelpOpen] = useState(false)
   const [reward, setReward] = useState(null)
   const [selectedResultLevel, setSelectedResultLevel] = useState(null)
+  const [cameraEnabled, setCameraEnabled] = useState(false)
   const confirming = useRef(false)
   const challengeRewardGranted = useRef(false)
   const historyRef = useRef(null)
@@ -65,7 +67,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
         if (current?.active !== 1) return current
         const visit = createAiVisit(current)
         const next = applyVisit(current, visit.points, visit.validCheckout, visit.dartsUsed)
-        if (next.winner === 1 && !challenge) {
+        if (next.winner === 1 && !challenge && !cameraTest) {
           setProgress((currentProgress) => {
             const old = currentProgress.levels[next.level] || {}
             const saved = { ...currentProgress, levels: { ...currentProgress.levels, [next.level]: { ...old, lastMatch: rivalMatchResult(next) } } }
@@ -77,23 +79,24 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       })
     }, 650)
     return () => window.clearTimeout(timer)
-  }, [activeProfile?.id, challenge, match])
+  }, [activeProfile?.id, cameraTest, challenge, match])
 
   useEffect(() => {
     if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight
   }, [match?.legVisits?.length])
 
   useEffect(() => {
-    if (challenge) return
+    if (challenge || cameraTest) return
     if (match && match.winner == null) {
       saveRivalDraft(activeProfile?.id, { match, input, checkoutPrompt, checkoutDartsInput })
       return
     }
     clearRivalDraft(activeProfile?.id)
-  }, [activeProfile?.id, challenge, checkoutDartsInput, checkoutPrompt, input, match])
+  }, [activeProfile?.id, cameraTest, challenge, checkoutDartsInput, checkoutPrompt, input, match])
 
   async function storeResult(nextMatch) {
     if (nextMatch.winner == null) return
+    if (cameraTest) return
     const matchResult = rivalMatchResult(nextMatch)
     if (challenge) {
       if (nextMatch.winner !== 0) return
@@ -207,7 +210,8 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   }
 
   function closeMatchSelection() {
-    clearRivalDraft(activeProfile?.id)
+    if (!cameraTest) clearRivalDraft(activeProfile?.id)
+    setCameraEnabled(false)
     setMatch(null)
     setInput('')
     setCheckoutPrompt(null)
@@ -215,7 +219,8 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   }
 
   function startMatch(level) {
-    clearRivalDraft(activeProfile?.id)
+    if (!cameraTest) clearRivalDraft(activeProfile?.id)
+    setCameraEnabled(false)
     setSelectedResultLevel(null)
     setInput('')
     setCheckoutPrompt(null)
@@ -232,6 +237,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
         onSelect={setSelectedResultLevel}
         onBack={onBack}
         onStart={startMatch}
+        cameraTest={cameraTest}
       />
     )
   }
@@ -247,14 +253,14 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
   const nextUnlocked = match.level < 40 && isCampaignLevelUnlocked(progress, match.level + 1)
 
   return (
-    <main className="rival-game">
+    <main className={`rival-game${cameraTest ? ' camera-test-game' : ''}`}>
       <header>
         <button type="button" onClick={() => challenge ? onBack() : closeMatchSelection()}>‹</button>
         <div>
-          <span>{challenge ? 'ZUFÄLLIGE HERAUSFORDERUNG' : `RIVALEN-LEVEL ${match.level} · Ø ${match.targetAverage}`}</span>
+          <span>{cameraTest ? `KAMERA TEST · RIVALE ${match.level}` : challenge ? 'ZUFÄLLIGE HERAUSFORDERUNG' : `RIVALEN-LEVEL ${match.level} · Ø ${match.targetAverage}`}</span>
           <h1>First to {match.firstTo ?? 3} · {match.startScore}</h1>
         </div>
-        <div className="rival-header-actions"><button type="button" className="rival-checkout-help-button" disabled={human.score < 2 || human.score > 170 || match.winner != null} onClick={() => setCheckoutHelpOpen(true)}>Checkout</button><button type="button" className="rival-undo" disabled={!match.history.length || aiThinking} onClick={() => { setMatch((current) => undoPlayerRound(current)); setInput('') }}>↶ Undo</button></div>
+        <div className="rival-header-actions">{cameraTest && <button type="button" className={`rival-camera-toggle${cameraEnabled ? ' active' : ''}`} aria-pressed={cameraEnabled} onClick={() => setCameraEnabled((enabled) => !enabled)}>📷<span>Kamera</span></button>}<button type="button" className="rival-checkout-help-button" disabled={human.score < 2 || human.score > 170 || match.winner != null} onClick={() => setCheckoutHelpOpen(true)}>Checkout</button><button type="button" className="rival-undo" disabled={!match.history.length || aiThinking} onClick={() => { setMatch((current) => undoPlayerRound(current)); setInput('') }}>↶ Undo</button></div>
       </header>
 
       <section className="rival-scoreboard">
@@ -270,7 +276,9 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
       </section>
 
       {aiThinking && <div className="rival-thinking" aria-live="polite">Rivale wirft …</div>}
-      {match.winner == null && <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} fill checkoutDartCounts={availableCheckoutDarts} onCheckoutLongPress={requestCheckoutByLongPress} />}
+      {match.winner == null && (cameraTest && cameraEnabled
+        ? <CameraPreview />
+        : <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} fill checkoutDartCounts={availableCheckoutDarts} onCheckoutLongPress={requestCheckoutByLongPress} />)}
       {checkoutHelpOpen && <CheckoutRouteOverlay score={human.score} onClose={() => setCheckoutHelpOpen(false)} />}
       {match.winner != null && (
         <CampaignResult title={match.winner === 0 ? 'Du hast gewonnen!' : 'Du hast verloren'}>
@@ -336,17 +344,17 @@ function Route({ route }) {
   return <div className="rival-checkout-route">{route.map((field, index) => <span key={`${field.notation}-${index}`} title={explainField(field)}><b>{field.notation}</b>{index < route.length - 1 && <i>→</i>}</span>)}</div>
 }
 
-function RivalLevels({ progress, selectedLevel, onSelect, onBack, onStart }) {
+function RivalLevels({ progress, selectedLevel, onSelect, onBack, onStart, cameraTest = false }) {
   const levels = Array.from({ length: 40 }, (_, index) => index + 1)
   const result = selectedLevel ? progress.levels[selectedLevel] : null
 
   return (
-    <main className="campaign-levels rival-levels">
+    <main className={`campaign-levels rival-levels${cameraTest ? ' camera-test-levels' : ''}`}>
       <header>
         <button type="button" onClick={onBack}>‹</button>
         <div>
-          <span>RIVALEN-KAMPAGNE</span>
-          <h1>Rivalen-Kampagne</h1>
+          <span>{cameraTest ? 'KAMERA TEST' : 'RIVALEN-KAMPAGNE'}</span>
+          <h1>{cameraTest ? 'Testversion Kamera' : 'Rivalen-Kampagne'}</h1>
         </div>
       </header>
 

@@ -9,6 +9,20 @@ import { isBogeyNumber, isCheckoutScore } from '../src/features/checkout/checkou
 import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
 import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
 
+test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
+  const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
+  const app = readFileSync(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const rival = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
+  const camera = readFileSync(new URL('../src/features/campaignModes/components/CameraPreview.jsx', import.meta.url), 'utf8')
+  assert.match(modes, /cameraTest.*Testversion Kamera/)
+  assert.match(app, /activePage === 'cameraTestCampaign'/)
+  assert.match(app, /<RivalCampaign activeProfile=\{activeProfile\} onBack=.* cameraTest \/>/)
+  assert.match(rival, /if \(cameraTest\) return/)
+  assert.match(camera, /facingMode: \{ ideal: 'environment' \}/)
+  assert.match(camera, /getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/)
+  assert.match(camera, /autoPlay playsInline muted/)
+})
+
 test('Rivalen-Average folgt der Levelkurve', () => {
   assert.equal(rivalAverageForLevel(1), 25)
   assert.equal(rivalAverageForLevel(4), 37.5)

@@ -475,6 +475,10 @@ function App() {
         <RivalCampaign activeProfile={activeProfile} onProfileRewards={applyProfileRewards} onBack={() => setActivePage('campaignModes')} />
       )}
 
+      {activePage === 'cameraTestCampaign' && (
+        <RivalCampaign activeProfile={activeProfile} onBack={() => setActivePage('campaignModes')} cameraTest />
+      )}
+
 
       {/* EINZELSPIELER-SCHWIERIGKEIT */}
 
