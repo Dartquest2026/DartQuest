@@ -58,14 +58,51 @@ function scoreCandidate(candidate, edge, width, height) {
   const structureVariance = Math.sqrt(angularProfile.reduce((sum, value) => sum + (value - mean) ** 2, 0) / angularProfile.length)
   let concentric = 0
   for (const radius of [.025, .07, .43, .47, .71, .76]) for (let degree = 0; degree < 360; degree += 30) concentric += sample(edge, width, height, ellipsePoint(candidate, degree * Math.PI / 180, radius))
-  const outerScore = outer / outerSamples / 95
+  const outerScore = Math.min(1, outer / outerSamples / 95)
   const closure = strongOuter / outerSamples
-  const structure = radial / radialSamples / 70
-  const rings = concentric / 72 / 65
-  const variance = structureVariance / 160
+  const structure = Math.min(1, radial / radialSamples / 70)
+  const rings = Math.min(1, concentric / 72 / 65)
+  const variance = Math.min(1, structureVariance / 160)
   const size = Math.min(1, candidate.rx / (Math.min(width, height) * .34))
   const centerBias = 1 - Math.min(1, Math.hypot(candidate.x - width / 2, candidate.y - height / 2) / Math.hypot(width / 2, height / 2))
-  return Math.min(1, outerScore * .3 + closure * .18 + structure * .19 + rings * .13 + variance * .08 + size * .07 + centerBias * .05)
+  const preliminaryScore = Math.min(1, outerScore * .3 + closure * .18 + structure * .19 + rings * .13 + variance * .08 + size * .07 + centerBias * .05)
+  return { edgeStrength: outerScore, contourCoverage: closure, circularity: candidate.ry / candidate.rx, internalRadialStructureScore: structure, concentricRingScore: rings, geometryScore: Math.min(1, size * .55 + centerBias * .25 + closure * .2), preliminaryScore }
+}
+
+function radialRingProfile(candidate, edge, width, height) {
+  const profile = []
+  for (let step = 2; step <= 100; step += 2) {
+    const radius = step / 100; let strength = 0
+    for (let angle = 0; angle < TAU; angle += Math.PI / 18) strength += sample(edge, width, height, ellipsePoint(candidate, angle, radius))
+    profile.push({ radius, strength: strength / 36 / 90 })
+  }
+  return profile.filter((item, index) => index > 0 && index < profile.length - 1 && item.strength > .24 && item.strength >= profile[index - 1].strength && item.strength >= profile[index + 1].strength).sort((a, b) => b.strength - a.strength).slice(0, 7).sort((a, b) => a.radius - b.radius)
+}
+
+function explainCandidate(candidate, largestRadius) {
+  const reasons = []
+  if (candidate.relativeRadius >= .94) reasons.push('+ largest plausible concentric candidate')
+  else if (candidate.relativeRadius < .78) reasons.push('- radius too small; likely inner ring')
+  if (candidate.bullAlignmentScore >= .7) reasons.push('+ bull aligned')
+  else reasons.push('- weak bull alignment')
+  if (candidate.ringCount >= 4) reasons.push(`+ contains ${candidate.ringCount} inner rings`)
+  else reasons.push('- incomplete ring hierarchy')
+  if (candidate.edgeStrength < .35) reasons.push('- weak outer contour')
+  if (candidate.rx < largestRadius * .82 && candidate.concentricRingScore > .5) reasons.push('- likely triple/double ring')
+  return reasons
+}
+
+export function rankOuterBoardCandidates(candidates) {
+  if (!candidates.length) return []
+  const largestRadius = Math.max(...candidates.map((candidate) => candidate.rx))
+  return candidates.map((candidate) => {
+    const relativeRadius = candidate.rx / largestRadius
+    const hierarchyPenalty = relativeRadius < .82 ? .35 : relativeRadius < .9 ? .12 : 0
+    const outerBoardLikelihood = Math.max(0, Math.min(1, relativeRadius * .62 + Math.min(1, candidate.ringCount / 5) * .18 + candidate.bullAlignmentScore * .1 + candidate.spiderAlignmentScore * .1 - hierarchyPenalty))
+    const finalCandidateScore = Math.min(1, candidate.preliminaryScore * .35 + outerBoardLikelihood * .65)
+    const result = { ...candidate, relativeRadius, outerBoardLikelihood, finalCandidateScore }
+    return { ...result, reasons: explainCandidate(result, largestRadius) }
+  }).sort((a, b) => b.finalCandidateScore - a.finalCandidateScore).map((candidate, index) => ({ ...candidate, candidateId: `C${index + 1}`, centerX: candidate.x, centerY: candidate.y, radiusX: candidate.rx, radiusY: candidate.ry }))
 }
 
 function candidateInside(candidate, width, height) {
@@ -136,19 +173,36 @@ function searchEllipse(imageData, previous, local) {
   const radii = local && previous ? [previous.rx * .94, previous.rx, previous.rx * 1.06] : Array.from({ length: Math.max(1, Math.floor((maximum - minimum) / 12) + 1) }, (_, i) => minimum + i * 12)
   const ratios = local && previous ? [Math.max(.52, previous.ry / previous.rx - .05), previous.ry / previous.rx, Math.min(1, previous.ry / previous.rx + .05)] : [.56, .68, .8, .9, 1]
   const rotations = local && previous ? [previous.rotation - .08, previous.rotation, previous.rotation + .08] : [-.52, -.34, -.17, 0, .17, .34, .52]
-  let best = null
+  const coarse = []
   for (const [x, y] of centers) for (const rx of radii) for (const ratio of ratios) for (const rotation of rotations) {
     const candidate = { x, y, rx, ry: rx * ratio, rotation }
     if (!candidateInside(candidate, width, height)) continue
-    const confidence = scoreCandidate(candidate, edge, width, height)
-    if (!best || confidence > best.confidence) best = { ...candidate, confidence }
+    const metrics = scoreCandidate(candidate, edge, width, height)
+    if (metrics.preliminaryScore < (local ? .3 : .34)) continue
+    coarse.push({ ...candidate, ...metrics })
+    coarse.sort((a, b) => b.preliminaryScore - a.preliminaryScore)
+    if (coarse.length > 80) coarse.length = 80
   }
-  if (!best || best.confidence < (local ? .38 : .46)) return null
-  best = refineCenter(best, edge, width, height)
-  if (best.ry / best.rx > .92) best.rotation = previous?.rotation ?? 0
-  const anchors = boardAnchors(best, edge, width, height)
-  best = { ...best, ...anchors }
-  return { ...best, cx: best.x, cy: best.y, majorRadius: best.rx, minorRadius: best.ry, rotationAngle: best.rotation, features: featurePoints(best, edge, width, height), frameWidth: width, frameHeight: height }
+  const spatiallyDistinct = []
+  for (const candidate of coarse) {
+    if (spatiallyDistinct.some((kept) => Math.abs(kept.rx - candidate.rx) < 7 && Math.hypot(kept.x - candidate.x, kept.y - candidate.y) < 12)) continue
+    spatiallyDistinct.push(candidate)
+    if (spatiallyDistinct.length === 5) break
+  }
+  if (!spatiallyDistinct.length) return null
+  const detailedCandidates = spatiallyDistinct.map((candidate) => {
+    const refined = refineCenter(candidate, edge, width, height)
+    if (refined.ry / refined.rx > .92) refined.rotation = previous?.rotation ?? 0
+    const anchors = boardAnchors(refined, edge, width, height), rings = radialRingProfile({ ...refined, ...anchors }, edge, width, height)
+    const bullDistance = Math.hypot(anchors.bullX - refined.x, anchors.bullY - refined.y)
+    const bullAlignmentScore = Math.max(0, 1 - bullDistance / Math.max(1, refined.rx * .12)) * anchors.bullConfidence
+    return { ...refined, ...anchors, diameterPx: refined.rx * 2, areaRatioToFrame: Math.PI * refined.rx * refined.ry / (width * height), ellipseRatio: refined.ry / refined.rx, distanceFromBullCandidate: bullDistance, bullAlignmentScore, spiderAlignmentScore: anchors.spiderConfidence, rings, ringCount: rings.filter((ring) => ring.radius < .94).length }
+  })
+  const candidates = rankOuterBoardCandidates(detailedCandidates)
+  let best = candidates[0]
+  if (!best || best.finalCandidateScore < (local ? .38 : .46)) return null
+  best = { ...best, confidence: best.finalCandidateScore }
+  return { ...best, selectedCandidateId: best.candidateId, candidates, cx: best.x, cy: best.y, majorRadius: best.rx, minorRadius: best.ry, rotationAngle: best.rotation, features: featurePoints(best, edge, width, height), frameWidth: width, frameHeight: height }
 }
 
 export function detectBoard(imageData) { return searchEllipse(imageData, null, false) }

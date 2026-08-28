@@ -14,6 +14,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
   const previousFrameRef = useRef(null), movementSeenRef = useRef(false), markersRef = useRef([]), ringVisibleUntilRef = useRef(0)
   const dartPendingRef = useRef(null), dartCountRef = useRef(0), visitTotalRef = useRef(0), scoreCallbackRef = useRef(onDartScore)
   const boardStateRef = useRef('SEARCHING'), lockStreakRef = useRef(0), lostFramesRef = useRef(0), outlierRef = useRef(null)
+  const candidateHistoryRef = useRef([]), candidateChangedFramesRef = useRef(0), lastDetectionAtRef = useRef(0)
   const debugRef = useRef(true)
   const [status, setStatus] = useState('starting'), [error, setError] = useState(''), [debug, setDebug] = useState(true)
   const [zoom, setZoom] = useState({ value: 1, min: 1, max: 1, step: .1, hardware: false })
@@ -26,6 +27,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     if (videoRef.current) videoRef.current.srcObject = null
     boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
+    candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0
     const canvas = overlayRef.current
     if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
   }, [])
@@ -41,11 +43,19 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     const sx = rect.width / board.frameWidth, sy = rect.height / board.frameHeight
     const x = rect.x + board.x * sx, y = rect.y + board.y * sy, rx = board.rx * sx, ry = board.ry * sy
     const opacity = now < ringVisibleUntilRef.current ? 1 : Math.max(0, 1 - (now - ringVisibleUntilRef.current) / 800)
-    context.save(); context.globalAlpha = opacity; context.strokeStyle = '#42e695'; context.lineWidth = 2; context.shadowColor = '#42e695'; context.shadowBlur = 9
+    context.save()
+    for (const candidate of board.candidates ?? []) { const cx = rect.x + candidate.x * sx, cy = rect.y + candidate.y * sy; context.globalAlpha = candidate.candidateId === board.selectedCandidateId ? .9 : .28; context.strokeStyle = candidate.candidateId === board.selectedCandidateId ? '#ffe35b' : '#61d9ff'; context.lineWidth = candidate.candidateId === board.selectedCandidateId ? 1.5 : 1; context.beginPath(); context.ellipse(cx, cy, candidate.rx * sx, candidate.ry * sy, candidate.rotation, 0, Math.PI * 2); context.stroke(); context.fillStyle = context.strokeStyle; context.font = 'bold 9px sans-serif'; context.fillText(candidate.candidateId, cx + candidate.rx * sx * .72, cy - candidate.ry * sy * .68) }
+    context.globalAlpha = opacity; context.strokeStyle = '#42e695'; context.lineWidth = 2; context.shadowColor = '#42e695'; context.shadowBlur = 9
     if (boardStateRef.current === 'SEARCHING') context.setLineDash([6, 5])
     context.beginPath(); context.ellipse(x, y, rx, ry, board.rotation, 0, Math.PI * 2); context.stroke(); context.setLineDash([])
     context.fillStyle = '#42e69522'; context.beginPath(); context.moveTo(x, y); context.ellipse(x, y, rx, ry, board.rotation, -Math.PI / 2 - Math.PI / 20, -Math.PI / 2 + Math.PI / 20); context.closePath(); context.fill()
     context.fillStyle = '#42e695'; context.beginPath(); context.arc(x, y, 3, 0, Math.PI * 2); context.fill(); context.restore()
+    if (debugRef.current) {
+      context.save(); context.strokeStyle = '#ff5fd155'; context.lineWidth = 1
+      for (const ring of board.rings ?? []) { context.beginPath(); context.ellipse(x, y, rx * ring.radius, ry * ring.radius, board.rotation, 0, Math.PI * 2); context.stroke() }
+      const bx = rect.x + (board.bullX ?? board.x) * sx, by = rect.y + (board.bullY ?? board.y) * sy; context.strokeStyle = '#ffe35b'; context.beginPath(); context.moveTo(bx - 5, by); context.lineTo(bx + 5, by); context.moveTo(bx, by - 5); context.lineTo(bx, by + 5); context.stroke(); context.fillStyle = '#ffe35b'; context.font = 'bold 9px sans-serif'; context.fillText('B', bx + 6, by - 4)
+      context.strokeStyle = '#61d9ff44'; for (let line = 0; line < Math.min(20, board.spiderLines ?? 0); line += 1) { const angle = (board.spiderPhase ?? 0) + line * Math.PI / 10; context.beginPath(); context.moveTo(x, y); context.lineTo(x + Math.cos(angle) * rx * .76, y + Math.sin(angle) * ry * .76); context.stroke() } context.restore()
+    }
     if (debugRef.current) for (const feature of board.features ?? []) { context.fillStyle = '#61d9ff'; context.beginPath(); context.arc(rect.x + feature.x * sx, rect.y + feature.y * sy, 1.5, 0, Math.PI * 2); context.fill() }
     for (const marker of markersRef.current) { const mx = rect.x + marker.x * sx, my = rect.y + marker.y * sy; context.strokeStyle = marker.score ? '#ffe35b' : '#ff7f87'; context.lineWidth = 3; context.beginPath(); context.arc(mx, my, 8, 0, Math.PI * 2); context.moveTo(mx - 12, my); context.lineTo(mx + 12, my); context.moveTo(mx, my - 12); context.lineTo(mx, my + 12); context.stroke(); context.fillStyle = context.strokeStyle; context.font = 'bold 9px sans-serif'; context.fillText(`DART ${marker.dart}`, mx + 10, my - 8) }
   }, [])
@@ -88,6 +98,14 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     stableFramesRef.current = moving ? 0 : stableFramesRef.current + 1
     if (moving) { movementSeenRef.current = true; ringVisibleUntilRef.current = now + 3000 }
     boardRef.current = found
+    const previousSelection = candidateHistoryRef.current.at(-1)
+    if (previousSelection && (Math.abs(previousSelection.radius - found.rx) / previousSelection.radius > .08 || Math.hypot(previousSelection.x - found.x, previousSelection.y - found.y) > 12)) candidateChangedFramesRef.current += 1
+    candidateHistoryRef.current.push({ x: found.x, y: found.y, radius: found.rx, score: found.confidence, candidateId: found.selectedCandidateId })
+    if (candidateHistoryRef.current.length > 20) candidateHistoryRef.current.shift()
+    const history = candidateHistoryRef.current, meanX = history.reduce((sum, item) => sum + item.x, 0) / history.length, meanY = history.reduce((sum, item) => sum + item.y, 0) / history.length, meanRadius = history.reduce((sum, item) => sum + item.radius, 0) / history.length
+    const centerJitter = Math.sqrt(history.reduce((sum, item) => sum + (item.x - meanX) ** 2 + (item.y - meanY) ** 2, 0) / history.length)
+    const radiusJitter = Math.sqrt(history.reduce((sum, item) => sum + (item.radius - meanRadius) ** 2, 0) / history.length) / meanRadius * 100
+    const redetectAge = lastDetectionAtRef.current ? now - lastDetectionAtRef.current : 0; lastDetectionAtRef.current = now
     lockStreakRef.current = moving ? Math.max(1, lockStreakRef.current - 1) : lockStreakRef.current + 1
     if (lockStreakRef.current >= 10 && found.confidence >= .5 && found.bullConfidence >= .2 && found.spiderLines >= 10) boardStateRef.current = 'LOCKED'
     else if (boardStateRef.current === 'LOCKED' && found.confidence < .42) boardStateRef.current = 'TRACKING'
@@ -115,7 +133,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
         }
       } else dartPendingRef.current = null
     }
-    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0 }))
+    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
   }, [])
 
   const startLoop = useCallback(() => {
@@ -151,6 +169,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
   function resetDetection() {
     boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null; dartCountRef.current = 0; visitTotalRef.current = 0; stableFramesRef.current = 0; movementSeenRef.current = false
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
+    candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; lastDetectionAtRef.current = 0
     ringVisibleUntilRef.current = performance.now() + 3000; setDetection({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
   }
 
@@ -159,11 +178,32 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
   useEffect(() => { debugRef.current = debug }, [debug])
   scoreCallbackRef.current = onDartScore
 
+  function logSnapshot() {
+    const snapshot = { boardState: detection.state, selectedCandidate: detection.selectedCandidateId, trackedBoard: detection.trackedCandidateId, candidates: detection.candidates, bull: { x: detection.bullX, y: detection.bullY, confidence: detection.bullConfidence }, rings: detection.rings, spider: { lines: detection.spiderLines, confidence: detection.spiderConfidence }, tracking: { features: detection.trackingFeatures, error: detection.reprojection, stableFrames: detection.stableFrames, lostFrames: detection.lostFrames }, jitter: { centerPx: detection.centerJitter, radiusPercent: detection.radiusJitter } }
+    console.log('DartQuest camera detection snapshot', snapshot); console.table(detection.candidates ?? [])
+  }
+
   return <section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
     <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} className="camera-detection-canvas" />
     {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
     {status === 'error' && <div className="camera-message camera-error" role="alert"><p>{error}</p><button type="button" onClick={() => void startCamera()}>ERNEUT VERSUCHEN</button></div>}
-    {status === 'active' && <><span className="camera-status">● Kamera aktiv</span><div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" disabled={!zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" disabled={!zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div><div className="camera-debug-actions"><button type="button" className={debug ? 'active' : ''} onClick={() => setDebug((value) => !value)}>Erkennung</button><button type="button" onClick={resetDetection}>Reset</button></div>{debug && <div className="camera-debug-info">BOARD: {detection.state}<br />Bull: {(detection.bullConfidence ?? 0) >= .42 ? 'FOUND' : 'NOT FOUND'} ({(detection.bullConfidence ?? 0).toFixed(2)})<br />Spider: {detection.spiderLines ?? 0}/20 lines<br />Board features: {detection.features}<br />Tracking features: {detection.trackingFeatures ?? 0}<br />Reprojection: {(detection.reprojection ?? 0).toFixed(1)} px<br />Center: {detection.x?.toFixed(0) ?? '–'} / {detection.y?.toFixed(0) ?? '–'}<br />Ellipse: {detection.rx?.toFixed(0) ?? '–'} / {detection.ry?.toFixed(0) ?? '–'}<br />Ellipse angle: {detection.rotation != null ? `${(detection.rotation * 180 / Math.PI).toFixed(1)}°` : '–'}<br />Perspective: {detection.rx ? (detection.ry / detection.rx).toFixed(2) : '–'}<br />Board orientation: {((detection.orientation ?? 0) * 180 / Math.PI).toFixed(1)}°<br />Confidence: {detection.confidence.toFixed(2)}<br />Lost frames: {detection.lostFrames}<br />Zoom: {zoom.value.toFixed(1)}×<br />Referenz: {detection.reference ? 'BEREIT' : 'wartet'}<br />Letzte Erkennung: {detection.last}{detection.dartConfidence ? ` (${detection.dartConfidence.toFixed(2)})` : ''}</div>}{detection.last !== 'keine' && <strong className="camera-hit-badge">{detection.last}</strong>}</>}
+    {status === 'active' && <>
+      <span className="camera-status">● Kamera aktiv</span>
+      <div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" disabled={!zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" disabled={!zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div>
+      <div className="camera-debug-actions"><button type="button" className={debug ? 'active' : ''} onClick={() => setDebug((value) => !value)}>Erkennung</button><button type="button" onClick={resetDetection}>Reset</button>{debug && <button type="button" onClick={logSnapshot}>Snapshot</button>}</div>
+      {debug && <div className="camera-debug-info">
+        <b>LOCK {detection.state} · SELECTED {detection.selectedCandidateId ?? '–'}</b>
+        <span>Detected best: {detection.selectedCandidateId ?? '–'} · Tracking: {detection.trackedCandidateId ?? '–'}</span>
+        <span>Bull {(detection.bullConfidence ?? 0) >= .42 ? 'FOUND' : 'NOT FOUND'} {(detection.bullConfidence ?? 0).toFixed(2)} · Spider {detection.spiderLines ?? 0}/20 ({(detection.spiderConfidence ?? 0).toFixed(2)})</span>
+        <span>Scores G {(detection.geometryScore ?? 0).toFixed(2)} · Outer {(detection.outerBoardLikelihood ?? 0).toFixed(2)} · Edge {(detection.edgeStrength ?? 0).toFixed(2)} · Rings {(detection.concentricRingScore ?? 0).toFixed(2)} · Final {detection.confidence.toFixed(2)}</span>
+        <span>Jitter Center {(detection.centerJitter ?? 0).toFixed(1)}px · Radius {(detection.radiusJitter ?? 0).toFixed(1)}%</span>
+        <span>Stable {detection.stableFrames ?? 0} · Changed {detection.candidateChangedFrames ?? 0} · Lost {detection.lostFrames} · Cycle {(detection.lastRedetect ?? 0).toFixed(0)}ms</span>
+        <div className="camera-candidate-ranking">{(detection.candidates ?? []).slice(0, 3).map((candidate) => <span key={candidate.candidateId}><b>{candidate.candidateId}</b> {candidate.finalCandidateScore.toFixed(2)} · Ø{candidate.diameterPx.toFixed(0)} · R{Math.round(candidate.relativeRadius * 100)}% · B{candidate.bullAlignmentScore.toFixed(2)} · Rings {candidate.ringCount} · O{candidate.outerBoardLikelihood.toFixed(2)}</span>)}</div>
+        <span>Radii: {(detection.rings ?? []).map((ring) => ring.radius.toFixed(2)).join(' · ') || '–'}</span>
+        <span>{(detection.reasons ?? []).slice(0, 3).join(' · ') || 'Warte auf Kandidatendiagnose'}</span>
+      </div>}
+      {detection.last !== 'keine' && <strong className="camera-hit-badge">{detection.last}</strong>}
+    </>}
   </div></section>
 })
 

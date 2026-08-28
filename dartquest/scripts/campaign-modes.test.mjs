@@ -8,7 +8,7 @@ import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setup
 import { isBogeyNumber, isCheckoutScore } from '../src/features/checkout/checkoutGuide.js'
 import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
 import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
-import { boardDelta, getContainedVideoRect, isInTwentySector, normalizeBoardPoint, smoothBoard } from '../src/features/campaignModes/cameraDetection.js'
+import { boardDelta, getContainedVideoRect, isInTwentySector, normalizeBoardPoint, rankOuterBoardCandidates, smoothBoard } from '../src/features/campaignModes/cameraDetection.js'
 import { detectNewDart, scoreTwentyDart } from '../src/features/campaignModes/cameraDartDetection.js'
 
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
@@ -61,6 +61,17 @@ test('20er-Test unterscheidet Single, Triple und Double radial', () => {
   assert.deepEqual(scoreTwentyDart(tip(.35)), { label: 'S20', score: 20 })
   assert.deepEqual(scoreTwentyDart(tip(.46)), { label: 'T20', score: 60 })
   assert.deepEqual(scoreTwentyDart(tip(.74)), { label: 'D20', score: 40 })
+})
+
+test('Board-Kandidatenranking bevorzugt den äußeren Hierarchie-Kandidaten vor einer starken inneren Kante', () => {
+  const common = { bullAlignmentScore: .8, spiderAlignmentScore: .8, ringCount: 5 }
+  const ranked = rankOuterBoardCandidates([
+    { ...common, x: 100, y: 100, rx: 120, ry: 112, preliminaryScore: .52, edgeStrength: .32 },
+    { ...common, x: 100, y: 100, rx: 78, ry: 74, preliminaryScore: .96, edgeStrength: .95 },
+  ])
+  assert.equal(ranked[0].rx, 120)
+  assert.equal(ranked[0].relativeRadius, 1)
+  assert.ok(ranked[1].reasons.some((reason) => reason.includes('likely inner ring')))
 })
 
 test('Rivalen-Average folgt der Levelkurve', () => {
