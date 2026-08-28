@@ -74,6 +74,17 @@ test('Board-Kandidatenranking bevorzugt den äußeren Hierarchie-Kandidaten vor 
   assert.ok(ranked[1].reasons.some((reason) => reason.includes('likely inner ring')))
 })
 
+test('Calibration Lab speichert lokal, misst fünf Sekunden und exportiert JSON', () => {
+  const source = readFileSync(new URL('../src/features/campaignModes/components/CameraCalibrationLab.jsx', import.meta.url), 'utf8')
+  assert.match(source, /dartquest-camera-calibration-samples-v1/)
+  assert.match(source, /window\.setTimeout\([\s\S]*?5000\)/)
+  assert.match(source, /navigator\.clipboard\.writeText\(json\)/)
+  assert.match(source, /candidateSwitchCount/)
+  assert.match(source, /geometryJumpCount/)
+  assert.match(source, /MESSUNG SPEICHERN/)
+  assert.match(source, /DATEN KOPIEREN/)
+})
+
 test('Rivalen-Average folgt der Levelkurve', () => {
   assert.equal(rivalAverageForLevel(1), 25)
   assert.equal(rivalAverageForLevel(4), 37.5)

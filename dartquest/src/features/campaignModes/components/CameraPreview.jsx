@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { boardDelta, detectBoard, getContainedVideoRect, smoothBoard, trackBoard } from '../cameraDetection'
 import { detectNewDart, normalizeBoardFrame, scoreTwentyDart } from '../cameraDartDetection'
+import CameraCalibrationLab from './CameraCalibrationLab'
 import './CameraPreview.css'
 
 const ANALYSIS_WIDTH = 280
@@ -14,7 +15,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
   const previousFrameRef = useRef(null), movementSeenRef = useRef(false), markersRef = useRef([]), ringVisibleUntilRef = useRef(0)
   const dartPendingRef = useRef(null), dartCountRef = useRef(0), visitTotalRef = useRef(0), scoreCallbackRef = useRef(onDartScore)
   const boardStateRef = useRef('SEARCHING'), lockStreakRef = useRef(0), lostFramesRef = useRef(0), outlierRef = useRef(null)
-  const candidateHistoryRef = useRef([]), candidateChangedFramesRef = useRef(0), lastDetectionAtRef = useRef(0)
+  const candidateHistoryRef = useRef([]), candidateChangedFramesRef = useRef(0), geometryJumpCountRef = useRef(0), lastDetectionAtRef = useRef(0)
   const debugRef = useRef(true)
   const [status, setStatus] = useState('starting'), [error, setError] = useState(''), [debug, setDebug] = useState(true)
   const [zoom, setZoom] = useState({ value: 1, min: 1, max: 1, step: .1, hardware: false })
@@ -27,7 +28,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     if (videoRef.current) videoRef.current.srcObject = null
     boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
-    candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0
+    candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; geometryJumpCountRef.current = 0
     const canvas = overlayRef.current
     if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
   }, [])
@@ -99,7 +100,11 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     if (moving) { movementSeenRef.current = true; ringVisibleUntilRef.current = now + 3000 }
     boardRef.current = found
     const previousSelection = candidateHistoryRef.current.at(-1)
-    if (previousSelection && (Math.abs(previousSelection.radius - found.rx) / previousSelection.radius > .08 || Math.hypot(previousSelection.x - found.x, previousSelection.y - found.y) > 12)) candidateChangedFramesRef.current += 1
+    if (previousSelection) {
+      const radiusChange = Math.abs(previousSelection.radius - found.rx) / previousSelection.radius, centerChange = Math.hypot(previousSelection.x - found.x, previousSelection.y - found.y)
+      if (radiusChange > .08 || centerChange > 12) candidateChangedFramesRef.current += 1
+      if (radiusChange > .15 || centerChange > 24) geometryJumpCountRef.current += 1
+    }
     candidateHistoryRef.current.push({ x: found.x, y: found.y, radius: found.rx, score: found.confidence, candidateId: found.selectedCandidateId })
     if (candidateHistoryRef.current.length > 20) candidateHistoryRef.current.shift()
     const history = candidateHistoryRef.current, meanX = history.reduce((sum, item) => sum + item.x, 0) / history.length, meanY = history.reduce((sum, item) => sum + item.y, 0) / history.length, meanRadius = history.reduce((sum, item) => sum + item.radius, 0) / history.length
@@ -133,7 +138,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
         }
       } else dartPendingRef.current = null
     }
-    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
+    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, geometryJumpCount: geometryJumpCountRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
   }, [])
 
   const startLoop = useCallback(() => {
@@ -169,7 +174,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
   function resetDetection() {
     boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null; dartCountRef.current = 0; visitTotalRef.current = 0; stableFramesRef.current = 0; movementSeenRef.current = false
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
-    candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; lastDetectionAtRef.current = 0
+    candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; geometryJumpCountRef.current = 0; lastDetectionAtRef.current = 0
     ringVisibleUntilRef.current = performance.now() + 3000; setDetection({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
   }
 
@@ -183,28 +188,17 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     console.log('DartQuest camera detection snapshot', snapshot); console.table(detection.candidates ?? [])
   }
 
-  return <section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
+  return <>{debug && <CameraCalibrationLab detection={detection} zoom={zoom} video={{ width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 }} onSnapshot={logSnapshot} />}<section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
     <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} className="camera-detection-canvas" />
     {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
     {status === 'error' && <div className="camera-message camera-error" role="alert"><p>{error}</p><button type="button" onClick={() => void startCamera()}>ERNEUT VERSUCHEN</button></div>}
     {status === 'active' && <>
       <span className="camera-status">● Kamera aktiv</span>
       <div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" disabled={!zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" disabled={!zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div>
-      <div className="camera-debug-actions"><button type="button" className={debug ? 'active' : ''} onClick={() => setDebug((value) => !value)}>Erkennung</button><button type="button" onClick={resetDetection}>Reset</button>{debug && <button type="button" onClick={logSnapshot}>Snapshot</button>}</div>
-      {debug && <div className="camera-debug-info">
-        <b>LOCK {detection.state} · SELECTED {detection.selectedCandidateId ?? '–'}</b>
-        <span>Detected best: {detection.selectedCandidateId ?? '–'} · Tracking: {detection.trackedCandidateId ?? '–'}</span>
-        <span>Bull {(detection.bullConfidence ?? 0) >= .42 ? 'FOUND' : 'NOT FOUND'} {(detection.bullConfidence ?? 0).toFixed(2)} · Spider {detection.spiderLines ?? 0}/20 ({(detection.spiderConfidence ?? 0).toFixed(2)})</span>
-        <span>Scores G {(detection.geometryScore ?? 0).toFixed(2)} · Outer {(detection.outerBoardLikelihood ?? 0).toFixed(2)} · Edge {(detection.edgeStrength ?? 0).toFixed(2)} · Rings {(detection.concentricRingScore ?? 0).toFixed(2)} · Final {detection.confidence.toFixed(2)}</span>
-        <span>Jitter Center {(detection.centerJitter ?? 0).toFixed(1)}px · Radius {(detection.radiusJitter ?? 0).toFixed(1)}%</span>
-        <span>Stable {detection.stableFrames ?? 0} · Changed {detection.candidateChangedFrames ?? 0} · Lost {detection.lostFrames} · Cycle {(detection.lastRedetect ?? 0).toFixed(0)}ms</span>
-        <div className="camera-candidate-ranking">{(detection.candidates ?? []).slice(0, 3).map((candidate) => <span key={candidate.candidateId}><b>{candidate.candidateId}</b> {candidate.finalCandidateScore.toFixed(2)} · Ø{candidate.diameterPx.toFixed(0)} · R{Math.round(candidate.relativeRadius * 100)}% · B{candidate.bullAlignmentScore.toFixed(2)} · Rings {candidate.ringCount} · O{candidate.outerBoardLikelihood.toFixed(2)}</span>)}</div>
-        <span>Radii: {(detection.rings ?? []).map((ring) => ring.radius.toFixed(2)).join(' · ') || '–'}</span>
-        <span>{(detection.reasons ?? []).slice(0, 3).join(' · ') || 'Warte auf Kandidatendiagnose'}</span>
-      </div>}
+      <div className="camera-debug-actions"><button type="button" className={debug ? 'active' : ''} onClick={() => setDebug((value) => !value)}>Erkennung</button><button type="button" onClick={resetDetection}>Reset</button></div>
       {detection.last !== 'keine' && <strong className="camera-hit-badge">{detection.last}</strong>}
     </>}
-  </div></section>
+  </div></section></>
 })
 
 export default CameraPreview
