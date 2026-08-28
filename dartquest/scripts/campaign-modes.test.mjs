@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { applyVisit, canCheckoutWithDarts, CHECKOUT_FINISH_VALUES, createAiVisit, createChallengeRivalMatch, createRivalMatch, currentLegStats, DARTBOARD_HIT_VALUES, findCheckoutRoute, getAvailableCheckoutDartCounts, getMinimumCheckoutDarts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, shouldRequestCheckoutConfirmation, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
+import { applyVisit, canCheckoutWithDarts, CHECKOUT_FINISH_VALUES, checkoutAttemptsForFinish, createAiVisit, createChallengeRivalMatch, createRivalMatch, currentLegStats, DARTBOARD_HIT_VALUES, findCheckoutRoute, getAvailableCheckoutDartCounts, getMinimumCheckoutDarts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, shouldRequestCheckoutConfirmation, undoPlayerRound } from '../src/features/campaignModes/rivalEngine.js'
 import { checkoutDartOptions, checkoutRewards, checkoutStarsForDarts } from '../src/features/campaignModes/checkoutRules.js'
 import { openFiveCardPack, RARITIES } from '../src/features/cards/cardCatalog.js'
 import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setupSuggestion } from '../src/features/checkout/checkoutGuide.js'
@@ -120,7 +120,7 @@ test('Rivalen- und Challenge-Long-Press bestätigt genau einmal ohne Dartanzahl-
   const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
   const longPressHandler = source.match(/function requestCheckoutByLongPress\(dartsUsed\) \{([\s\S]*?)\n  \}/)?.[1] ?? ''
 
-  assert.match(longPressHandler, /applyVisit\(match, points, true, dartsUsed, recordedCheckoutDarts\(match\) \+ 1\)/)
+  assert.match(longPressHandler, /recordedCheckoutDarts\(match\) \+ checkoutAttemptsForFinish\(points, dartsUsed\)/)
   assert.match(longPressHandler, /storeResult\(next\)/)
   assert.match(longPressHandler, /setCheckoutPrompt\(null\)/)
   assert.doesNotMatch(longPressHandler, /setCheckoutPrompt\(\{/)
@@ -260,6 +260,7 @@ test('Undo entfernt Checkout-Rohwerte vollständig aus dem Match-State', () => {
   const result = rivalMatchResult(restored)
   assert.equal(result.successfulCheckouts, 0)
   assert.equal(result.checkoutDarts, 0)
+  assert.deepEqual(restored.currentLegCheckoutDarts, [0, 0])
   assert.equal(result.checkoutRate, null)
   assert.deepEqual(result.legs, [])
 })
@@ -272,7 +273,7 @@ test('KI-Aufnahme bleibt gültig und schwankt mit Zufall', () => {
   assert.notEqual(low.points, high.points)
 })
 
-test('Statistik verwendet echte Punkte und Checkout-Darts', () => {
+test('40 mit zwei Gesamtdarts zählt Miss und Treffer als zwei Checkout-Darts', () => {
   let match = createRivalMatch('Daniel', 1, 40)
   match = applyVisit(match, 40, true, 2)
   const stats = playerMatchStats(match.players[0])
@@ -280,7 +281,7 @@ test('Statistik verwendet echte Punkte und Checkout-Darts', () => {
   assert.equal(stats.visits, 1)
   assert.equal(stats.average, 60)
   assert.equal(stats.bestCheckout, 40)
-  assert.equal(stats.checkoutRate, 100)
+  assert.equal(stats.checkoutRate, 50)
 })
 
 test('Rivalen-Checkout akzeptiert nur regelkonforme Dartzahlen', () => {
@@ -423,6 +424,7 @@ test('zufällige Herausforderung speichert 1 Checkout bei 3 Checkout-Darts als 3
     winner: 0,
     average: 120,
     checkoutDarts: 3,
+    checkoutDartsReliable: true,
     successfulCheckouts: 1,
     darts: 1,
     remaining: null,
@@ -436,7 +438,7 @@ test('gewonnenes Leg speichert Average, echte Checkout-Darts und benötigte Dart
   const result = rivalMatchResult(finished)
   assert.equal(result.won, true)
   assert.equal(result.checkoutRate, 25)
-  assert.deepEqual(result.legs, [{ number: 1, winner: 0, average: 78, checkoutDarts: 4, successfulCheckouts: 1, darts: 2, remaining: null }])
+  assert.deepEqual(result.legs, [{ number: 1, winner: 0, average: 78, checkoutDarts: 4, checkoutDartsReliable: true, successfulCheckouts: 1, darts: 2, remaining: null }])
 })
 
 test('Checkout-Darts sind unabhängig von den finalen Aufnahmedarts und dürfen größer als drei sein', () => {
@@ -466,7 +468,7 @@ test('verlorenes Leg speichert null erfolgreiche Checkouts und den Restscore', (
   const result = rivalMatchResult(match)
   assert.equal(result.won, false)
   assert.equal(result.checkoutRate, 0)
-  assert.deepEqual(result.legs[0], { number: 1, winner: 1, average: 0, checkoutDarts: 3, successfulCheckouts: 0, darts: null, remaining: 40 })
+  assert.deepEqual(result.legs[0], { number: 1, winner: 1, average: 0, checkoutDarts: 3, checkoutDartsReliable: true, successfulCheckouts: 0, darts: null, remaining: 40 })
 })
 
 test('Match-Checkoutquote verwendet Summen aller Doppel-Darts', () => {
@@ -497,6 +499,42 @@ test('drei Legs werden aus Rohwerten addiert und nicht als Prozentwerte gemittel
   assert.equal(formatCheckoutStats(3, 11), '27,3 % (3/11)')
 })
 
+test('Setup-Darts werden mathematisch von echten Checkout-Versuchen getrennt', () => {
+  for (const [score, darts, attempts] of [[40, 1, 1], [40, 2, 2], [40, 3, 3], [80, 2, 1], [81, 2, 1], [81, 3, 2], [100, 2, 1], [141, 3, 1], [170, 3, 1]]) {
+    assert.equal(checkoutAttemptsForFinish(score, darts), attempts, `${score} mit ${darts} Gesamtdarts`)
+  }
+  for (const [score, darts] of [[80, 2], [81, 2], [141, 3], [170, 3]]) {
+    const finished = applyVisit(createRivalMatch('Daniel', 1, score, 1), score, true, darts)
+    assert.equal(formatCheckoutStats(finished.legResults[0].successfulCheckouts, finished.legResults[0].checkoutDarts), '100 % (1/1)', `${score} direkter Checkout`)
+  }
+})
+
+test('81er-Finish zählt nur ausgeführte D12-Versuche und behält sie über Aufnahmen', () => {
+  const direct = applyVisit(createRivalMatch('Daniel', 1, 81, 1), 81, true, 2, checkoutAttemptsForFinish(81, 2))
+  assert.equal(formatCheckoutStats(direct.legResults[0].successfulCheckouts, direct.legResults[0].checkoutDarts), '100 % (1/1)')
+
+  const missThenHit = applyVisit(createRivalMatch('Daniel', 1, 81, 1), 81, true, 3, checkoutAttemptsForFinish(81, 3))
+  assert.equal(formatCheckoutStats(missThenHit.legResults[0].successfulCheckouts, missThenHit.legResults[0].checkoutDarts), '50 % (1/2)')
+
+  let acrossVisits = createRivalMatch('Daniel', 1, 24, 1)
+  acrossVisits = applyVisit(acrossVisits, 24, false, 3, 2)
+  acrossVisits = applyVisit(acrossVisits, 0)
+  assert.equal(acrossVisits.currentLegCheckoutDarts[0], 2)
+  acrossVisits = applyVisit(acrossVisits, 24, true, 1, 3)
+  assert.equal(formatCheckoutStats(acrossVisits.legResults[0].successfulCheckouts, acrossVisits.legResults[0].checkoutDarts), '33,3 % (1/3)')
+})
+
+test('First-to-3 summiert 1/1, 1/2 und 1/3 zu 50 Prozent (3/6)', () => {
+  let match = createRivalMatch('Daniel', 1, 40, 3)
+  for (const attempts of [1, 2, 3]) {
+    if (match.active === 1) match = applyVisit(match, 0)
+    match = applyVisit(match, 40, true, Math.min(3, attempts), attempts)
+  }
+  const result = rivalMatchResult(match)
+  assert.deepEqual(result.legs.map((leg) => leg.checkoutDarts), [1, 2, 3])
+  assert.equal(formatCheckoutStats(result.successfulCheckouts, result.checkoutDarts), '50 % (3/6)')
+})
+
 test('alte Rivalenergebnisse ohne Legdaten erhalten einen sicheren Fallback', () => {
   const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
   assert.match(source, /Match- und Leg-Statistiken: Nicht verfügbar/)
@@ -505,7 +543,16 @@ test('alte Rivalenergebnisse ohne Legdaten erhalten einen sicheren Fallback', ()
 
 test('Rivalen-Ergebnis passt auf kleine Displays ohne internen Scrollbereich', () => {
   const css = readFileSync(new URL('../src/features/campaignModes/RivalLevels.css', import.meta.url), 'utf8')
+  const source = readFileSync(new URL('../src/features/campaignModes/RivalCampaign.jsx', import.meta.url), 'utf8')
   assert.match(css, /@media\(max-height:700px\)/)
   assert.match(css, /campaign-result:has\(\.rival-result-details\)\{place-items:start center/)
-  assert.match(css, /section:has\(\.rival-result-details\)\{max-height:calc\(100dvh - 8px\);overflow:hidden/)
+  assert.match(css, /inset:0 0 calc\(78px \+ env\(safe-area-inset-bottom\)\)/)
+  assert.match(css, /section:has\(\.rival-result-details\)\{width:min\(100%,390px\);max-height:100%;overflow:hidden/)
+  assert.match(css, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/)
+  assert.match(css, /height:min\(88%,740px\)/)
+  assert.match(css, /height:min\(96%,570px\)/)
+  assert.match(css, /min-height:clamp\(44px,6\.2dvh,50px\)/)
+  assert.doesNotMatch(css, /transform:\s*scale\(/)
+  assert.match(source, /<dt>Checkoutquote<\/dt>/)
+  assert.match(source, /formatCheckoutStats\(leg\.successfulCheckouts/)
 })

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { applyVisit, createAiVisit, createChallengeRivalMatch, createRivalMatch, currentLegStats, getAvailableCheckoutDartCounts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, shouldRequestCheckoutConfirmation, undoPlayerRound } from './rivalEngine'
+import { applyVisit, checkoutAttemptsForFinish, createAiVisit, createChallengeRivalMatch, createRivalMatch, currentLegStats, getAvailableCheckoutDartCounts, isValidCheckoutAttempt, playerMatchStats, rivalAverageForLevel, rivalMatchResult, shouldRequestCheckoutConfirmation, undoPlayerRound } from './rivalEngine'
 import { buildVisitRows } from './rivalHistory'
 import { formatCheckoutStats } from './checkoutStatistics.js'
 import { isCampaignLevelUnlocked, loadCampaignProgress, saveCampaignProgress } from './campaignModeStorage'
@@ -37,6 +37,7 @@ function clearRivalDraft(profileId) {
 }
 
 function recordedCheckoutDarts(match, playerIndex = 0) {
+  if (Array.isArray(match?.currentLegCheckoutDarts)) return match.currentLegCheckoutDarts[playerIndex] ?? 0
   return (match?.legVisits ?? [])
     .filter((visit) => visit.player === playerIndex)
     .reduce((total, visit) => total + (visit.checkoutDarts ?? visit.doubleAttempts ?? 0), 0)
@@ -194,7 +195,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     setCheckoutPrompt(null)
     setCheckoutDartsInput(0)
     setInput('')
-    const next = applyVisit(match, points, true, dartsUsed, recordedCheckoutDarts(match) + 1)
+    const next = applyVisit(match, points, true, dartsUsed, recordedCheckoutDarts(match) + checkoutAttemptsForFinish(points, dartsUsed))
     setMatch(next)
     void storeResult(next)
     window.setTimeout(() => { confirming.current = false }, 250)
@@ -275,11 +276,10 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
         <CampaignResult title={match.winner === 0 ? 'Du hast gewonnen!' : 'Du hast verloren'}>
           <RivalResultDetails result={rivalMatchResult(match)} />
           {reward && (
-            <>
+            <div className="rival-result-reward">
               <strong className="result-stars">{'★'.repeat(reward.stars)}</strong>
-              <p>+{reward.xp} XP · +{reward.coins} Coins</p>
-              {reward.pack && <p>Fünfer-Kartenpaket erhalten</p>}
-            </>
+              <p>+{reward.xp} XP · +{reward.coins} Coins{reward.pack && ' · 🎴 5er-Pack'}</p>
+            </div>
           )}
           <button type="button" onClick={() => { setReward(null); challenge ? setMatch(createChallengeRivalMatch(activeProfile?.name, challenge)) : startMatch(match.level) }}>ERNEUT SPIELEN</button>
           <button type="button" onClick={() => { setReward(null); challenge ? closeChallenge() : closeMatchSelection() }}>{challenge ? 'ZURÜCK ZUR KARTE' : 'ZUR RIVALENAUSWAHL'}</button>
@@ -300,7 +300,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
             </> : <>
               <p>Wie viele Gesamtdarts wurden in der finalen Aufnahme verwendet?</p>
               <div className="checkout-attempt-choice" aria-label="Darts der finalen Aufnahme">
-                {getAvailableCheckoutDartCounts(typeof checkoutPrompt === 'object' ? checkoutPrompt.points : checkoutPrompt).map((darts) => <button type="button" key={darts} onClick={() => { setCheckoutPrompt((current) => ({ ...current, finalVisitDarts: darts })); setCheckoutDartsInput(minimumCheckoutDarts) }}><strong>{darts}</strong><span className="checkout-card-darts" aria-hidden="true">{Array.from({ length: darts }, (_, index) => <i key={index} />)}</span><small>{darts === 1 ? 'Dart' : 'Darts'}</small></button>)}
+                {getAvailableCheckoutDartCounts(typeof checkoutPrompt === 'object' ? checkoutPrompt.points : checkoutPrompt).map((darts) => <button type="button" key={darts} onClick={() => { setCheckoutPrompt((current) => ({ ...current, finalVisitDarts: darts })); setCheckoutDartsInput(recordedCheckoutDarts(match) + checkoutAttemptsForFinish(checkoutPrompt.points, darts)) }}><strong>{darts}</strong><span className="checkout-card-darts" aria-hidden="true">{Array.from({ length: darts }, (_, index) => <i key={index} />)}</span><small>{darts === 1 ? 'Dart' : 'Darts'}</small></button>)}
               </div>
             </>}
             {checkoutPrompt?.checkout && <div className="rival-checkout-divider" aria-hidden="true"><i /></div>}
@@ -390,16 +390,17 @@ function RivalResultDetails({ result, legacy = null }) {
     <header><span>{result.won ? 'MATCH GEWONNEN' : 'MATCH VERLOREN'}</span><strong>{result.playerLegs}:{result.opponentLegs}</strong></header>
     <dl>
       <div><dt>Gesamt-Average</dt><dd>{Number(result.average ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</dd></div>
-      <div><dt>Checkoutquote</dt><dd>{formatCheckoutStats(result.successfulCheckouts ?? result.checkouts, result.checkoutDarts ?? result.checkoutAttempts)}</dd></div>
       <div><dt>Darts</dt><dd>{result.darts ?? '–'}</dd></div>
       <div><dt>Höchste Aufnahme</dt><dd>{result.highestVisit ?? '–'}</dd></div>
+      {result.checkoutDartsReliable === true && (result.checkoutDarts ?? 0) > 0 && <div className="rival-checkout-stat"><dt>Checkoutquote</dt><dd>{formatCheckoutStats(result.successfulCheckouts, result.checkoutDarts)}</dd></div>}
     </dl>
     <section className="rival-leg-results">
       {!Array.isArray(result.legs) || result.legs.length === 0 ? <p>Leg-Statistiken: Nicht verfügbar</p> : result.legs.map((leg, index) => <article key={leg.number ?? index}>
-        <div><strong>Leg {leg.number ?? index + 1}</strong><b className={leg.winner === 0 ? 'won' : 'lost'}>{leg.winner === 0 ? 'Gewonnen' : 'Verloren'}</b></div>
-        <span>Average: {Number(leg.average ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
-        <span>Checkout: {formatCheckoutStats(leg.successfulCheckouts ?? leg.checkouts, leg.checkoutDarts ?? leg.checkoutAttempts)}</span>
-        <em>{leg.winner === 0 ? `Gewonnen mit ${leg.darts} Darts` : `Verloren – ${leg.remaining} Punkte Rest`}</em>
+        <strong>LEG {leg.number ?? index + 1}</strong>
+        <span>AVG {Number(leg.average ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+        <em>{leg.winner === 0 ? `${leg.darts} DARTS` : `${leg.remaining} REST`}</em>
+        {leg.checkoutDartsReliable === true && (leg.checkoutDarts ?? 0) > 0 && <small>CO {formatCheckoutStats(leg.successfulCheckouts, leg.checkoutDarts)}</small>}
+        <b className={leg.winner === 0 ? 'won' : 'lost'} aria-label={leg.winner === 0 ? 'Gewonnen' : 'Verloren'}>{leg.winner === 0 ? '✓' : '×'}</b>
       </article>)}
     </section>
   </div>
