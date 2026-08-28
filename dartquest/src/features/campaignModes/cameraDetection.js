@@ -51,13 +51,13 @@ function scoreCandidate(candidate, edge, width, height) {
     const value = sample(edge, width, height, ellipsePoint(candidate, angle))
     outer += value; outerSamples += 1; strongOuter += value > 32 ? 1 : 0
     let spoke = 0
-    for (const radius of [.18, .32, .51, .67, .82]) spoke += sample(edge, width, height, ellipsePoint(candidate, angle, radius))
+    for (const radius of [.16, .3, .45, .62, .74]) spoke += sample(edge, width, height, ellipsePoint(candidate, angle, radius))
     radial += spoke; radialSamples += 5; angularProfile.push(spoke)
   }
   const mean = angularProfile.reduce((sum, value) => sum + value, 0) / angularProfile.length
   const structureVariance = Math.sqrt(angularProfile.reduce((sum, value) => sum + (value - mean) ** 2, 0) / angularProfile.length)
   let concentric = 0
-  for (const radius of [.08, .1, .52, .55, .82, .86]) for (let degree = 0; degree < 360; degree += 30) concentric += sample(edge, width, height, ellipsePoint(candidate, degree * Math.PI / 180, radius))
+  for (const radius of [.025, .07, .43, .47, .71, .76]) for (let degree = 0; degree < 360; degree += 30) concentric += sample(edge, width, height, ellipsePoint(candidate, degree * Math.PI / 180, radius))
   const outerScore = outer / outerSamples / 95
   const closure = strongOuter / outerSamples
   const structure = radial / radialSamples / 70
@@ -84,6 +84,35 @@ function refineCenter(candidate, edge, width, height) {
     if (score > bestScore) { bestScore = score; best = test }
   }
   return best
+}
+
+function boardAnchors(candidate, edge, width, height) {
+  let bull = { x: candidate.x, y: candidate.y, confidence: 0 }
+  for (let y = candidate.y - 10; y <= candidate.y + 10; y += 2) for (let x = candidate.x - 10; x <= candidate.x + 10; x += 2) {
+    const test = { ...candidate, x, y }; let ring = 0, symmetry = 0
+    for (let angle = 0; angle < TAU; angle += Math.PI / 12) {
+      ring += sample(edge, width, height, ellipsePoint(test, angle, .03)) + sample(edge, width, height, ellipsePoint(test, angle, .07))
+      symmetry += Math.abs(sample(edge, width, height, ellipsePoint(test, angle, .15)) - sample(edge, width, height, ellipsePoint(test, angle + Math.PI, .15)))
+    }
+    const confidence = Math.max(0, Math.min(1, ring / 48 / 55 - symmetry / 24 / 180))
+    if (confidence > bull.confidence) bull = { x, y, confidence }
+  }
+  const centerWeight = bull.confidence >= .42 ? .7 : bull.confidence >= .25 ? .35 : 0
+  const x = candidate.x * (1 - centerWeight) + bull.x * centerWeight, y = candidate.y * (1 - centerWeight) + bull.y * centerWeight
+  const profile = []
+  for (let degree = 0; degree < 360; degree += 1) {
+    const angle = degree * Math.PI / 180; let strength = 0
+    for (const radius of [.28, .4, .65, .78]) strength += sample(edge, width, height, ellipsePoint({ ...candidate, x, y }, angle, radius))
+    profile.push(strength)
+  }
+  let bestPhase = 0, bestScore = -1, lineCount = 0
+  for (let phase = 0; phase < 18; phase += 1) {
+    let score = 0, strong = 0
+    for (let line = 0; line < 20; line += 1) { const value = profile[(phase + line * 18) % 360]; score += value; if (value > 90) strong += 1 }
+    if (score > bestScore) { bestScore = score; bestPhase = phase; lineCount = strong }
+  }
+  const imageUpAngle = Math.atan2(-Math.cos(candidate.rotation) / candidate.ry, -Math.sin(candidate.rotation) / candidate.rx)
+  return { x, y, bullX: bull.x, bullY: bull.y, bullConfidence: bull.confidence, spiderLines: lineCount, spiderConfidence: Math.min(1, bestScore / 20 / 180), spiderPhase: bestPhase * Math.PI / 180, boardOrientation: imageUpAngle + Math.PI / 2 }
 }
 
 function featurePoints(candidate, edge, width, height) {
@@ -116,6 +145,9 @@ function searchEllipse(imageData, previous, local) {
   }
   if (!best || best.confidence < (local ? .38 : .46)) return null
   best = refineCenter(best, edge, width, height)
+  if (best.ry / best.rx > .92) best.rotation = previous?.rotation ?? 0
+  const anchors = boardAnchors(best, edge, width, height)
+  best = { ...best, ...anchors }
   return { ...best, cx: best.x, cy: best.y, majorRadius: best.rx, minorRadius: best.ry, rotationAngle: best.rotation, features: featurePoints(best, edge, width, height), frameWidth: width, frameHeight: height }
 }
 
@@ -126,7 +158,7 @@ export function smoothBoard(previous, next, strength = .2) {
   if (!previous) return next
   const alpha = Math.max(.12, Math.min(.48, strength))
   const blend = (a, b) => a * (1 - alpha) + b * alpha
-  const result = { ...next, x: blend(previous.x, next.x), y: blend(previous.y, next.y), rx: blend(previous.rx, next.rx), ry: blend(previous.ry, next.ry), rotation: blend(previous.rotation, next.rotation), confidence: blend(previous.confidence, next.confidence) }
+  const result = { ...next, x: blend(previous.x, next.x), y: blend(previous.y, next.y), rx: blend(previous.rx, next.rx), ry: blend(previous.ry, next.ry), rotation: next.ry / next.rx > .92 ? previous.rotation : blend(previous.rotation, next.rotation), confidence: blend(previous.confidence, next.confidence), bullX: blend(previous.bullX ?? previous.x, next.bullX ?? next.x), bullY: blend(previous.bullY ?? previous.y, next.bullY ?? next.y), bullConfidence: blend(previous.bullConfidence ?? 0, next.bullConfidence ?? 0), boardOrientation: blend(previous.boardOrientation ?? 0, next.boardOrientation ?? 0) }
   return { ...result, cx: result.x, cy: result.y, majorRadius: result.rx, minorRadius: result.ry, rotationAngle: result.rotation }
 }
 

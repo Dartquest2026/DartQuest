@@ -1,16 +1,18 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { boardDelta, detectBoard, findFrameChange, getContainedVideoRect, isInTwentySector, smoothBoard, trackBoard } from '../cameraDetection'
+import { boardDelta, detectBoard, getContainedVideoRect, smoothBoard, trackBoard } from '../cameraDetection'
+import { detectNewDart, normalizeBoardFrame, scoreTwentyDart } from '../cameraDartDetection'
 import './CameraPreview.css'
 
 const ANALYSIS_WIDTH = 280
 const ANALYSIS_INTERVAL = 160
 
-const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
+const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forwardedRef) {
   const stageRef = useRef(null), videoRef = useRef(null), overlayRef = useRef(null)
   const workRef = useRef(document.createElement('canvas')), streamRef = useRef(null), trackRef = useRef(null)
   const requestRef = useRef(0), loopRef = useRef(0), lastAnalysisRef = useRef(0)
   const boardRef = useRef(null), stableFramesRef = useRef(0), referenceRef = useRef(null)
-  const previousFrameRef = useRef(null), movementSeenRef = useRef(false), markerRef = useRef(null), ringVisibleUntilRef = useRef(0)
+  const previousFrameRef = useRef(null), movementSeenRef = useRef(false), markersRef = useRef([]), ringVisibleUntilRef = useRef(0)
+  const dartPendingRef = useRef(null), dartCountRef = useRef(0), visitTotalRef = useRef(0), scoreCallbackRef = useRef(onDartScore)
   const boardStateRef = useRef('SEARCHING'), lockStreakRef = useRef(0), lostFramesRef = useRef(0), outlierRef = useRef(null)
   const debugRef = useRef(true)
   const [status, setStatus] = useState('starting'), [error, setError] = useState(''), [debug, setDebug] = useState(true)
@@ -22,7 +24,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null; trackRef.current = null
     if (videoRef.current) videoRef.current.srcObject = null
-    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markerRef.current = null
+    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
     const canvas = overlayRef.current
     if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
@@ -45,11 +47,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     context.fillStyle = '#42e69522'; context.beginPath(); context.moveTo(x, y); context.ellipse(x, y, rx, ry, board.rotation, -Math.PI / 2 - Math.PI / 20, -Math.PI / 2 + Math.PI / 20); context.closePath(); context.fill()
     context.fillStyle = '#42e695'; context.beginPath(); context.arc(x, y, 3, 0, Math.PI * 2); context.fill(); context.restore()
     if (debugRef.current) for (const feature of board.features ?? []) { context.fillStyle = '#61d9ff'; context.beginPath(); context.arc(rect.x + feature.x * sx, rect.y + feature.y * sy, 1.5, 0, Math.PI * 2); context.fill() }
-    if (markerRef.current) {
-      const mx = rect.x + markerRef.current.x * sx, my = rect.y + markerRef.current.y * sy
-      context.strokeStyle = markerRef.current.twenty ? '#ffe35b' : '#ff7f87'; context.lineWidth = 3
-      context.beginPath(); context.arc(mx, my, 8, 0, Math.PI * 2); context.moveTo(mx - 12, my); context.lineTo(mx + 12, my); context.moveTo(mx, my - 12); context.lineTo(mx, my + 12); context.stroke()
-    }
+    for (const marker of markersRef.current) { const mx = rect.x + marker.x * sx, my = rect.y + marker.y * sy; context.strokeStyle = marker.score ? '#ffe35b' : '#ff7f87'; context.lineWidth = 3; context.beginPath(); context.arc(mx, my, 8, 0, Math.PI * 2); context.moveTo(mx - 12, my); context.lineTo(mx + 12, my); context.moveTo(mx, my - 12); context.lineTo(mx, my + 12); context.stroke(); context.fillStyle = context.strokeStyle; context.font = 'bold 9px sans-serif'; context.fillText(`DART ${marker.dart}`, mx + 10, my - 8) }
   }, [])
 
   const analyse = useCallback((now) => {
@@ -91,19 +89,33 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     if (moving) { movementSeenRef.current = true; ringVisibleUntilRef.current = now + 3000 }
     boardRef.current = found
     lockStreakRef.current = moving ? Math.max(1, lockStreakRef.current - 1) : lockStreakRef.current + 1
-    if (lockStreakRef.current >= 10 && found.confidence >= .5) boardStateRef.current = 'LOCKED'
+    if (lockStreakRef.current >= 10 && found.confidence >= .5 && found.bullConfidence >= .2 && found.spiderLines >= 10) boardStateRef.current = 'LOCKED'
     else if (boardStateRef.current === 'LOCKED' && found.confidence < .42) boardStateRef.current = 'TRACKING'
     const stable = stableFramesRef.current >= 8
-    if (stable && !referenceRef.current) { referenceRef.current = gray; movementSeenRef.current = false }
-    else if (stable && movementSeenRef.current && referenceRef.current) {
-      const change = findFrameChange(referenceRef.current, gray, boardRef.current)
-      if (change) {
-        const twenty = isInTwentySector(change, boardRef.current)
-        markerRef.current = { ...change, twenty }; referenceRef.current = gray; movementSeenRef.current = false
-        setDetection((value) => ({ ...value, last: twenty ? '20' : 'außerhalb' }))
-      }
+    const lockedAndStable = boardStateRef.current === 'LOCKED' && stable
+    const normalized = lockedAndStable ? normalizeBoardFrame(image, boardRef.current) : null
+    if (lockedAndStable && !referenceRef.current) { referenceRef.current = normalized; movementSeenRef.current = false }
+    else if (lockedAndStable && referenceRef.current) {
+      const dart = detectNewDart(referenceRef.current, normalized)
+      if (dart) {
+        const pending = dartPendingRef.current, confirmed = pending && Math.hypot(pending.tip.x - dart.tip.x, pending.tip.y - dart.tip.y) < 6
+        if (!confirmed) dartPendingRef.current = dart
+        else {
+          const scored = scoreTwentyDart(dart.tip, normalized.size, boardRef.current.boardOrientation ?? 0)
+          const nx = (dart.tip.x / (normalized.size - 1) - .5) * 2, ny = (dart.tip.y / (normalized.size - 1) - .5) * 2
+          const cosine = Math.cos(boardRef.current.rotation), sine = Math.sin(boardRef.current.rotation)
+          const x = boardRef.current.x + nx * boardRef.current.rx * cosine - ny * boardRef.current.ry * sine
+          const y = boardRef.current.y + nx * boardRef.current.rx * sine + ny * boardRef.current.ry * cosine
+          if (scored) { dartCountRef.current += 1; visitTotalRef.current += scored.score }
+          markersRef.current.push({ x, y, dart: scored ? dartCountRef.current : '?', score: scored?.score ?? 0 })
+          if (scored) scoreCallbackRef.current?.(scored.score, { ...scored, confidence: dart.confidence, dartNumber: dartCountRef.current, visitTotal: visitTotalRef.current, complete: dartCountRef.current === 3 })
+          if (scored && dartCountRef.current === 3) { dartCountRef.current = 0; visitTotalRef.current = 0 }
+          referenceRef.current = normalized; movementSeenRef.current = false; dartPendingRef.current = null
+          setDetection((value) => ({ ...value, last: scored ? `${scored.label} · ${scored.score}` : 'Position unsicher', dartConfidence: dart.confidence }))
+        }
+      } else dartPendingRef.current = null
     }
-    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, lostFrames: 0, x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation }))
+    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0 }))
   }, [])
 
   const startLoop = useCallback(() => {
@@ -137,7 +149,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   }
 
   function resetDetection() {
-    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markerRef.current = null; stableFramesRef.current = 0; movementSeenRef.current = false
+    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null; dartCountRef.current = 0; visitTotalRef.current = 0; stableFramesRef.current = 0; movementSeenRef.current = false
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
     ringVisibleUntilRef.current = performance.now() + 3000; setDetection({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
   }
@@ -145,12 +157,13 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   useImperativeHandle(forwardedRef, () => ({ get videoElement() { return videoRef.current }, get stream() { return streamRef.current }, get resolution() { return { width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 } }, stop: stopCamera }), [stopCamera])
   useEffect(() => { void startCamera(); return stopCamera }, [startCamera, stopCamera])
   useEffect(() => { debugRef.current = debug }, [debug])
+  scoreCallbackRef.current = onDartScore
 
   return <section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
     <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} className="camera-detection-canvas" />
     {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
     {status === 'error' && <div className="camera-message camera-error" role="alert"><p>{error}</p><button type="button" onClick={() => void startCamera()}>ERNEUT VERSUCHEN</button></div>}
-    {status === 'active' && <><span className="camera-status">● Kamera aktiv</span><div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" disabled={!zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" disabled={!zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div><div className="camera-debug-actions"><button type="button" className={debug ? 'active' : ''} onClick={() => setDebug((value) => !value)}>Erkennung</button><button type="button" onClick={resetDetection}>Reset</button></div>{debug && <div className="camera-debug-info">Board: {detection.state}<br />Center: {detection.x?.toFixed(0) ?? '–'} / {detection.y?.toFixed(0) ?? '–'}<br />Ellipse: {detection.rx?.toFixed(0) ?? '–'} / {detection.ry?.toFixed(0) ?? '–'}<br />Rotation: {detection.rotation != null ? `${(detection.rotation * 180 / Math.PI).toFixed(1)}°` : '–'}<br />Perspective: {detection.rx ? (detection.ry / detection.rx).toFixed(2) : '–'}<br />Confidence: {detection.confidence.toFixed(2)}<br />Features: {detection.features}<br />Lost frames: {detection.lostFrames}<br />Zoom: {zoom.value.toFixed(1)}×<br />Referenz: {detection.reference ? 'bereit' : 'wartet'}<br />Letzte Erkennung: {detection.last}</div>}{detection.last !== 'keine' && <strong className="camera-hit-badge">{detection.last === '20' ? '20 ERKANNT' : 'TREFFER AUSSERHALB 20'}</strong>}</>}
+    {status === 'active' && <><span className="camera-status">● Kamera aktiv</span><div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" disabled={!zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" disabled={!zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div><div className="camera-debug-actions"><button type="button" className={debug ? 'active' : ''} onClick={() => setDebug((value) => !value)}>Erkennung</button><button type="button" onClick={resetDetection}>Reset</button></div>{debug && <div className="camera-debug-info">BOARD: {detection.state}<br />Bull: {(detection.bullConfidence ?? 0) >= .42 ? 'FOUND' : 'NOT FOUND'} ({(detection.bullConfidence ?? 0).toFixed(2)})<br />Spider: {detection.spiderLines ?? 0}/20 lines<br />Board features: {detection.features}<br />Tracking features: {detection.trackingFeatures ?? 0}<br />Reprojection: {(detection.reprojection ?? 0).toFixed(1)} px<br />Center: {detection.x?.toFixed(0) ?? '–'} / {detection.y?.toFixed(0) ?? '–'}<br />Ellipse: {detection.rx?.toFixed(0) ?? '–'} / {detection.ry?.toFixed(0) ?? '–'}<br />Ellipse angle: {detection.rotation != null ? `${(detection.rotation * 180 / Math.PI).toFixed(1)}°` : '–'}<br />Perspective: {detection.rx ? (detection.ry / detection.rx).toFixed(2) : '–'}<br />Board orientation: {((detection.orientation ?? 0) * 180 / Math.PI).toFixed(1)}°<br />Confidence: {detection.confidence.toFixed(2)}<br />Lost frames: {detection.lostFrames}<br />Zoom: {zoom.value.toFixed(1)}×<br />Referenz: {detection.reference ? 'BEREIT' : 'wartet'}<br />Letzte Erkennung: {detection.last}{detection.dartConfidence ? ` (${detection.dartConfidence.toFixed(2)})` : ''}</div>}{detection.last !== 'keine' && <strong className="camera-hit-badge">{detection.last}</strong>}</>}
   </div></section>
 })
 

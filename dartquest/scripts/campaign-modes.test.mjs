@@ -9,6 +9,7 @@ import { isBogeyNumber, isCheckoutScore } from '../src/features/checkout/checkou
 import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
 import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
 import { boardDelta, getContainedVideoRect, isInTwentySector, normalizeBoardPoint, smoothBoard } from '../src/features/campaignModes/cameraDetection.js'
+import { detectNewDart, scoreTwentyDart } from '../src/features/campaignModes/cameraDartDetection.js'
 
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
   const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
@@ -43,6 +44,23 @@ test('Board-Tracking glättet Ellipsenparameter und quantifiziert Ausreißer', (
   assert.equal(smoothed.y, 101.2)
   assert.ok(smoothed.rotation > 0 && smoothed.rotation < next.rotation)
   assert.ok(boardDelta(previous, { ...previous, x: 140 }) > boardDelta(previous, next))
+})
+
+test('Dart-Differenz ignoriert das unveränderte Referenzboard und erkennt eine neue längliche Struktur', () => {
+  const size = 160, reference = { size, pixels: new Uint8Array(size * size).fill(100) }
+  assert.equal(detectNewDart(reference, { size, pixels: reference.pixels.slice() }), null)
+  const pixels = reference.pixels.slice()
+  for (let y = 22; y <= 62; y += 1) for (let x = 78; x <= 81; x += 1) pixels[y * size + x] = 190
+  const dart = detectNewDart(reference, { size, pixels })
+  assert.ok(dart)
+  assert.ok(dart.confidence >= .56)
+})
+
+test('20er-Test unterscheidet Single, Triple und Double radial', () => {
+  const tip = (radius) => ({ x: 79.5, y: 79.5 - radius * 79.5 })
+  assert.deepEqual(scoreTwentyDart(tip(.35)), { label: 'S20', score: 20 })
+  assert.deepEqual(scoreTwentyDart(tip(.46)), { label: 'T20', score: 60 })
+  assert.deepEqual(scoreTwentyDart(tip(.74)), { label: 'D20', score: 40 })
 })
 
 test('Rivalen-Average folgt der Levelkurve', () => {
