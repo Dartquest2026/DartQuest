@@ -8,7 +8,7 @@ import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setup
 import { isBogeyNumber, isCheckoutScore } from '../src/features/checkout/checkoutGuide.js'
 import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
 import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
-import { getContainedVideoRect, isInTwentySector } from '../src/features/campaignModes/cameraDetection.js'
+import { boardDelta, getContainedVideoRect, isInTwentySector, normalizeBoardPoint, smoothBoard } from '../src/features/campaignModes/cameraDetection.js'
 
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
   const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
@@ -29,6 +29,20 @@ test('Kamera-Overlay bildet contain-Balken und den oberen 20er-Sektor korrekt ab
   const board = { x: 100, y: 100, rx: 80, ry: 80 }
   assert.equal(isInTwentySector({ x: 100, y: 25 }, board), true)
   assert.equal(isInTwentySector({ x: 175, y: 100 }, board), false)
+  const tilted = { x: 100, y: 100, rx: 80, ry: 48, rotation: Math.PI / 6 }
+  const top = { x: 100 + 24, y: 100 - 48 * Math.cos(Math.PI / 6) }
+  assert.ok(Math.abs(normalizeBoardPoint(top, tilted).x) < .01)
+  assert.equal(isInTwentySector(top, tilted), true)
+})
+
+test('Board-Tracking glättet Ellipsenparameter und quantifiziert Ausreißer', () => {
+  const previous = { x: 100, y: 100, rx: 80, ry: 60, rotation: 0, confidence: .9 }
+  const next = { x: 110, y: 106, rx: 84, ry: 58, rotation: .1, confidence: .8 }
+  const smoothed = smoothBoard(previous, next, .2)
+  assert.equal(smoothed.x, 102)
+  assert.equal(smoothed.y, 101.2)
+  assert.ok(smoothed.rotation > 0 && smoothed.rotation < next.rotation)
+  assert.ok(boardDelta(previous, { ...previous, x: 140 }) > boardDelta(previous, next))
 })
 
 test('Rivalen-Average folgt der Levelkurve', () => {
