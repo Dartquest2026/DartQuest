@@ -153,9 +153,9 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     setReward({ ...delta, stars, pack: firstPack })
   }
 
-  function commit(validCheckout = false, checkoutDart = 3, checkoutDartsForLeg = 0, pointsOverride = null) {
+  function commit(validCheckout = false, checkoutDart = 3, checkoutDartsForLeg = 0) {
     if (confirming.current || !match || match.active !== 0) return
-    const points = pointsOverride == null ? Number(input) : Number(pointsOverride)
+    const points = Number(input)
     if (!Number.isInteger(points) || points < 0 || points > 180) return
     const checkoutCompleted = shouldRequestCheckoutConfirmation(match.players[0].score, points)
     if (checkoutCompleted && !validCheckout) {
@@ -202,12 +202,6 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
     setMatch(next)
     void storeResult(next)
     window.setTimeout(() => { confirming.current = false }, 250)
-  }
-
-  function handleCameraDartScore(_score, dart) {
-    if (!cameraTest || match?.active !== 0 || match?.winner != null) return
-    setInput(String(dart.visitTotal))
-    if (dart.complete) commit(false, 3, 0, dart.visitTotal)
   }
 
   function closeChallenge() {
@@ -283,7 +277,7 @@ export default function RivalCampaign({ activeProfile, onProfileRewards, onBack,
 
       {aiThinking && <div className="rival-thinking" aria-live="polite">Rivale wirft …</div>}
       {match.winner == null && (cameraTest && cameraEnabled
-        ? <CameraPreview onDartScore={handleCameraDartScore} />
+        ? <CameraPreview />
         : <ScoreKeypad value={input} onChange={setInput} onConfirm={() => commit(false)} disabled={match.active !== 0} fill checkoutDartCounts={availableCheckoutDarts} onCheckoutLongPress={requestCheckoutByLongPress} />)}
       {checkoutHelpOpen && <CheckoutRouteOverlay score={human.score} onClose={() => setCheckoutHelpOpen(false)} />}
       {match.winner != null && (

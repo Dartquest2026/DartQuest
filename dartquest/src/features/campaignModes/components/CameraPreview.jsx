@@ -1,23 +1,26 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { boardDelta, detectBoard, getContainedVideoRect, smoothBoard, trackBoard } from '../cameraDetection'
-import { detectNewDart, normalizeBoardFrame, scoreTwentyDart } from '../cameraDartDetection'
 import CameraCalibrationLab from './CameraCalibrationLab'
+import { calibrateBoard, calibrationFromManualKeypoints, renderNormalizedBoard } from '../cameraVision/boardCalibration'
+import { BOARD_MODEL_RADII, NORMALIZED_CENTER, SEGMENT_BOUNDARY_ANGLES } from '../cameraVision/boardGeometry'
+import { projectPoint } from '../cameraVision/boardHomography'
 import './CameraPreview.css'
 
 const ANALYSIS_WIDTH = 280
 const ANALYSIS_INTERVAL = 160
 
-const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forwardedRef) {
+const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   const stageRef = useRef(null), videoRef = useRef(null), overlayRef = useRef(null)
   const workRef = useRef(document.createElement('canvas')), streamRef = useRef(null), trackRef = useRef(null)
   const requestRef = useRef(0), loopRef = useRef(0), lastAnalysisRef = useRef(0)
   const boardRef = useRef(null), stableFramesRef = useRef(0), referenceRef = useRef(null)
   const previousFrameRef = useRef(null), movementSeenRef = useRef(false), markersRef = useRef([]), ringVisibleUntilRef = useRef(0)
-  const dartPendingRef = useRef(null), dartCountRef = useRef(0), visitTotalRef = useRef(0), scoreCallbackRef = useRef(onDartScore)
   const boardStateRef = useRef('SEARCHING'), lockStreakRef = useRef(0), lostFramesRef = useRef(0), outlierRef = useRef(null)
   const candidateHistoryRef = useRef([]), candidateChangedFramesRef = useRef(0), geometryJumpCountRef = useRef(0), lastDetectionAtRef = useRef(0)
+  const calibrationRef = useRef(null), calibrationPendingRef = useRef(null), normalizedCanvasRef = useRef(document.createElement('canvas')), analysisFrameRef = useRef(null), manualPointsRef = useRef([])
   const debugRef = useRef(true)
   const [status, setStatus] = useState('starting'), [error, setError] = useState(''), [debug, setDebug] = useState(true)
+  const [manualMode, setManualMode] = useState(false)
   const [zoom, setZoom] = useState({ value: 1, min: 1, max: 1, step: .1, hardware: false })
   const [detection, setDetection] = useState({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
 
@@ -26,9 +29,10 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null; trackRef.current = null
     if (videoRef.current) videoRef.current.srcObject = null
-    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null
+    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
     candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; geometryJumpCountRef.current = 0
+    calibrationRef.current = null; calibrationPendingRef.current = null; manualPointsRef.current = []
     const canvas = overlayRef.current
     if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
   }, [])
@@ -57,6 +61,16 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
       const bx = rect.x + (board.bullX ?? board.x) * sx, by = rect.y + (board.bullY ?? board.y) * sy; context.strokeStyle = '#ffe35b'; context.beginPath(); context.moveTo(bx - 5, by); context.lineTo(bx + 5, by); context.moveTo(bx, by - 5); context.lineTo(bx, by + 5); context.stroke(); context.fillStyle = '#ffe35b'; context.font = 'bold 9px sans-serif'; context.fillText('B', bx + 6, by - 4)
       context.strokeStyle = '#61d9ff44'; for (let line = 0; line < Math.min(20, board.spiderLines ?? 0); line += 1) { const angle = (board.spiderPhase ?? 0) + line * Math.PI / 10; context.beginPath(); context.moveTo(x, y); context.lineTo(x + Math.cos(angle) * rx * .76, y + Math.sin(angle) * ry * .76); context.stroke() } context.restore()
     }
+    const calibration = calibrationRef.current
+    if (debugRef.current && calibration?.inverseHomography) {
+      const project = (point) => { const source = projectPoint(calibration.inverseHomography, point); return source ? { x: rect.x + source.x * sx, y: rect.y + source.y * sy } : null }
+      context.save(); context.strokeStyle = '#ffe35bcc'; context.lineWidth = 1.4
+      for (const radius of Object.values(BOARD_MODEL_RADII)) { context.beginPath(); for (let step = 0; step <= 72; step += 1) { const angle = step / 72 * Math.PI * 2, point = project({ x: NORMALIZED_CENTER + Math.cos(angle) * radius, y: NORMALIZED_CENTER + Math.sin(angle) * radius }); if (point) step ? context.lineTo(point.x, point.y) : context.moveTo(point.x, point.y) } context.stroke() }
+      for (const angle of SEGMENT_BOUNDARY_ANGLES) { const start = project({ x: NORMALIZED_CENTER + Math.cos(angle) * BOARD_MODEL_RADII.outerBull, y: NORMALIZED_CENTER + Math.sin(angle) * BOARD_MODEL_RADII.outerBull }), end = project({ x: NORMALIZED_CENTER + Math.cos(angle) * BOARD_MODEL_RADII.doubleOuter, y: NORMALIZED_CENTER + Math.sin(angle) * BOARD_MODEL_RADII.doubleOuter }); if (start && end) { context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke() } }
+      const names = [['top','K1'],['right','K2'],['bottom','K3'],['left','K4']]; context.fillStyle = '#ff65d8'; context.font = 'bold 10px sans-serif'
+      for (const [name,label] of names) { const point = calibration.keypoints?.[name]; if (!point) continue; const px = rect.x + point.x * sx, py = rect.y + point.y * sy; context.beginPath(); context.arc(px, py, 4, 0, Math.PI * 2); context.fill(); context.fillText(label, px + 5, py - 5) }
+      context.restore()
+    }
     if (debugRef.current) for (const feature of board.features ?? []) { context.fillStyle = '#61d9ff'; context.beginPath(); context.arc(rect.x + feature.x * sx, rect.y + feature.y * sy, 1.5, 0, Math.PI * 2); context.fill() }
     for (const marker of markersRef.current) { const mx = rect.x + marker.x * sx, my = rect.y + marker.y * sy; context.strokeStyle = marker.score ? '#ffe35b' : '#ff7f87'; context.lineWidth = 3; context.beginPath(); context.arc(mx, my, 8, 0, Math.PI * 2); context.moveTo(mx - 12, my); context.lineTo(mx + 12, my); context.moveTo(mx, my - 12); context.lineTo(mx, my + 12); context.stroke(); context.fillStyle = context.strokeStyle; context.font = 'bold 9px sans-serif'; context.fillText(`DART ${marker.dart}`, mx + 10, my - 8) }
   }, [])
@@ -70,6 +84,7 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     work.width = ANALYSIS_WIDTH; work.height = height
     const context = work.getContext('2d', { willReadFrequently: true }); context.drawImage(video, 0, 0, ANALYSIS_WIDTH, height)
     const image = context.getImageData(0, 0, ANALYSIS_WIDTH, height), previous = boardRef.current
+    analysisFrameRef.current = image
     let found = boardStateRef.current === 'SEARCHING' ? detectBoard(image) : trackBoard(image, previous)
     if (!found) {
       stableFramesRef.current = 0; lostFramesRef.current += 1
@@ -99,6 +114,15 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     stableFramesRef.current = moving ? 0 : stableFramesRef.current + 1
     if (moving) { movementSeenRef.current = true; ringVisibleUntilRef.current = now + 3000 }
     boardRef.current = found
+    if (!calibrationRef.current?.manual) {
+      const proposed = calibrateBoard(image, found)
+      if (proposed.homography && proposed.condition !== 'BAD') {
+        const pending = calibrationPendingRef.current, agrees = pending && Math.abs((pending.value.reprojectionError ?? 99) - proposed.reprojectionError) < 3
+        calibrationPendingRef.current = { value: proposed, frames: agrees ? pending.frames + 1 : 1 }
+        if (calibrationPendingRef.current.frames >= 3) { calibrationRef.current = { ...proposed, state: calibrationRef.current ? 'TRACKING' : proposed.state }; calibrationPendingRef.current = null }
+      }
+    }
+    if (calibrationRef.current?.inverseHomography) renderNormalizedBoard(normalizedCanvasRef.current, image, calibrationRef.current.inverseHomography)
     const previousSelection = candidateHistoryRef.current.at(-1)
     if (previousSelection) {
       const radiusChange = Math.abs(previousSelection.radius - found.rx) / previousSelection.radius, centerChange = Math.hypot(previousSelection.x - found.x, previousSelection.y - found.y)
@@ -115,30 +139,8 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
     if (lockStreakRef.current >= 10 && found.confidence >= .5 && found.bullConfidence >= .2 && found.spiderLines >= 10) boardStateRef.current = 'LOCKED'
     else if (boardStateRef.current === 'LOCKED' && found.confidence < .42) boardStateRef.current = 'TRACKING'
     const stable = stableFramesRef.current >= 8
-    const lockedAndStable = boardStateRef.current === 'LOCKED' && stable
-    const normalized = lockedAndStable ? normalizeBoardFrame(image, boardRef.current) : null
-    if (lockedAndStable && !referenceRef.current) { referenceRef.current = normalized; movementSeenRef.current = false }
-    else if (lockedAndStable && referenceRef.current) {
-      const dart = detectNewDart(referenceRef.current, normalized)
-      if (dart) {
-        const pending = dartPendingRef.current, confirmed = pending && Math.hypot(pending.tip.x - dart.tip.x, pending.tip.y - dart.tip.y) < 6
-        if (!confirmed) dartPendingRef.current = dart
-        else {
-          const scored = scoreTwentyDart(dart.tip, normalized.size, boardRef.current.boardOrientation ?? 0)
-          const nx = (dart.tip.x / (normalized.size - 1) - .5) * 2, ny = (dart.tip.y / (normalized.size - 1) - .5) * 2
-          const cosine = Math.cos(boardRef.current.rotation), sine = Math.sin(boardRef.current.rotation)
-          const x = boardRef.current.x + nx * boardRef.current.rx * cosine - ny * boardRef.current.ry * sine
-          const y = boardRef.current.y + nx * boardRef.current.rx * sine + ny * boardRef.current.ry * cosine
-          if (scored) { dartCountRef.current += 1; visitTotalRef.current += scored.score }
-          markersRef.current.push({ x, y, dart: scored ? dartCountRef.current : '?', score: scored?.score ?? 0 })
-          if (scored) scoreCallbackRef.current?.(scored.score, { ...scored, confidence: dart.confidence, dartNumber: dartCountRef.current, visitTotal: visitTotalRef.current, complete: dartCountRef.current === 3 })
-          if (scored && dartCountRef.current === 3) { dartCountRef.current = 0; visitTotalRef.current = 0 }
-          referenceRef.current = normalized; movementSeenRef.current = false; dartPendingRef.current = null
-          setDetection((value) => ({ ...value, last: scored ? `${scored.label} · ${scored.score}` : 'Position unsicher', dartConfidence: dart.confidence }))
-        }
-      } else dartPendingRef.current = null
-    }
-    setDetection((value) => ({ ...value, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, geometryJumpCount: geometryJumpCountRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: Boolean(referenceRef.current), features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
+    referenceRef.current = null
+    setDetection((value) => ({ ...value, calibration: calibrationRef.current, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, geometryJumpCount: geometryJumpCountRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: false, features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
   }, [])
 
   const startLoop = useCallback(() => {
@@ -172,24 +174,43 @@ const CameraPreview = forwardRef(function CameraPreview({ onDartScore }, forward
   }
 
   function resetDetection() {
-    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; dartPendingRef.current = null; dartCountRef.current = 0; visitTotalRef.current = 0; stableFramesRef.current = 0; movementSeenRef.current = false
+    boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; stableFramesRef.current = 0; movementSeenRef.current = false
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
     candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; geometryJumpCountRef.current = 0; lastDetectionAtRef.current = 0
+    calibrationRef.current = null; calibrationPendingRef.current = null; manualPointsRef.current = []; setManualMode(false)
     ringVisibleUntilRef.current = performance.now() + 3000; setDetection({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
   }
 
   useImperativeHandle(forwardedRef, () => ({ get videoElement() { return videoRef.current }, get stream() { return streamRef.current }, get resolution() { return { width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 } }, stop: stopCamera }), [stopCamera])
   useEffect(() => { void startCamera(); return stopCamera }, [startCamera, stopCamera])
   useEffect(() => { debugRef.current = debug }, [debug])
-  scoreCallbackRef.current = onDartScore
 
   function logSnapshot() {
     const snapshot = { boardState: detection.state, selectedCandidate: detection.selectedCandidateId, trackedBoard: detection.trackedCandidateId, candidates: detection.candidates, bull: { x: detection.bullX, y: detection.bullY, confidence: detection.bullConfidence }, rings: detection.rings, spider: { lines: detection.spiderLines, confidence: detection.spiderConfidence }, tracking: { features: detection.trackingFeatures, error: detection.reprojection, stableFrames: detection.stableFrames, lostFrames: detection.lostFrames }, jitter: { centerPx: detection.centerJitter, radiusPercent: detection.radiusJitter } }
     console.log('DartQuest camera detection snapshot', snapshot); console.table(detection.candidates ?? [])
   }
 
-  return <>{debug && <CameraCalibrationLab detection={detection} zoom={zoom} video={{ width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 }} onSnapshot={logSnapshot} />}<section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
-    <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} className="camera-detection-canvas" />
+  function toggleManualCalibration() {
+    manualPointsRef.current = []; setManualMode((value) => !value)
+  }
+
+  function setManualPoint(event) {
+    if (!manualMode || !videoRef.current?.videoWidth || !stageRef.current) return
+    const bounds = stageRef.current.getBoundingClientRect(), rect = getContainedVideoRect(videoRef.current.videoWidth, videoRef.current.videoHeight, bounds.width, bounds.height)
+    const x = (event.clientX - bounds.left - rect.x) / rect.width * ANALYSIS_WIDTH
+    const analysisHeight = Math.round(ANALYSIS_WIDTH * videoRef.current.videoHeight / videoRef.current.videoWidth)
+    const y = (event.clientY - bounds.top - rect.y) / rect.height * analysisHeight
+    if (x < 0 || y < 0 || x > ANALYSIS_WIDTH || y > analysisHeight) return
+    manualPointsRef.current.push({ x, y })
+    if (manualPointsRef.current.length === 4) {
+      calibrationRef.current = calibrationFromManualKeypoints(manualPointsRef.current)
+      if (analysisFrameRef.current) renderNormalizedBoard(normalizedCanvasRef.current, analysisFrameRef.current, calibrationRef.current.inverseHomography)
+      setDetection((value) => ({ ...value, calibration: calibrationRef.current })); setManualMode(false)
+    }
+  }
+
+  return <>{debug && <CameraCalibrationLab detection={detection} zoom={zoom} video={{ width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 }} normalizedCanvas={normalizedCanvasRef.current} manualMode={manualMode} manualPointCount={manualPointsRef.current.length} onManualToggle={toggleManualCalibration} onSnapshot={logSnapshot} />}<section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
+    <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} className={`camera-detection-canvas${manualMode ? ' is-manual' : ''}`} onPointerDown={setManualPoint} />
     {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
     {status === 'error' && <div className="camera-message camera-error" role="alert"><p>{error}</p><button type="button" onClick={() => void startCamera()}>ERNEUT VERSUCHEN</button></div>}
     {status === 'active' && <>

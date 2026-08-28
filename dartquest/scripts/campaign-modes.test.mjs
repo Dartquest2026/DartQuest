@@ -10,6 +10,9 @@ import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
 import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
 import { boardDelta, getContainedVideoRect, isInTwentySector, normalizeBoardPoint, rankOuterBoardCandidates, smoothBoard } from '../src/features/campaignModes/cameraDetection.js'
 import { detectNewDart, scoreTwentyDart } from '../src/features/campaignModes/cameraDartDetection.js'
+import { calibrationFromManualKeypoints } from '../src/features/campaignModes/cameraVision/boardCalibration.js'
+import { BOARD_MODEL_RADII, NORMALIZED_CENTER, STEEL_BOARD_MM } from '../src/features/campaignModes/cameraVision/boardGeometry.js'
+import { findHomography, invertHomography, projectPoint, reprojectionError } from '../src/features/campaignModes/cameraVision/boardHomography.js'
 
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
   const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
@@ -83,6 +86,35 @@ test('Calibration Lab speichert lokal, misst fünf Sekunden und exportiert JSON'
   assert.match(source, /geometryJumpCount/)
   assert.match(source, /MESSUNG SPEICHERN/)
   assert.match(source, /DATEN KOPIEREN/)
+})
+
+test('Vier Referenzpunkte erzeugen eine invertierbare Homographie mit kleinem Projektionsfehler', () => {
+  const matches = [
+    [{ x: 80, y: 20 }, { x: 256, y: 40 }], [{ x: 180, y: 70 }, { x: 472, y: 256 }],
+    [{ x: 150, y: 190 }, { x: 256, y: 472 }], [{ x: 30, y: 140 }, { x: 40, y: 256 }],
+  ].map(([source, target]) => ({ source, target }))
+  const matrix = findHomography(matches), inverse = invertHomography(matrix)
+  assert.ok(matrix); assert.ok(inverse); assert.ok(reprojectionError(matrix, matches) < .001)
+  const projected = projectPoint(inverse, projectPoint(matrix, { x: 100, y: 100 }))
+  assert.ok(Math.hypot(projected.x - 100, projected.y - 100) < .001)
+})
+
+test('Manuelle Vierpunktkalibrierung und Standard-Boardmaße sind zentral verfügbar', () => {
+  const calibration = calibrationFromManualKeypoints([{ x: 100, y: 20 }, { x: 180, y: 100 }, { x: 100, y: 180 }, { x: 20, y: 100 }])
+  assert.equal(calibration.state, 'CALIBRATED'); assert.equal(calibration.manual, true); assert.equal(calibration.matchCount, 4)
+  assert.equal(STEEL_BOARD_MM.doubleOuterRadius, 170)
+  assert.ok(BOARD_MODEL_RADII.doubleOuter > BOARD_MODEL_RADII.tripleOuter)
+  assert.equal(NORMALIZED_CENTER, 256)
+})
+
+test('Kamera-Meilenstein deaktiviert Dart-Differenz und erweitert Calibration-Samples um Homographie', () => {
+  const camera = readFileSync(new URL('../src/features/campaignModes/components/CameraPreview.jsx', import.meta.url), 'utf8')
+  const lab = readFileSync(new URL('../src/features/campaignModes/components/CameraCalibrationLab.jsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(camera, /detectNewDart|scoreTwentyDart|onDartScore/)
+  assert.match(camera, /calibrateBoard/)
+  assert.match(lab, /keypointConfidences/)
+  assert.match(lab, /reprojectionError/)
+  assert.match(lab, /geometryValidationScore/)
 })
 
 test('Rivalen-Average folgt der Levelkurve', () => {
