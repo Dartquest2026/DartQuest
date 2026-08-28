@@ -8,6 +8,7 @@ import { BOGEY_NUMBERS, CHECKOUT_TABLE, checkoutRoutes, getCheckoutAdvice, setup
 import { isBogeyNumber, isCheckoutScore } from '../src/features/checkout/checkoutGuide.js'
 import { buildVisitRows } from '../src/features/campaignModes/rivalHistory.js'
 import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } from '../src/features/campaignModes/checkoutStatistics.js'
+import { getContainedVideoRect, isInTwentySector } from '../src/features/campaignModes/cameraDetection.js'
 
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
   const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
@@ -21,6 +22,13 @@ test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschrit
   assert.match(camera, /facingMode: \{ ideal: 'environment' \}/)
   assert.match(camera, /getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/)
   assert.match(camera, /autoPlay playsInline muted/)
+})
+
+test('Kamera-Overlay bildet contain-Balken und den oberen 20er-Sektor korrekt ab', () => {
+  assert.deepEqual(getContainedVideoRect(1080, 1920, 500, 300), { x: 165.625, y: 0, width: 168.75, height: 300, scale: 0.15625 })
+  const board = { x: 100, y: 100, rx: 80, ry: 80 }
+  assert.equal(isInTwentySector({ x: 100, y: 25 }, board), true)
+  assert.equal(isInTwentySector({ x: 175, y: 100 }, board), false)
 })
 
 test('Rivalen-Average folgt der Levelkurve', () => {
