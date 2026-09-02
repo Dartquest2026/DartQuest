@@ -1,5 +1,6 @@
 import './CampaignGameUI.css'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { triggerHaptic } from '../../settings/haptics'
 
 export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'] }) {
   return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? 'Noch nicht geworfen' : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
@@ -15,11 +16,18 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
   const suppressClickTimer = useRef(null)
   const confirmDisabled = disabled || value === '' || Number(value) > 180
 
-  function press(key, action) {
+  useEffect(() => () => {
+    if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current)
+    if (holdTimer.current) window.clearTimeout(holdTimer.current)
+    if (suppressClickTimer.current) window.clearTimeout(suppressClickTimer.current)
+  }, [])
+
+  function press(key, action, hapticType = 'light') {
     setPressedKey(key)
     if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current)
     feedbackTimer.current = window.setTimeout(() => setPressedKey(null), 820)
     action()
+    triggerHaptic(hapticType)
   }
 
   function keyClass(key, extra = '') {
@@ -48,7 +56,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
       holdStart.current = null
       suppressNextClick()
       setHoldingKey(null)
-      navigator.vibrate?.(35)
+      triggerHaptic('medium')
       onCheckoutLongPress(number)
     }, 600)
   }
@@ -73,7 +81,8 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
       if (suppressClickTimer.current) window.clearTimeout(suppressClickTimer.current)
       return
     }
-    press(`number-${number}`, () => onChange((value + number).slice(0, 3)))
+    const nextValue = (value + number).slice(0, 3)
+    press(`number-${number}`, () => onChange(nextValue), Number(nextValue) > 180 ? 'error' : 'light')
   }
 
   const numberButton = (number) => {
@@ -96,7 +105,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
       {numberButton(8)}
       {numberButton(9)}
       <button type="button" className={keyClass('backspace')} disabled={disabled} onClick={() => press('backspace', () => onChange(value.slice(0, -1)))} aria-label="Letzte Ziffer löschen">⌫</button>
-      <button type="button" className={keyClass('number-0', 'score-zero')} disabled={disabled} onClick={() => press('number-0', () => onChange((value + '0').slice(0, 3)))}>0</button>
+      <button type="button" className={keyClass('number-0', 'score-zero')} disabled={disabled} onClick={() => { const nextValue = (value + '0').slice(0, 3); press('number-0', () => onChange(nextValue), Number(nextValue) > 180 ? 'error' : 'light') }}>0</button>
       <button className={keyClass('confirm', 'score-confirm')} type="button" disabled={confirmDisabled} onClick={() => press('confirm', onConfirm)} aria-label="Eingabe bestätigen">✓ <span>OK</span></button>
     </div>
   </section>

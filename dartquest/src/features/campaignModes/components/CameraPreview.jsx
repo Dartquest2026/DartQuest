@@ -1,9 +1,10 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { boardDelta, detectBoard, getContainedVideoRect, smoothBoard, trackBoard } from '../cameraDetection'
+import { boardDelta, detectBoard, smoothBoard, trackBoard } from '../cameraDetection'
 import CameraCalibrationLab from './CameraCalibrationLab'
 import { calibrateBoard, calibrationFromManualKeypoints, renderNormalizedBoard } from '../cameraVision/boardCalibration'
-import { BOARD_MODEL_RADII, NORMALIZED_CENTER, SEGMENT_BOUNDARY_ANGLES } from '../cameraVision/boardGeometry'
+import { BOARD_MODEL_RADII, GROUND_TRUTH_POINTS, NORMALIZED_CENTER, SEGMENT_BOUNDARY_ANGLES } from '../cameraVision/boardGeometry'
 import { projectPoint } from '../cameraVision/boardHomography'
+import { createVideoDisplayTransform, displayPointToVideoPoint, videoPointToDisplayPoint } from '../cameraVision/coordinateTransforms'
 import './CameraPreview.css'
 
 const ANALYSIS_WIDTH = 280
@@ -17,10 +18,10 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   const previousFrameRef = useRef(null), movementSeenRef = useRef(false), markersRef = useRef([]), ringVisibleUntilRef = useRef(0)
   const boardStateRef = useRef('SEARCHING'), lockStreakRef = useRef(0), lostFramesRef = useRef(0), outlierRef = useRef(null)
   const candidateHistoryRef = useRef([]), candidateChangedFramesRef = useRef(0), geometryJumpCountRef = useRef(0), lastDetectionAtRef = useRef(0)
-  const calibrationRef = useRef(null), calibrationPendingRef = useRef(null), normalizedCanvasRef = useRef(document.createElement('canvas')), analysisFrameRef = useRef(null), manualPointsRef = useRef([])
-  const debugRef = useRef(true)
+  const calibrationRef = useRef(null), autoCalibrationRef = useRef(null), autoOrientationRef = useRef(null), calibrationPendingRef = useRef(null), normalizedCanvasRef = useRef(document.createElement('canvas')), analysisFrameRef = useRef(null), manualPointsRef = useRef([]), calibrationRejectedRef = useRef(0)
+  const debugRef = useRef(true), manualModeRef = useRef(false)
   const [status, setStatus] = useState('starting'), [error, setError] = useState(''), [debug, setDebug] = useState(true)
-  const [manualMode, setManualMode] = useState(false)
+  const [manualMode, setManualMode] = useState(false), [manualPointCount, setManualPointCount] = useState(0)
   const [zoom, setZoom] = useState({ value: 1, min: 1, max: 1, step: .1, hardware: false })
   const [detection, setDetection] = useState({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
 
@@ -32,7 +33,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
     candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; geometryJumpCountRef.current = 0
-    calibrationRef.current = null; calibrationPendingRef.current = null; manualPointsRef.current = []
+    calibrationRef.current = null; autoCalibrationRef.current = null; autoOrientationRef.current = null; calibrationPendingRef.current = null; manualPointsRef.current = []; calibrationRejectedRef.current = 0
     const canvas = overlayRef.current
     if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
   }, [])
@@ -44,7 +45,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) { canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio) }
     const context = canvas.getContext('2d'); context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, width, height)
     if (!debugRef.current || !board) return
-    const rect = getContainedVideoRect(video.videoWidth, video.videoHeight, width, height)
+    const rect = createVideoDisplayTransform(video.videoWidth, video.videoHeight, width, height)
     const sx = rect.width / board.frameWidth, sy = rect.height / board.frameHeight
     const x = rect.x + board.x * sx, y = rect.y + board.y * sy, rx = board.rx * sx, ry = board.ry * sy
     const opacity = now < ringVisibleUntilRef.current ? 1 : Math.max(0, 1 - (now - ringVisibleUntilRef.current) / 800)
@@ -63,13 +64,19 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     }
     const calibration = calibrationRef.current
     if (debugRef.current && calibration?.inverseHomography) {
-      const project = (point) => { const source = projectPoint(calibration.inverseHomography, point); return source ? { x: rect.x + source.x * sx, y: rect.y + source.y * sy } : null }
+      const calibrationTransform = createVideoDisplayTransform(calibration.sourceSize?.width ?? board.frameWidth, calibration.sourceSize?.height ?? board.frameHeight, width, height)
+      const project = (point) => { const source = projectPoint(calibration.inverseHomography, point); return source ? videoPointToDisplayPoint(source, calibrationTransform) : null }
       context.save(); context.strokeStyle = '#ffe35bcc'; context.lineWidth = 1.4
       for (const radius of Object.values(BOARD_MODEL_RADII)) { context.beginPath(); for (let step = 0; step <= 72; step += 1) { const angle = step / 72 * Math.PI * 2, point = project({ x: NORMALIZED_CENTER + Math.cos(angle) * radius, y: NORMALIZED_CENTER + Math.sin(angle) * radius }); if (point) step ? context.lineTo(point.x, point.y) : context.moveTo(point.x, point.y) } context.stroke() }
       for (const angle of SEGMENT_BOUNDARY_ANGLES) { const start = project({ x: NORMALIZED_CENTER + Math.cos(angle) * BOARD_MODEL_RADII.outerBull, y: NORMALIZED_CENTER + Math.sin(angle) * BOARD_MODEL_RADII.outerBull }), end = project({ x: NORMALIZED_CENTER + Math.cos(angle) * BOARD_MODEL_RADII.doubleOuter, y: NORMALIZED_CENTER + Math.sin(angle) * BOARD_MODEL_RADII.doubleOuter }); if (start && end) { context.beginPath(); context.moveTo(start.x, start.y); context.lineTo(end.x, end.y); context.stroke() } }
-      const names = [['top','K1'],['right','K2'],['bottom','K3'],['left','K4']]; context.fillStyle = '#ff65d8'; context.font = 'bold 10px sans-serif'
-      for (const [name,label] of names) { const point = calibration.keypoints?.[name]; if (!point) continue; const px = rect.x + point.x * sx, py = rect.y + point.y * sy; context.beginPath(); context.arc(px, py, 4, 0, Math.PI * 2); context.fill(); context.fillText(label, px + 5, py - 5) }
+      context.fillStyle = '#ff65d8'; context.font = 'bold 10px sans-serif'
+      for (const [index, point] of Object.values(calibration.keypoints ?? {}).entries()) { if (!point) continue; const display = videoPointToDisplayPoint(point, calibrationTransform); context.beginPath(); context.arc(display.x, display.y, 4, 0, Math.PI * 2); context.fill(); context.fillText(`K${index + 1}`, display.x + 5, display.y - 5) }
       context.restore()
+    }
+    if (manualModeRef.current) {
+      const videoTransform = createVideoDisplayTransform(video.videoWidth, video.videoHeight, width, height)
+      context.save(); context.fillStyle = '#ff65d8'; context.font = 'bold 10px sans-serif'
+      manualPointsRef.current.forEach((point, index) => { const display = videoPointToDisplayPoint(point, videoTransform); context.beginPath(); context.arc(display.x, display.y, 5, 0, Math.PI * 2); context.fill(); context.fillText(`K${index + 1}`, display.x + 6, display.y - 6) }); context.restore()
     }
     if (debugRef.current) for (const feature of board.features ?? []) { context.fillStyle = '#61d9ff'; context.beginPath(); context.arc(rect.x + feature.x * sx, rect.y + feature.y * sy, 1.5, 0, Math.PI * 2); context.fill() }
     for (const marker of markersRef.current) { const mx = rect.x + marker.x * sx, my = rect.y + marker.y * sy; context.strokeStyle = marker.score ? '#ffe35b' : '#ff7f87'; context.lineWidth = 3; context.beginPath(); context.arc(mx, my, 8, 0, Math.PI * 2); context.moveTo(mx - 12, my); context.lineTo(mx + 12, my); context.moveTo(mx, my - 12); context.lineTo(mx, my + 12); context.stroke(); context.fillStyle = context.strokeStyle; context.font = 'bold 9px sans-serif'; context.fillText(`DART ${marker.dart}`, mx + 10, my - 8) }
@@ -114,15 +121,18 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     stableFramesRef.current = moving ? 0 : stableFramesRef.current + 1
     if (moving) { movementSeenRef.current = true; ringVisibleUntilRef.current = now + 3000 }
     boardRef.current = found
-    if (!calibrationRef.current?.manual) {
-      const proposed = calibrateBoard(image, found)
-      if (proposed.homography && proposed.condition !== 'BAD') {
-        const pending = calibrationPendingRef.current, agrees = pending && Math.abs((pending.value.reprojectionError ?? 99) - proposed.reprojectionError) < 3
-        calibrationPendingRef.current = { value: proposed, frames: agrees ? pending.frames + 1 : 1 }
-        if (calibrationPendingRef.current.frames >= 3) { calibrationRef.current = { ...proposed, state: calibrationRef.current ? 'TRACKING' : proposed.state }; calibrationPendingRef.current = null }
-      }
+    const proposed = calibrateBoard(image, found)
+    const orientationDelta = autoOrientationRef.current != null && proposed.orientationAngle != null ? Math.abs(Math.atan2(Math.sin(proposed.orientationAngle - autoOrientationRef.current), Math.cos(proposed.orientationAngle - autoOrientationRef.current))) : 0
+    proposed.orientationDelta = orientationDelta
+    if (orientationDelta > Math.PI / 12) { proposed.condition = 'BAD'; proposed.state = 'KEYPOINTS_FOUND'; proposed.rejected = true; proposed.rejectionReason = `ORIENT JUMP: ${(orientationDelta * 180 / Math.PI).toFixed(0)}°`; calibrationRejectedRef.current += 1 }
+    if (proposed.homography) { autoCalibrationRef.current = proposed; if (!proposed.rejected) autoOrientationRef.current = proposed.orientationAngle }
+    if (!manualModeRef.current && !calibrationRef.current?.manual && proposed.homography && proposed.condition !== 'BAD') {
+      const orientationStable = orientationDelta <= Math.PI / 12
+      const pending = calibrationPendingRef.current, agrees = pending && orientationStable && Math.abs((pending.value.reprojectionError ?? 99) - proposed.reprojectionError) < 2 && Math.abs((pending.value.geometryValidationScore ?? 0) - proposed.geometryValidationScore) < .12
+      calibrationPendingRef.current = { value: proposed, frames: agrees ? pending.frames + 1 : 1 }
+      if (calibrationPendingRef.current.frames >= 3) { calibrationRef.current = { ...proposed, state: calibrationRef.current ? 'TRACKING' : proposed.state }; calibrationPendingRef.current = null }
     }
-    if (calibrationRef.current?.inverseHomography) renderNormalizedBoard(normalizedCanvasRef.current, image, calibrationRef.current.inverseHomography)
+    if (calibrationRef.current?.inverseHomography) renderNormalizedBoard(normalizedCanvasRef.current, image, calibrationRef.current.inverseHomography, 160, calibrationRef.current.sourceSize)
     const previousSelection = candidateHistoryRef.current.at(-1)
     if (previousSelection) {
       const radiusChange = Math.abs(previousSelection.radius - found.rx) / previousSelection.radius, centerChange = Math.hypot(previousSelection.x - found.x, previousSelection.y - found.y)
@@ -140,7 +150,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     else if (boardStateRef.current === 'LOCKED' && found.confidence < .42) boardStateRef.current = 'TRACKING'
     const stable = stableFramesRef.current >= 8
     referenceRef.current = null
-    setDetection((value) => ({ ...value, calibration: calibrationRef.current, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, geometryJumpCount: geometryJumpCountRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: false, features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
+    setDetection((value) => ({ ...value, calibration: calibrationRef.current, autoCalibration: autoCalibrationRef.current, calibrationRejectedCount: calibrationRejectedRef.current, state: boardStateRef.current, found: true, confidence: found.confidence, stable, stableFrames: lockStreakRef.current, candidateChangedFrames: candidateChangedFramesRef.current, geometryJumpCount: geometryJumpCountRef.current, lastRedetect: redetectAge, centerJitter, radiusJitter, reference: false, features: found.features?.length ?? 0, trackingFeatures: found.features?.length ?? 0, lostFrames: 0, reprojection: Number.isFinite(geometryDelta) ? geometryDelta : 0, bullConfidence: found.bullConfidence ?? 0, bullX: found.bullX, bullY: found.bullY, spiderLines: found.spiderLines ?? 0, spiderConfidence: found.spiderConfidence ?? 0, rings: found.rings ?? [], candidates: found.candidates ?? [], selectedCandidateId: found.selectedCandidateId, trackedCandidateId: boardRef.current?.selectedCandidateId, reasons: found.reasons ?? [], x: found.x, y: found.y, rx: found.rx, ry: found.ry, rotation: found.rotation, orientation: found.boardOrientation ?? 0, edgeStrength: found.edgeStrength ?? 0, geometryScore: found.geometryScore ?? 0, outerBoardLikelihood: found.outerBoardLikelihood ?? 0, concentricRingScore: found.concentricRingScore ?? 0 }))
   }, [])
 
   const startLoop = useCallback(() => {
@@ -177,13 +187,14 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     boardRef.current = null; referenceRef.current = null; previousFrameRef.current = null; markersRef.current = []; stableFramesRef.current = 0; movementSeenRef.current = false
     boardStateRef.current = 'SEARCHING'; lockStreakRef.current = 0; lostFramesRef.current = 0; outlierRef.current = null
     candidateHistoryRef.current = []; candidateChangedFramesRef.current = 0; geometryJumpCountRef.current = 0; lastDetectionAtRef.current = 0
-    calibrationRef.current = null; calibrationPendingRef.current = null; manualPointsRef.current = []; setManualMode(false)
+    calibrationRef.current = null; autoCalibrationRef.current = null; autoOrientationRef.current = null; calibrationPendingRef.current = null; manualPointsRef.current = []; calibrationRejectedRef.current = 0; setManualPointCount(0); setManualMode(false)
     ringVisibleUntilRef.current = performance.now() + 3000; setDetection({ state: 'SEARCHING', found: false, confidence: 0, stable: false, reference: false, last: 'keine', features: 0, lostFrames: 0 })
   }
 
   useImperativeHandle(forwardedRef, () => ({ get videoElement() { return videoRef.current }, get stream() { return streamRef.current }, get resolution() { return { width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 } }, stop: stopCamera }), [stopCamera])
   useEffect(() => { void startCamera(); return stopCamera }, [startCamera, stopCamera])
   useEffect(() => { debugRef.current = debug }, [debug])
+  useEffect(() => { manualModeRef.current = manualMode }, [manualMode])
 
   function logSnapshot() {
     const snapshot = { boardState: detection.state, selectedCandidate: detection.selectedCandidateId, trackedBoard: detection.trackedCandidateId, candidates: detection.candidates, bull: { x: detection.bullX, y: detection.bullY, confidence: detection.bullConfidence }, rings: detection.rings, spider: { lines: detection.spiderLines, confidence: detection.spiderConfidence }, tracking: { features: detection.trackingFeatures, error: detection.reprojection, stableFrames: detection.stableFrames, lostFrames: detection.lostFrames }, jitter: { centerPx: detection.centerJitter, radiusPercent: detection.radiusJitter } }
@@ -191,25 +202,27 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   }
 
   function toggleManualCalibration() {
-    manualPointsRef.current = []; setManualMode((value) => !value)
+    manualPointsRef.current = []; setManualPointCount(0); setManualMode((value) => !value)
   }
+
+  function undoManualPoint() { manualPointsRef.current.pop(); setManualPointCount(manualPointsRef.current.length) }
+  function cancelManualCalibration() { manualPointsRef.current = []; setManualPointCount(0); setManualMode(false) }
 
   function setManualPoint(event) {
     if (!manualMode || !videoRef.current?.videoWidth || !stageRef.current) return
-    const bounds = stageRef.current.getBoundingClientRect(), rect = getContainedVideoRect(videoRef.current.videoWidth, videoRef.current.videoHeight, bounds.width, bounds.height)
-    const x = (event.clientX - bounds.left - rect.x) / rect.width * ANALYSIS_WIDTH
-    const analysisHeight = Math.round(ANALYSIS_WIDTH * videoRef.current.videoHeight / videoRef.current.videoWidth)
-    const y = (event.clientY - bounds.top - rect.y) / rect.height * analysisHeight
-    if (x < 0 || y < 0 || x > ANALYSIS_WIDTH || y > analysisHeight) return
-    manualPointsRef.current.push({ x, y })
-    if (manualPointsRef.current.length === 4) {
-      calibrationRef.current = calibrationFromManualKeypoints(manualPointsRef.current)
-      if (analysisFrameRef.current) renderNormalizedBoard(normalizedCanvasRef.current, analysisFrameRef.current, calibrationRef.current.inverseHomography)
+    const bounds = stageRef.current.getBoundingClientRect(), transform = createVideoDisplayTransform(videoRef.current.videoWidth, videoRef.current.videoHeight, bounds.width, bounds.height)
+    const point = displayPointToVideoPoint({ x: event.clientX - bounds.left, y: event.clientY - bounds.top }, transform)
+    if (point.x < 0 || point.y < 0 || point.x > videoRef.current.videoWidth || point.y > videoRef.current.videoHeight) return
+    manualPointsRef.current.push(point); setManualPointCount(manualPointsRef.current.length)
+    if (manualPointsRef.current.length === GROUND_TRUTH_POINTS.length) {
+      const sourceSize = { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight }
+      calibrationRef.current = calibrationFromManualKeypoints(manualPointsRef.current, analysisFrameRef.current, sourceSize)
+      if (analysisFrameRef.current) renderNormalizedBoard(normalizedCanvasRef.current, analysisFrameRef.current, calibrationRef.current.inverseHomography, 160, sourceSize)
       setDetection((value) => ({ ...value, calibration: calibrationRef.current })); setManualMode(false)
     }
   }
 
-  return <>{debug && <CameraCalibrationLab detection={detection} zoom={zoom} video={{ width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 }} normalizedCanvas={normalizedCanvasRef.current} manualMode={manualMode} manualPointCount={manualPointsRef.current.length} onManualToggle={toggleManualCalibration} onSnapshot={logSnapshot} />}<section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
+  return <>{debug && <CameraCalibrationLab detection={detection} zoom={zoom} video={{ width: videoRef.current?.videoWidth ?? 0, height: videoRef.current?.videoHeight ?? 0 }} videoToDisplayTransform={videoRef.current?.videoWidth && stageRef.current ? createVideoDisplayTransform(videoRef.current.videoWidth, videoRef.current.videoHeight, stageRef.current.clientWidth, stageRef.current.clientHeight) : null} normalizedCanvas={normalizedCanvasRef.current} manualMode={manualMode} manualPointCount={manualPointCount} groundTruthPoint={GROUND_TRUTH_POINTS[manualPointCount]} onManualToggle={toggleManualCalibration} onManualUndo={undoManualPoint} onManualCancel={cancelManualCalibration} onSnapshot={logSnapshot} />}<section className="camera-preview" aria-label="Live-Kamerabild"><div ref={stageRef} className="camera-stage">
     <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} className={`camera-detection-canvas${manualMode ? ' is-manual' : ''}`} onPointerDown={setManualPoint} />
     {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
     {status === 'error' && <div className="camera-message camera-error" role="alert"><p>{error}</p><button type="button" onClick={() => void startCamera()}>ERNEUT VERSUCHEN</button></div>}

@@ -84,7 +84,7 @@ function Settings({ activeProfile, onBack, onOpenProfile, onLogout }) {
     <section className="settings-section"><div className="settings-section-heading"><span aria-hidden="true">⚙</span><div><p>ALLGEMEIN</p><h2>Darstellung &amp; Gerät</h2></div></div><div className="settings-list">
       <label><span><strong>Sound</strong><small>Vorhandene Spielsounds steuern</small></span><input type="checkbox" checked={settings.sound} onChange={(event) => updateSetting('sound', event.target.checked)} /></label>
       <label><span><strong>Animationen</strong><small>Reduzierte Systembewegung wird respektiert</small></span><select value={settings.animations} onChange={(event) => updateSetting('animations', event.target.value)}><option value="full">Vollständig</option><option value="reduced">Reduziert</option><option value="off">Aus</option></select></label>
-      <label><span><strong>Vibration / Haptik</strong><small>Nur auf unterstützten Geräten</small></span><input type="checkbox" checked={settings.haptics} onChange={(event) => updateSetting('haptics', event.target.checked)} /></label>
+      <label><span><strong>Haptisches Feedback</strong><small>Nur auf unterstützten Geräten</small></span><input type="checkbox" checked={settings.haptics} onChange={(event) => updateSetting('haptics', event.target.checked)} /></label>
       <div className="settings-row"><span><strong>Benachrichtigungen</strong><small>Push-Benachrichtigungen</small></span><em>Demnächst</em></div>
     </div></section>
 

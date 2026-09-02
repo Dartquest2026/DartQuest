@@ -22,7 +22,7 @@ import './CampaignPolish.css'
 import { confirmInputModeHint, hasConfirmedInputModeHint } from '../settings/tutorialStorage'
 import { shouldShowBossDefeated } from './bossDefeated'
 import { getReturnTransitionTiming, RETURN_TRANSITION_PHASES } from './returnTransition'
-import { vibrate } from '../settings/settingsStorage'
+import { triggerHaptic } from '../settings/haptics'
 
 const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
 
@@ -94,7 +94,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   const [normalConfirmation, setNormalConfirmation] = useState(null)
   const [profileSyncError, setProfileSyncError] = useState('')
   const [bossConfirmation, setBossConfirmation] = useState(null)
-  const [introReady, setIntroReady] = useState(false)
+  const [introReady, setIntroReady] = useState(() => document.documentElement.dataset.animations === 'off')
   const [menuOpen, setMenuOpen] = useState(false)
   const [restartConfirmOpen, setRestartConfirmOpen] = useState(false)
   const menuButtonRef = useRef(null)
@@ -104,10 +104,14 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   const transitionTimers = useRef([])
   const onCompleteRef = useRef(onComplete)
   const onCloseRef = useRef(onClose)
+  const onPlayNextRef = useRef(onPlayNext)
   onCompleteRef.current = onComplete
   onCloseRef.current = onClose
+  onPlayNextRef.current = onPlayNext
+  const instantMode = document.documentElement.dataset.animations === 'off'
 
   useEffect(() => {
+    if (document.documentElement.dataset.animations === 'off') return undefined
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const timer = window.setTimeout(() => setIntroReady(true), reducedMotion ? 40 : 1200)
     return () => window.clearTimeout(timer)
@@ -142,20 +146,31 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   useEffect(() => {
     if (!result || !level) return undefined
     const animationMode = document.documentElement.dataset.animations
-    const completionDelay = level.boss
-      ? animationMode === 'off' ? 0 : animationMode === 'reduced' ? 120 : 500
-      : 3200
-    const timer = setTimeout(async () => {
+    const completeAndContinue = async () => {
       if (resultDelivered.current) return
       resultDelivered.current = true
       try {
         const confirmation = await onCompleteRef.current(level, result)
+        if (animationMode === 'off') {
+          if (confirmation?.nextLevelId) onPlayNextRef.current(confirmation.nextLevelId)
+          else onCloseRef.current()
+          return
+        }
         if (shouldShowBossDefeated({ level, result, confirmation })) setBossConfirmation(confirmation)
         else setNormalConfirmation(confirmation)
       } catch (error) {
         setProfileSyncError(error?.message || 'XP und Coins konnten nicht gespeichert werden.')
       }
-    }, completionDelay)
+    }
+
+    if (animationMode === 'off') {
+      completeAndContinue()
+      return undefined
+    }
+    const completionDelay = level.boss
+      ? animationMode === 'reduced' ? 120 : 500
+      : 3200
+    const timer = setTimeout(completeAndContinue, completionDelay)
     return () => clearTimeout(timer)
   }, [result, level])
 
@@ -198,13 +213,20 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   useEffect(() => {
     if (!autoPerfectPending || !isAutoPerfectAttempt(attempt)) return undefined
 
-    const timer = window.setTimeout(() => {
+    const finishAutoPerfect = () => {
       if (completionStarted.current) return
       completionStarted.current = true
       setResult({
         ...createAttemptResult(level, attempt, Date.now(), 3),
         autoPerfect: true,
       })
+    }
+    if (document.documentElement.dataset.animations === 'off') {
+      finishAutoPerfect()
+      return undefined
+    }
+    const timer = window.setTimeout(() => {
+      finishAutoPerfect()
     }, 1100)
 
     return () => window.clearTimeout(timer)
@@ -220,11 +242,12 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     const nextAttempt = registerTargetHit(attempt, targetId)
     if (nextAttempt === attempt) return
     setAttempt(nextAttempt)
-    vibrate(12)
     if (isAttemptComplete(nextAttempt) && !completionStarted.current) {
       completionStarted.current = true
-      vibrate([18, 35, 18])
+      triggerHaptic('success')
       setResult(createAttemptResult(level, nextAttempt, Date.now()))
+    } else {
+      triggerHaptic('light')
     }
   }
 
@@ -232,23 +255,31 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     if (!introReady || !isAttemptComplete(attempt) || completionStarted.current) return
     setAutoPerfectPending(false)
     completionStarted.current = true
+    triggerHaptic('success')
     setResult(createAttemptResult(level, attempt, Date.now(), finishingDart))
   }
 
   function addVisit() {
     setAutoPerfectPending(false)
-    vibrate(8)
+    triggerHaptic('medium')
     setAttempt((current) => nextVisit(current))
   }
 
   function undoHit(targetId) {
     setAutoPerfectPending(false)
+    triggerHaptic('light')
     setAttempt((current) => undoTargetHit(current, targetId))
+  }
+
+  function undoPreviousDart() {
+    triggerHaptic('light')
+    setAttempt((current) => undoLastDart(current))
   }
 
   function finishQuickAttempt(totalDarts) {
     if (!introReady || completionStarted.current) return
     completionStarted.current = true
+    triggerHaptic('success')
     setResult(createQuickAttemptResult(level, totalDarts, attempt.startedAt))
   }
 
@@ -257,7 +288,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     setInputMode(nextMode)
     setPendingInputMode(null)
     localStorage.setItem(INPUT_MODE_STORAGE_KEY, nextMode)
-    vibrate(8)
+    triggerHaptic('light')
   }
 
   function requestInputMode(nextMode) {
@@ -354,7 +385,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
                 attempt={attempt}
                 onHit={applyHit}
                 onNextVisit={addVisit}
-                onPreviousVisit={() => setAttempt((current) => undoLastDart(current))}
+                onPreviousVisit={undoPreviousDart}
                 onUndo={undoHit}
                 completionPending={false}
                 autoPerfectPending={autoPerfectPending}
@@ -386,7 +417,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
             {menuOpen && <div className="level-pause-backdrop" onClick={closePauseMenu}><section role="dialog" aria-modal="true" aria-labelledby="level-pause-title" onClick={(event) => event.stopPropagation()}><p>DARTQUEST</p><h3 id="level-pause-title">Spiel pausiert</h3><button autoFocus type="button" onClick={closePauseMenu}>WEITERSPIELEN</button><button type="button" onClick={() => { setMenuOpen(false); onOpenSettings(() => menuButtonRef.current?.focus()) }}>EINSTELLUNGEN</button><button type="button" onClick={() => setRestartConfirmOpen(true)}>LEVEL NEU STARTEN</button><button className="danger" type="button" onClick={() => { window.history.replaceState(null, ''); setMenuOpen(false); onExitCampaign() }}>KAMPAGNE VERLASSEN</button>{restartConfirmOpen && <div className="level-restart-confirm" onClick={() => setRestartConfirmOpen(false)}><div role="alertdialog" aria-modal="true" aria-labelledby="level-restart-title" onClick={(event) => event.stopPropagation()}><h4 id="level-restart-title">Level wirklich neu starten?</h4><span>Alle Eingaben dieses Versuchs werden zurückgesetzt.</span><button autoFocus type="button" onClick={() => setRestartConfirmOpen(false)}>ABBRECHEN</button><button className="danger" type="button" onClick={restartLevel}>NEU STARTEN</button></div></div>}</section></div>}
         </div>
 
-        {result && !level.boss && (
+        {result && !level.boss && !instantMode && (
           <>
             <LevelCompleteAnimation
               stars={result.stars}
@@ -402,8 +433,9 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
             {profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
           </>
         )}
+        {result && !level.boss && instantMode && profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
         {normalConfirmation && !level.boss && <div className="level-success-actions" role="dialog" aria-modal="true" aria-labelledby="level-success-title"><section><span>DARTQUEST</span><h3 id="level-success-title">Aufgabe erfüllt</h3><p>{result.totalDarts} Darts</p><strong className="level-success-stars" aria-label={`${result.stars} Sterne`}>{'★'.repeat(result.stars)}</strong><div className="level-success-rewards"><b>+{normalConfirmation.awardedXP ?? 0} XP</b><b>🪙 +{normalConfirmation.awardedCoins ?? 0} Coins</b></div><button type="button" onClick={returnToAttempt}>ZURÜCK ZUM SPIEL</button><button type="button" onClick={beginReturnToMap}>WEITER ZUR KARTE</button>{normalConfirmation.nextLevelId&&<button className="primary" type="button" onClick={()=>onPlayNext(normalConfirmation.nextLevelId)}>NÄCHSTE AUFGABE</button>}</section></div>}
-        {result && level.boss && !bossConfirmation && !profileSyncError && <p className="level-profile-sync-status" role="status">Boss-Abschluss wird gespeichert …</p>}
+        {result && level.boss && !bossConfirmation && !profileSyncError && !instantMode && <p className="level-profile-sync-status" role="status">Boss-Abschluss wird gespeichert …</p>}
         {bossConfirmation && <BossDefeatedSequence confirmation={bossConfirmation} onContinue={beginReturnToMap} onPlayNext={onPlayNext} />}
         {result && level.boss && profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
       </article>

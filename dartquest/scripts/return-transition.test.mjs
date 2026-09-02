@@ -28,6 +28,14 @@ test('level return is guarded, waits for confirmation and hides gameplay accessi
   assert.match(modal, /timers\.forEach/)
 })
 
+test('disabled animations bypass completion UI and continue only after persistence', async () => {
+  const modal = await readFile(new URL('../src/features/campaign/LevelModal.jsx', import.meta.url), 'utf8')
+  assert.match(modal, /if \(animationMode === 'off'\) \{\s*completeAndContinue\(\)\s*return undefined\s*\}/)
+  assert.match(modal, /const confirmation = await onCompleteRef\.current\(level, result\)[\s\S]*?confirmation\?\.nextLevelId[\s\S]*?onPlayNextRef\.current/)
+  assert.match(modal, /result && !level\.boss && !instantMode/)
+  assert.match(modal, /dataset\.animations === 'off'\)/)
+})
+
 test('crossfade presentation has no persistence or reward mutation', async () => {
   const transition = await readFile(new URL('../src/features/campaign/returnTransition.js', import.meta.url), 'utf8')
   assert.doesNotMatch(transition, /localStorage|supabase|onProfileRewards|rewardXP|rewardCoins|\.rpc\(/i)

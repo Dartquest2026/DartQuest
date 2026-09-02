@@ -131,7 +131,8 @@ function boardAnchors(candidate, edge, width, height) {
       ring += sample(edge, width, height, ellipsePoint(test, angle, .03)) + sample(edge, width, height, ellipsePoint(test, angle, .07))
       symmetry += Math.abs(sample(edge, width, height, ellipsePoint(test, angle, .15)) - sample(edge, width, height, ellipsePoint(test, angle + Math.PI, .15)))
     }
-    const confidence = Math.max(0, Math.min(1, ring / 48 / 55 - symmetry / 24 / 180))
+    const ringEnergy = ring / 48 / 255, symmetryPenalty = symmetry / 24 / 255
+    const confidence = Math.max(0, Math.min(1, (ringEnergy - .08) / .48)) * Math.max(0, 1 - symmetryPenalty * 1.5)
     if (confidence > bull.confidence) bull = { x, y, confidence }
   }
   const centerWeight = bull.confidence >= .42 ? .7 : bull.confidence >= .25 ? .35 : 0
@@ -145,11 +146,12 @@ function boardAnchors(candidate, edge, width, height) {
   let bestPhase = 0, bestScore = -1, lineCount = 0
   for (let phase = 0; phase < 18; phase += 1) {
     let score = 0, strong = 0
-    for (let line = 0; line < 20; line += 1) { const value = profile[(phase + line * 18) % 360]; score += value; if (value > 90) strong += 1 }
+    for (let line = 0; line < 20; line += 1) { const value = profile[(phase + line * 18) % 360]; score += value; if (value > 260) strong += 1 }
     if (score > bestScore) { bestScore = score; bestPhase = phase; lineCount = strong }
   }
   const imageUpAngle = Math.atan2(-Math.cos(candidate.rotation) / candidate.ry, -Math.sin(candidate.rotation) / candidate.rx)
-  return { x, y, bullX: bull.x, bullY: bull.y, bullConfidence: bull.confidence, spiderLines: lineCount, spiderConfidence: Math.min(1, bestScore / 20 / 180), spiderPhase: bestPhase * Math.PI / 180, boardOrientation: imageUpAngle + Math.PI / 2 }
+  const spiderEnergy = bestScore / 20 / (4 * 255), spiderConfidence = lineCount / 20 * Math.min(1, spiderEnergy / .55)
+  return { x, y, bullX: bull.x, bullY: bull.y, bullConfidence: bull.confidence, spiderLines: lineCount, spiderConfidence, spiderPhase: bestPhase * Math.PI / 180, boardOrientation: imageUpAngle + Math.PI / 2 }
 }
 
 function featurePoints(candidate, edge, width, height) {

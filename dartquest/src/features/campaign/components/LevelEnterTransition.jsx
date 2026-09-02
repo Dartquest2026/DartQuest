@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getBossIntroContent } from '../bossIntro'
-import { getBossHapticPattern, getBossPresentation, getBossPresentationStyle } from '../bossPresentation'
-import { loadSettings, vibrate } from '../../settings/settingsStorage'
+import { getBossPresentation, getBossPresentationStyle } from '../bossPresentation'
+import { triggerHaptic } from '../../settings/haptics'
 
 import './LevelEnterTransition.css'
 
@@ -32,6 +32,10 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
     const animationMode = document.documentElement.dataset.animations
     const limitedMotion = reducedMotion || animationMode === 'reduced'
     const noMotion = animationMode === 'off'
+    if (noMotion && !isBoss) {
+      finishOnce()
+      return undefined
+    }
     const zoomTimer = window.setTimeout(() => setPhase(isBoss ? 'revealing' : 'zooming'), noMotion ? 0 : limitedMotion ? 20 : 300)
     const readyTimer = isBoss ? window.setTimeout(() => setPhase('ready'), noMotion ? 20 : limitedMotion ? 180 : 1050) : null
     const completeTimer = isBoss ? null : window.setTimeout(finishOnce, reducedMotion ? 140 : 1500)
@@ -39,7 +43,10 @@ function LevelEnterTransition({ level, sourceRect, worldName, onComplete }) {
 
     if (isBoss && !hapticPlayed.current) {
       hapticPlayed.current = true
-      vibrate(getBossHapticPattern(bossPresentation.hapticKey), loadSettings())
+      const hapticType = ['double', 'final'].includes(bossPresentation.hapticKey)
+        ? 'success'
+        : bossPresentation.hapticKey === 'sharp' ? 'medium' : 'light'
+      triggerHaptic(hapticType)
     }
     if (isBoss && !historyPushed.current) {
       window.history.pushState({ dartQuestOverlay: 'boss-intro' }, '')

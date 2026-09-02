@@ -7,6 +7,7 @@ import {
   saveSettings,
   vibrate,
 } from '../src/features/settings/settingsStorage.js'
+import { HAPTIC_PATTERNS, isHapticsSupported, triggerHaptic } from '../src/features/settings/haptics.js'
 import {
   confirmInputModeHint,
   getInputModeHintKey,
@@ -41,6 +42,31 @@ test('haptics safely handles disabled and unsupported devices', () => {
   assert.equal(vibrate(20, { haptics: false }, { vibrate: () => true }), false)
   assert.equal(vibrate(20, { haptics: true }, {}), false)
   assert.equal(vibrate(20, { haptics: true }, { vibrate: () => true }), true)
+})
+
+test('typed haptics use subtle patterns and remain fire-and-forget', () => {
+  const calls = []
+  const supportedNavigator = { vibrate: (pattern) => { calls.push(pattern); return true } }
+  assert.equal(isHapticsSupported(supportedNavigator), true)
+  assert.equal(isHapticsSupported({}), false)
+  assert.equal(triggerHaptic('light', { haptics: true }, supportedNavigator), true)
+  assert.equal(triggerHaptic('medium', { haptics: true }, supportedNavigator), true)
+  assert.equal(triggerHaptic('success', { haptics: true }, supportedNavigator), true)
+  assert.equal(triggerHaptic('error', { haptics: true }, supportedNavigator), true)
+  assert.deepEqual(calls, [15, 35, [25, 40, 35], [50, 40, 50]])
+  assert.deepEqual(HAPTIC_PATTERNS.success, [25, 40, 35])
+  assert.equal(triggerHaptic('light', { haptics: false }, supportedNavigator), false)
+  assert.equal(triggerHaptic('light', { haptics: true }, {}), false)
+  assert.equal(triggerHaptic('unknown', { haptics: true }, supportedNavigator), false)
+  assert.equal(triggerHaptic('error', { haptics: true }, { vibrate: () => { throw new Error('unsupported') } }), false)
+})
+
+test('long press haptic is centralized and click suppression prevents a second feedback', async () => {
+  const source = await readFile(new URL('../src/features/campaignModes/components/CampaignGameUI.jsx', import.meta.url), 'utf8')
+  const holdHandler = source.match(/function startHold\(number, event\) \{([\s\S]*?)\n  \}/)?.[1] ?? ''
+  assert.match(holdHandler, /suppressNextClick\(\)[\s\S]*?triggerHaptic\('medium'\)[\s\S]*?onCheckoutLongPress/)
+  assert.doesNotMatch(source, /navigator\.vibrate/)
+  assert.match(source, /if \(suppressClick\.current\) \{[\s\S]*?return/)
 })
 
 test('tutorial reset is profile-scoped and keeps progress and settings', () => {

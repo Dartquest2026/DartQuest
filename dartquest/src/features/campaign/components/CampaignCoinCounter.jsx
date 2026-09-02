@@ -33,10 +33,14 @@ function CampaignCoinCounter({ confirmedCoins, animation, onAnimationComplete })
     const finish = () => {
       animationFrame.current = null
       setDisplayCoins(animation.to)
+      if (duration === 0) {
+        onCompleteRef.current?.(animation.id)
+        return
+      }
       completionTimer.current = window.setTimeout(() => {
         completionTimer.current = null
         onCompleteRef.current?.(animation.id)
-      }, duration === 0 ? 900 : 500)
+      }, 500)
     }
     if (duration === 0) {
       finish()

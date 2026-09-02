@@ -11,8 +11,9 @@ import { aggregateCheckoutStats, calculateCheckoutRate, formatCheckoutStats } fr
 import { boardDelta, getContainedVideoRect, isInTwentySector, normalizeBoardPoint, rankOuterBoardCandidates, smoothBoard } from '../src/features/campaignModes/cameraDetection.js'
 import { detectNewDart, scoreTwentyDart } from '../src/features/campaignModes/cameraDartDetection.js'
 import { calibrationFromManualKeypoints } from '../src/features/campaignModes/cameraVision/boardCalibration.js'
-import { BOARD_MODEL_RADII, NORMALIZED_CENTER, STEEL_BOARD_MM } from '../src/features/campaignModes/cameraVision/boardGeometry.js'
+import { BOARD_MODEL_RADII, GROUND_TRUTH_POINTS, NORMALIZED_CENTER, STEEL_BOARD_MM } from '../src/features/campaignModes/cameraVision/boardGeometry.js'
 import { findHomography, invertHomography, projectPoint, reprojectionError } from '../src/features/campaignModes/cameraVision/boardHomography.js'
+import { createVideoDisplayTransform, displayPointToVideoPoint, videoPointToDisplayPoint } from '../src/features/campaignModes/cameraVision/coordinateTransforms.js'
 
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
   const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
@@ -99,12 +100,21 @@ test('Vier Referenzpunkte erzeugen eine invertierbare Homographie mit kleinem Pr
   assert.ok(Math.hypot(projected.x - 100, projected.y - 100) < .001)
 })
 
-test('Manuelle Vierpunktkalibrierung und Standard-Boardmaße sind zentral verfügbar', () => {
-  const calibration = calibrationFromManualKeypoints([{ x: 100, y: 20 }, { x: 180, y: 100 }, { x: 100, y: 180 }, { x: 20, y: 100 }])
-  assert.equal(calibration.state, 'CALIBRATED'); assert.equal(calibration.manual, true); assert.equal(calibration.matchCount, 4)
+test('Manuelle Achtpunkt-Ground-Truth und Standard-Boardmaße sind zentral verfügbar', () => {
+  const points = GROUND_TRUTH_POINTS.map(({ target }) => ({ x: target.x * .6 + 20, y: target.y * .9 + 10 }))
+  const calibration = calibrationFromManualKeypoints(points)
+  assert.equal(calibration.state, 'CALIBRATED'); assert.equal(calibration.manual, true); assert.equal(calibration.matchCount, 8)
+  assert.equal(calibration.calibrationMode, 'MANUAL'); assert.equal(calibration.usedRansac, true)
   assert.equal(STEEL_BOARD_MM.doubleOuterRadius, 170)
   assert.ok(BOARD_MODEL_RADII.doubleOuter > BOARD_MODEL_RADII.tripleOuter)
   assert.equal(NORMALIZED_CENTER, 256)
+})
+
+test('Video- und Displaypunkte bleiben bei object-fit contain exakt umkehrbar', () => {
+  const transform = createVideoDisplayTransform(480, 640, 390, 320), source = { x: 123, y: 456 }
+  const display = videoPointToDisplayPoint(source, transform), restored = displayPointToVideoPoint(display, transform)
+  assert.ok(Math.hypot(restored.x - source.x, restored.y - source.y) < 1e-9)
+  assert.equal(transform.objectFit, 'contain')
 })
 
 test('Kamera-Meilenstein deaktiviert Dart-Differenz und erweitert Calibration-Samples um Homographie', () => {
