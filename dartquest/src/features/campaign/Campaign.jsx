@@ -1022,6 +1022,11 @@ function Campaign({
       : result.darts == null
         ? previousResult.darts
         : Math.min(previousResult.darts, result.darts)
+    const bestElapsedTime = previousResult?.elapsedTimeSeconds == null
+      ? result.elapsedTimeSeconds
+      : result.elapsedTimeSeconds == null
+        ? previousResult.elapsedTimeSeconds
+        : Math.min(previousResult.elapsedTimeSeconds, result.elapsedTimeSeconds)
     const successfulAttempt =
       result.success !== false && (result.stars ?? 0) >= 1
     const completedSuccessfully = bestStars >= 1
@@ -1046,6 +1051,7 @@ function Campaign({
           ...result,
           stars: bestStars,
           darts: bestDarts,
+          elapsedTimeSeconds: bestElapsedTime,
         },
       },
       // Vorhandene lokale Werte bleiben erhalten, erhalten aber keine neuen

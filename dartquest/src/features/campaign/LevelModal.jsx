@@ -4,6 +4,8 @@ import HitCounter from './components/HitCounter'
 import LevelCompleteAnimation from './components/LevelCompleteAnimation'
 import BossDefeatedSequence from './components/BossDefeatedSequence'
 import QuickDartInput from './components/QuickDartInput'
+import NumericCampaignInput from './components/NumericCampaignInput'
+import TimedTaskGame from './components/TimedTaskGame'
 import {
   createAbandonedResult,
   createAttemptResult,
@@ -14,7 +16,6 @@ import {
   isAttemptComplete,
   nextVisit,
   registerTargetHit,
-  undoTargetHit,
   undoLastDart,
 } from './utils/levelAttempt'
 import './LevelModal.css'
@@ -23,6 +24,7 @@ import { confirmInputModeHint, hasConfirmedInputModeHint } from '../settings/tut
 import { shouldShowBossDefeated } from './bossDefeated'
 import { getReturnTransitionTiming, RETURN_TRANSITION_PHASES } from './returnTransition'
 import { triggerHaptic } from '../settings/haptics'
+import { getBossPresentation, getBossPresentationStyle } from './bossPresentation'
 
 const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
 
@@ -33,15 +35,6 @@ function formatTaskForDisplay(task) {
 function joinTargetLabels(labels) {
   if (labels.length < 2) return labels[0] ?? ''
   return labels.slice(0, -1).join(', ') + ' und ' + labels.at(-1)
-}
-
-function expandTargetLabel(label) {
-  const value = String(label ?? '')
-  if (/^S\d+$/i.test(value)) return `Single ${value.slice(1)}`
-  if (/^D\d+$/i.test(value)) return `Doppel ${value.slice(1)}`
-  if (/^T\d+$/i.test(value)) return `Triple ${value.slice(1)}`
-  if (/^S?BULL$/i.test(value)) return value.toUpperCase() === 'BULL' ? 'Bull' : 'Single Bull'
-  return value
 }
 
 function formatAttemptTitle(level, attempt) {
@@ -56,7 +49,17 @@ function formatAttemptTitle(level, attempt) {
   const numberTargets = targets.every((target) => target.targetType === 'number')
 
   if (attempt.ordered) {
-    return 'Triff nacheinander folgende Felder: ' + labels.map(expandTargetLabel).join(', ')
+    if (targets.length > 4) {
+      const aroundTheClock = labels.length === 20 && labels.every((label, index) => new RegExp(`^[SDT]${index + 1}$`, 'i').test(label))
+      if (aroundTheClock && labels.every((label) => /^S\d+$/i.test(label))) return 'Triff alle Singlefelder von 1 bis 20.'
+      if (aroundTheClock && labels.every((label) => /^D\d+$/i.test(label))) return 'Triff alle Doppelfelder von 1 bis 20.'
+      if (aroundTheClock && labels.every((label) => /^T\d+$/i.test(label))) return 'Triff alle Triplefelder von 1 bis 20.'
+      if (labels.every((label) => /^S\d+$/i.test(label))) return 'Triff die Singlefelder der Reihe nach.'
+      if (labels.every((label) => /^D\d+$/i.test(label))) return 'Triff die Doppelfelder der Reihe nach.'
+      if (labels.every((label) => /^T\d+$/i.test(label))) return 'Triff die Triplefelder der Reihe nach.'
+      return 'Triff die angezeigten Felder der Reihe nach.'
+    }
+    return 'In dieser Reihenfolge:'
   }
 
   if (targets.length === 1) {
@@ -233,6 +236,10 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   }, [attempt, autoPerfectPending, level])
 
   const displayedTask = formatAttemptTitle(level, attempt)
+  const orderedTargetLabels = attempt.ordered && attempt.targets.length <= 4 ? attempt.targets.map((target) => target.label).join(' · ') : ''
+  const bossPresentation = level.boss ? getBossPresentation(level) : null
+  const timedLevel = Number.isFinite(level.timeLimitSeconds) && level.timeLimitSeconds > 0
+  const gameplayInteractionDisabled = !introReady || Boolean(result)
   const playerNames = Array.isArray(players)
     ? players.filter((player) => player?.active !== false).map((player) => player?.name).filter(Boolean)
     : []
@@ -265,12 +272,6 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     setAttempt((current) => nextVisit(current))
   }
 
-  function undoHit(targetId) {
-    setAutoPerfectPending(false)
-    triggerHaptic('light')
-    setAttempt((current) => undoTargetHit(current, targetId))
-  }
-
   function undoPreviousDart() {
     triggerHaptic('light')
     setAttempt((current) => undoLastDart(current))
@@ -283,8 +284,21 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     setResult(createQuickAttemptResult(level, totalDarts, attempt.startedAt))
   }
 
+  function finishNumericAttempt(numericResult) {
+    if (!introReady || completionStarted.current) return
+    completionStarted.current = true
+    triggerHaptic('success')
+    setResult(numericResult)
+  }
+
+  function finishTimedAttempt(timedResult) {
+    if (!introReady || completionStarted.current) return
+    completionStarted.current = true
+    setResult(timedResult)
+  }
+
   function applyInputMode(nextMode) {
-    setAttempt(createLevelAttempt(level))
+    if (level.taskType === 'targets') setAttempt(createLevelAttempt(level))
     setInputMode(nextMode)
     setPendingInputMode(null)
     localStorage.setItem(INPUT_MODE_STORAGE_KEY, nextMode)
@@ -344,27 +358,15 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
 
   return (
     <div className={`level-modal-backdrop return-${returnTransition}`} data-return-transition={returnTransition} onClick={result ? undefined : beginReturnToMap}>
-      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${level.boss ? ' is-boss-level' : ''}${result ? ' is-completing' : ''} return-${returnTransition}`} aria-hidden={returnTransition !== RETURN_TRANSITION_PHASES.idle ? 'true' : undefined} inert={returnTransition !== RETURN_TRANSITION_PHASES.idle ? '' : undefined} onClick={(event) => event.stopPropagation()}>
+      <article className={`level-modal ${introReady ? 'is-intro-ready' : 'is-intro-entering'}${level.boss ? ' is-boss-level' : ''}${result ? ' is-completing' : ''} return-${returnTransition}`} style={bossPresentation ? getBossPresentationStyle(bossPresentation) : undefined} aria-hidden={returnTransition !== RETURN_TRANSITION_PHASES.idle ? 'true' : undefined} inert={returnTransition !== RETURN_TRANSITION_PHASES.idle ? '' : undefined} onClick={(event) => event.stopPropagation()}>
         {!result && <button className="level-modal-close" type="button" onClick={beginReturnToMap} aria-label="Level schließen">×</button>}
         {!result && <div className="level-modal-header-actions">
           <button ref={menuButtonRef} className="level-modal-menu" type="button" onClick={openPauseMenu} disabled={!introReady || autoPerfectPending || completionStarted.current} aria-label="Kampagnenmenü öffnen" aria-expanded={menuOpen}>☰</button>
-          <button
-            type="button"
-            className={`level-input-mode-switch is-${inputMode}${showInputModeHint ? ' is-coachmark-target' : ''}`}
-            onClick={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
-            disabled={!introReady || Boolean(result)}
-            aria-label={inputMode === 'counter' ? 'Zur Schnelleingabe wechseln' : 'Zum Trefferzähler wechseln'}
-            aria-describedby={showInputModeHint ? 'input-mode-hint' : undefined}
-            title={inputMode === 'counter' ? 'Treffer zählen' : 'Schnelleingabe'}
-          >
-            <span aria-hidden="true"><i /></span>
-            <small>{inputMode === 'counter' ? 'Zähler' : 'Schnell'}</small>
-          </button>
         </div>}
 
         <div className={`level-gameplay-layer${result ? ' is-finished' : ''}`} aria-hidden={result ? 'true' : undefined}>
             <p className="level-modal-eyebrow">{level.boss ? `BOSS-LEVEL ${level.id}` : `LEVEL ${level.id}`}</p>
-            <h2 className="level-modal-title">{displayedTask}</h2>
+            {!timedLevel && <h2 className={`level-modal-title${orderedTargetLabels ? ' is-sequence' : ''}`}>{displayedTask}{orderedTargetLabels && <strong>{orderedTargetLabels}</strong>}</h2>}
             {showInputModeHint && !result && (
               <aside className="level-input-mode-hint" id="input-mode-hint" role="status">
                 <strong>Du kannst hier jederzeit wechseln.</strong>
@@ -380,24 +382,36 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
               </div>
             )}
 
-            {inputMode === 'counter' ? (
+            {timedLevel ? (
+              <TimedTaskGame key={`${level.id}-${attempt.startedAt}`} level={level} disabled={!introReady || Boolean(result)} onComplete={finishTimedAttempt} />
+            ) : level.taskType === 'checkout' || level.taskType === 'score' ? (
+              <NumericCampaignInput
+                level={level}
+                disabled={!introReady || Boolean(result)}
+                onComplete={finishNumericAttempt}
+                inputMode={inputMode}
+                inputModeHint={showInputModeHint}
+                onToggleInputMode={() => requestInputMode(inputMode === 'counter' ? 'quick' : 'counter')}
+              />
+            ) : inputMode === 'counter' ? (
               <HitCounter
                 attempt={attempt}
                 onHit={applyHit}
                 onNextVisit={addVisit}
                 onPreviousVisit={undoPreviousDart}
-                onUndo={undoHit}
                 completionPending={false}
                 autoPerfectPending={autoPerfectPending}
                 onFinish={finishAttempt}
-                interactionDisabled={!introReady || Boolean(result)}
+                interactionDisabled={gameplayInteractionDisabled}
+                inputModeControl={<button type="button" className={`level-input-mode-switch is-${inputMode}${showInputModeHint ? ' is-coachmark-target' : ''}`} onClick={() => requestInputMode('quick')} disabled={!introReady || Boolean(result)} aria-label="Zur Schnelleingabe wechseln" aria-describedby={showInputModeHint ? 'input-mode-hint' : undefined} title="Treffer zählen"><span aria-hidden="true"><i /></span></button>}
               />
             ) : (
               <QuickDartInput
                 attempt={attempt}
                 minimumDarts={minimumDarts}
                 onComplete={finishQuickAttempt}
-                disabled={!introReady || Boolean(result)}
+                disabled={gameplayInteractionDisabled}
+                inputModeControl={<button type="button" className={`level-input-mode-switch is-${inputMode}${showInputModeHint ? ' is-coachmark-target' : ''}`} onClick={() => requestInputMode('counter')} disabled={!introReady || Boolean(result)} aria-label="Zum Trefferzähler wechseln" aria-describedby={showInputModeHint ? 'input-mode-hint' : undefined} title="Schnelleingabe"><span aria-hidden="true"><i /></span></button>}
               />
             )}
             <button type="button" className="level-giveup-button" onClick={giveUpLevel} disabled={!introReady || Boolean(result)}>Aufgeben</button>
@@ -417,7 +431,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
             {menuOpen && <div className="level-pause-backdrop" onClick={closePauseMenu}><section role="dialog" aria-modal="true" aria-labelledby="level-pause-title" onClick={(event) => event.stopPropagation()}><p>DARTQUEST</p><h3 id="level-pause-title">Spiel pausiert</h3><button autoFocus type="button" onClick={closePauseMenu}>WEITERSPIELEN</button><button type="button" onClick={() => { setMenuOpen(false); onOpenSettings(() => menuButtonRef.current?.focus()) }}>EINSTELLUNGEN</button><button type="button" onClick={() => setRestartConfirmOpen(true)}>LEVEL NEU STARTEN</button><button className="danger" type="button" onClick={() => { window.history.replaceState(null, ''); setMenuOpen(false); onExitCampaign() }}>KAMPAGNE VERLASSEN</button>{restartConfirmOpen && <div className="level-restart-confirm" onClick={() => setRestartConfirmOpen(false)}><div role="alertdialog" aria-modal="true" aria-labelledby="level-restart-title" onClick={(event) => event.stopPropagation()}><h4 id="level-restart-title">Level wirklich neu starten?</h4><span>Alle Eingaben dieses Versuchs werden zurückgesetzt.</span><button autoFocus type="button" onClick={() => setRestartConfirmOpen(false)}>ABBRECHEN</button><button className="danger" type="button" onClick={restartLevel}>NEU STARTEN</button></div></div>}</section></div>}
         </div>
 
-        {result && !level.boss && !instantMode && (
+        {result && !level.boss && !instantMode && !result.timed && (
           <>
             <LevelCompleteAnimation
               stars={result.stars}
@@ -433,8 +447,9 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
             {profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
           </>
         )}
+        {result?.timed && !normalConfirmation && !profileSyncError && <p className="level-profile-sync-status" role="status">Zeit und Fortschritt werden gespeichert …</p>}
         {result && !level.boss && instantMode && profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}
-        {normalConfirmation && !level.boss && <div className="level-success-actions" role="dialog" aria-modal="true" aria-labelledby="level-success-title"><section><span>DARTQUEST</span><h3 id="level-success-title">Aufgabe erfüllt</h3><p>{result.totalDarts} Darts</p><strong className="level-success-stars" aria-label={`${result.stars} Sterne`}>{'★'.repeat(result.stars)}</strong><div className="level-success-rewards"><b>+{normalConfirmation.awardedXP ?? 0} XP</b><b>🪙 +{normalConfirmation.awardedCoins ?? 0} Coins</b></div><button type="button" onClick={returnToAttempt}>ZURÜCK ZUM SPIEL</button><button type="button" onClick={beginReturnToMap}>WEITER ZUR KARTE</button>{normalConfirmation.nextLevelId&&<button className="primary" type="button" onClick={()=>onPlayNext(normalConfirmation.nextLevelId)}>NÄCHSTE AUFGABE</button>}</section></div>}
+        {normalConfirmation && !level.boss && <div className="level-success-actions" role="dialog" aria-modal="true" aria-labelledby="level-success-title"><section><span>DARTQUEST</span><h3 id="level-success-title">Aufgabe erfüllt</h3><p>{result.timed ? `Benötigte Zeit: ${Math.floor(result.elapsedTimeSeconds / 60)}:${String(result.elapsedTimeSeconds % 60).padStart(2, '0')}` : `${result.totalDarts} Darts`}</p><strong className="level-success-stars" aria-label={`${result.stars} Sterne`}>{'★'.repeat(result.stars)}</strong><div className="level-success-rewards"><b>+{normalConfirmation.awardedXP ?? 0} XP</b><b>🪙 +{normalConfirmation.awardedCoins ?? 0} Coins</b></div><button type="button" onClick={returnToAttempt}>ZURÜCK ZUM SPIEL</button><button type="button" onClick={beginReturnToMap}>WEITER ZUR KARTE</button>{normalConfirmation.nextLevelId&&<button className="primary" type="button" onClick={()=>onPlayNext(normalConfirmation.nextLevelId)}>NÄCHSTE AUFGABE</button>}</section></div>}
         {result && level.boss && !bossConfirmation && !profileSyncError && !instantMode && <p className="level-profile-sync-status" role="status">Boss-Abschluss wird gespeichert …</p>}
         {bossConfirmation && <BossDefeatedSequence confirmation={bossConfirmation} onContinue={beginReturnToMap} onPlayNext={onPlayNext} />}
         {result && level.boss && profileSyncError && <div className="level-profile-sync-error" role="alert"><strong>Speichern fehlgeschlagen</strong><span>{profileSyncError}</span><button type="button" onClick={onClose}>Zur Karte</button></div>}

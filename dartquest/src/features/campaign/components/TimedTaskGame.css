@@ -1,0 +1,26 @@
+.timed-task-game { --timer-color:#42e695; display:grid; min-height:0; flex:1 1 auto; grid-template-rows:auto auto minmax(180px,1fr) auto; align-items:center; gap:8px; color:#fff; text-align:center; }
+.timed-task-copy { display:grid; gap:1px; padding-top:4px; color:#d8e2de; font-size:clamp(13px,3.8vw,17px); font-weight:900; letter-spacing:1px; line-height:1.08; }
+.timed-task-copy strong { color:#59ec9f; font-size:clamp(28px,9vw,43px); line-height:1; text-shadow:0 0 15px rgba(66,230,149,.25); }
+.timed-task-limit { display:grid; place-items:center; gap:1px; }
+.timed-task-limit small { display:flex; width:100%; align-items:center; gap:12px; color:#42e695; font-size:10px; font-weight:950; letter-spacing:1.4px; }
+.timed-task-limit small::before,.timed-task-limit small::after { height:1px; flex:1; content:''; background:linear-gradient(90deg,transparent,#42e695); }
+.timed-task-limit small::after { transform:scaleX(-1); }
+.timed-task-limit strong { color:#ecfff5; font-size:clamp(33px,11vw,51px); line-height:1; letter-spacing:1px; text-shadow:0 0 7px rgba(66,230,149,.7),0 0 19px rgba(66,230,149,.38); }
+.timed-task-clock { position:relative; width:min(64vw,270px); aspect-ratio:1; place-self:center; border-radius:50%; background:conic-gradient(var(--timer-color) var(--timer-progress),rgba(66,230,149,.08) 0); box-shadow:0 0 18px color-mix(in srgb,var(--timer-color) 36%,transparent),inset 0 0 22px rgba(0,0,0,.72); transition:background .2s linear; }
+.timed-task-clock::before { position:absolute; inset:7px; border:1px solid color-mix(in srgb,var(--timer-color) 58%,transparent); border-radius:inherit; background:radial-gradient(circle,rgba(12,57,40,.64),#00100b 70%); content:''; }
+.timed-task-clock>div { position:absolute; inset:14px; display:grid; place-items:center; align-content:center; border:1px solid color-mix(in srgb,var(--timer-color) 32%,transparent); border-radius:50%; }
+.timed-task-clock strong { min-width:5.6ch; color:#edfff6; font-size:clamp(44px,14vw,65px); font-variant-numeric:tabular-nums; line-height:1; letter-spacing:2px; text-shadow:0 0 7px var(--timer-color),0 0 18px color-mix(in srgb,var(--timer-color) 60%,transparent),0 0 32px color-mix(in srgb,var(--timer-color) 32%,transparent); }
+.timed-task-clock small { margin-top:9px; color:var(--timer-color); font-size:10px; font-weight:900; letter-spacing:1.3px; }
+.timed-task-game.is-warning { --timer-color:#ffc35d; }.timed-task-game.is-urgent { --timer-color:#ff8a63; }.timed-task-game.is-critical,.timed-task-game.is-expired { --timer-color:#ff5966; }
+.timed-task-game.is-critical .timed-task-clock { animation:timedTaskPulse .72s ease-in-out infinite alternate; }
+@keyframes timedTaskPulse { from { filter:brightness(.92); transform:scale(.99); } to { filter:brightness(1.12); transform:scale(1.01); } }
+.timed-task-controls { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.timed-task-controls button,.timed-task-expired button,.timed-task-review button { min-height:48px; border:1px solid rgba(66,230,149,.52); border-radius:12px; background:#09251c; color:#58eaa6; font:inherit; font-size:14px; font-weight:950; letter-spacing:.5px; }
+.timed-task-controls .start { border-color:#42e695; background:#0b3527; color:#e9fff5; }.timed-task-controls .stop { border-color:#e43d4b; background:#3a1117; color:#ff9199; }.timed-task-controls .finish { color:#78f5b8; }
+.timed-task-controls button:disabled { border-color:#25493c; background:#061711; color:#49675c; opacity:.58; }
+.timed-task-expired button { width:100%; border-color:#f04452; color:#ffc1c6; }
+.timed-task-review { position:absolute; z-index:35; inset:0; display:grid; place-items:center; align-content:center; gap:9px; padding:18px; border-radius:20px; background:rgba(0,10,7,.94); backdrop-filter:blur(7px); }
+.timed-task-review>strong { color:#64efac; font-size:24px; }.timed-task-review>span { margin-bottom:7px; color:#eafff5; font-size:17px; }.timed-task-review button { width:min(100%,340px); }
+@media(max-width:560px) and (max-height:700px) { .timed-task-game { grid-template-rows:auto auto minmax(145px,1fr) auto; gap:4px; }.timed-task-copy { font-size:12px; }.timed-task-copy strong { font-size:27px; }.timed-task-limit strong { font-size:32px; }.timed-task-clock { width:min(43vh,210px); }.timed-task-clock strong { font-size:45px; }.timed-task-clock small { margin-top:5px; font-size:8px; }.timed-task-controls { gap:5px; }.timed-task-controls button { min-height:39px; font-size:12px; } }
+:root[data-animations=reduced] .timed-task-game.is-critical .timed-task-clock,:root[data-animations=off] .timed-task-game.is-critical .timed-task-clock { animation:none; }
+@media(prefers-reduced-motion:reduce) { .timed-task-game.is-critical .timed-task-clock { animation:none; } }

@@ -1,0 +1,37 @@
+.numeric-campaign-input { display:grid; min-height:0; flex:1 1 auto; grid-template-rows:auto auto 44px 112px auto minmax(0,1fr); gap:6px; }
+.numeric-campaign-score { display:grid; place-items:center; align-content:center; min-height:116px; border:1px solid rgba(66,230,149,.3); border-radius:14px; background:radial-gradient(circle,rgba(31,126,91,.2),transparent 68%),#04140f; }
+.numeric-campaign-score span,.numeric-campaign-score small { color:#8fb0a4; font-size:10px; font-weight:900; letter-spacing:1.2px; text-transform:uppercase; }
+.numeric-campaign-score strong { color:#fff; font-size:52px; line-height:1; text-shadow:0 0 16px rgba(66,230,149,.28); }
+.numeric-campaign-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); min-height:42px; overflow:hidden; border:1px solid rgba(66,230,149,.28); border-radius:11px; }
+.numeric-campaign-meta>div { display:grid; min-width:0; place-items:center; align-content:center; border-left:1px solid rgba(66,230,149,.2); }
+.numeric-campaign-meta>div:first-child { border-left:0; }
+.numeric-campaign-meta span { color:#9fb3ab; font-size:9px; font-weight:800; text-transform:uppercase; }
+.numeric-campaign-meta strong { font-size:17px; }
+.numeric-campaign-input>.campaign-dart-slots>div { height:44px; min-height:44px; padding:3px 4px; border-radius:9px; }
+.numeric-campaign-input>.campaign-dart-slots small { font-size:8px; line-height:1; }
+.numeric-campaign-input>.campaign-dart-slots strong { font-size:11px; line-height:1.1; }
+.numeric-campaign-history { height:112px; min-height:112px; overflow:hidden; border:1px solid #29483d; border-radius:10px; background:#04140f; }
+.numeric-campaign-history header,.numeric-campaign-history div { display:grid; grid-template-columns:70px 1fr 70px; align-items:center; min-height:28px; padding:2px 8px; text-align:center; }
+.numeric-campaign-history header { background:#092019; color:#8fa79e; font-size:8px; font-weight:900; text-transform:uppercase; }
+.numeric-campaign-history div { border-top:1px solid rgba(255,255,255,.05); font-size:11px; }
+.numeric-campaign-history div b { color:#42e695; }
+.numeric-campaign-history .is-empty { color:#657c73; }
+.numeric-campaign-history .is-empty strong { font-weight:500; }
+.numeric-campaign-undo { min-height:34px; border:1px solid #29483d; border-radius:9px; background:#071b15; color:#b9cac4; font-weight:900; }
+.numeric-campaign-undo:disabled { opacity:.3; }
+.numeric-campaign-input .score-keypad { min-height:0; margin:0; }
+.numeric-campaign-input .score-display { height:42px; font-size:25px; }
+.numeric-campaign-input .score-keypad button { min-height:36px; }
+.numeric-checkout-prompt { position:absolute; z-index:40; inset:0; display:grid; place-items:center; padding:14px; background:rgba(0,7,5,.9); backdrop-filter:blur(5px); }
+.numeric-checkout-prompt>section { width:min(100%,340px); padding:18px 14px; border:1px solid #42e695; border-radius:16px; background:#071a14; text-align:center; }
+.numeric-checkout-prompt>section>span { color:#42e695; font-size:9px; font-weight:900; letter-spacing:1.2px; }
+.numeric-checkout-prompt h3 { margin:6px 0; }
+.numeric-checkout-prompt p { color:#adc0b9; font-size:12px; }
+.numeric-checkout-prompt div { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.numeric-checkout-prompt div .confirm-double { grid-column:1 / -1; }
+.numeric-checkout-prompt button { min-height:44px; border:1px solid #42e69566; border-radius:9px; background:#10382b; color:#fff; font-weight:900; }
+.numeric-checkout-prompt div button { display:grid; place-items:center; }
+.numeric-checkout-prompt div strong { font-size:22px; }
+.numeric-checkout-prompt div small { color:#8ff0bd; }
+.numeric-checkout-prompt>section>button { width:100%; margin-top:9px; border-color:#a14d57; background:#3a171c; color:#ffc3c7; }
+@media(max-height:700px) { .numeric-campaign-input { grid-template-rows:auto auto 40px 88px auto minmax(0,1fr); gap:4px; } .numeric-campaign-score { min-height:72px; } .numeric-campaign-score strong { font-size:38px; } .numeric-campaign-input>.campaign-dart-slots>div { height:40px; min-height:40px; } .numeric-campaign-history { height:88px; min-height:88px; } .numeric-campaign-history header,.numeric-campaign-history div { min-height:22px; padding-block:0; } .numeric-campaign-input .score-display { height:34px; } .numeric-campaign-input .score-keypad button { min-height:31px; } }

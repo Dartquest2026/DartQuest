@@ -25,10 +25,11 @@ function getDartboardTargetAreas(target) {
   return rings.map((ring) => `${Number(match[2])}:${ring}`)
 }
 
-function Dartboard({ targets, hitCounters }) {
+function Dartboard({ targets, hitCounters, activeTargetId = null }) {
   const highlighted = new Set()
   const highlightedBulls = new Set()
   targets.forEach((target) => {
+    if (activeTargetId && target.id !== activeTargetId) return
     if ((hitCounters[target.id] ?? 0) >= target.requiredHits) return
     getDartboardTargetAreas(target).forEach((area) => {
       if (area.startsWith('bull:')) highlightedBulls.add(area.slice(5))

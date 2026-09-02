@@ -2,8 +2,8 @@ import './CampaignGameUI.css'
 import { useEffect, useRef, useState } from 'react'
 import { triggerHaptic } from '../../settings/haptics'
 
-export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'] }) {
-  return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? 'Noch nicht geworfen' : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
+export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'], emptyText = 'Noch nicht geworfen' }) {
+  return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? emptyText : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
 }
 
 export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false, checkoutDartCounts = [], onCheckoutLongPress }) {

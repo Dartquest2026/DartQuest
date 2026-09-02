@@ -1,7 +1,7 @@
 import Dartboard from './Dartboard'
 import './QuickDartInput.css'
 
-function QuickDartInput({ attempt, minimumDarts, onComplete, disabled = false }) {
+function QuickDartInput({ attempt, minimumDarts, onComplete, disabled = false, inputModeControl }) {
   const options = [
     { stars: 4, darts: minimumDarts, text: `${minimumDarts} ${minimumDarts === 1 ? 'Pfeil' : 'Pfeile'} · Perfekt` },
     { stars: 3, darts: minimumDarts + 1, text: `${minimumDarts + 1}–${minimumDarts * 3} Pfeile` },
@@ -12,6 +12,7 @@ function QuickDartInput({ attempt, minimumDarts, onComplete, disabled = false })
   return (
     <section className="quick-dart-input" aria-label="Schnelleingabe">
       <Dartboard targets={attempt.targets} hitCounters={attempt.hitCounters} />
+      <header className="hit-counter-visit quick-input-status"><div><span>Aufnahme</span><strong>{attempt.visits}</strong></div><div><span>Darts gesamt</span><strong>{attempt.totalDarts}</strong></div><div className="hit-counter-mode"><span>Zähler</span>{inputModeControl}</div></header>
 
       <div className="quick-dart-input__panel">
         <span>Wie hast du die Aufgabe geschafft?</span>
