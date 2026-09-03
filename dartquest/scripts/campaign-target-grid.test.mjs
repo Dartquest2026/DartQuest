@@ -3,7 +3,25 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 import { difficultyLevels } from '../src/features/campaign/data/levels.js'
+import { getWorldPosition } from '../src/features/campaign/data/worldMaps.js'
 import { createLevelAttempt, isAttemptComplete, registerTargetHit } from '../src/features/campaign/utils/levelAttempt.js'
+
+test('mobile campaign map and action card keep stable independent regions', () => {
+  const css = readFileSync(new URL('../src/features/campaign/Campaign.css', import.meta.url), 'utf8')
+  const finalMobileLayout = css.slice(css.lastIndexOf('/* Final compact campaign layout'))
+
+  assert.match(finalMobileLayout, /\.app-shell > \.dq-campaign \.dq-map\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?min-height:\s*320px;/)
+  assert.match(finalMobileLayout, /\.app-shell > \.dq-campaign \.dq-level-card\s*\{[\s\S]*?flex:\s*0 0 92px;[\s\S]*?height:\s*92px;[\s\S]*?max-height:\s*92px;/)
+  assert.match(finalMobileLayout, /\.dq-level-task\s*\{[\s\S]*?-webkit-line-clamp:\s*2;/)
+
+  for (const world of [1, 6, 9, 10]) {
+    assert.deepEqual([1, 5, 10].map((localLevel) => getWorldPosition(world, (world - 1) * 10 + localLevel)), [
+      { id: 1, x: 12, y: 10 },
+      { id: 5, x: 65, y: 46 },
+      { id: 10, x: 84, y: 88 },
+    ])
+  }
+})
 
 test('Schwer Level 61 rendert und akzeptiert S1 bis S5 vollständig', () => {
   const level = difficultyLevels[4].find((entry) => entry.id === 61)

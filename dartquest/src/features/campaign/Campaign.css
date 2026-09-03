@@ -3414,8 +3414,8 @@
     justify-self: center;
   }
 
-  .dq-map {
-    flex: none;
+  .app-shell > .dq-campaign .dq-map {
+    flex: 0 0 auto;
 
     min-height: 320px;
     height: clamp(320px, 41.6dvh, 359px);
@@ -3423,6 +3423,7 @@
     margin: 0;
 
     border-radius: 15px;
+    isolation: isolate;
   }
 
   .dq-node {
@@ -3487,11 +3488,11 @@
   }
 
   .dq-reward-item {
-    min-height: 34px;
+    min-height: 32px;
 
     gap: 3px;
 
-    padding: 4px;
+    padding: 3px;
   }
 
   .dq-play-button {
@@ -3507,6 +3508,49 @@
     margin-bottom: 0;
 
     padding: 7px;
+  }
+}
+
+/* Stable, compact action region; keep this after all campaign mobile overrides. */
+@media (max-width: 480px) {
+  .app-shell > .dq-campaign .dq-level-card {
+    flex: 0 0 92px;
+    min-height: 92px;
+    height: 92px;
+    max-height: 92px;
+  }
+
+  .app-shell > .dq-campaign .dq-level-description {
+    min-height: 0;
+    padding: 5px 8px;
+  }
+
+  .app-shell > .dq-campaign .dq-level-task {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: clamp(12px, 3.35vw, 14px);
+    line-height: 1.15;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .app-shell > .dq-campaign .dq-level-best {
+    margin-top: 2px;
+  }
+
+  .app-shell > .dq-campaign .dq-level-stars {
+    margin-top: 1px;
+  }
+
+  .app-shell > .dq-campaign .dq-level-action-area {
+    min-height: 0;
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .app-shell > .dq-campaign .dq-reward-item {
+    min-height: 32px;
+    padding: 3px;
   }
 }
 .campaign-menu-backdrop{position:fixed;z-index:11000;inset:0;background:rgba(0,7,5,.78);backdrop-filter:blur(5px)}.campaign-menu-drawer{position:absolute;top:0;left:0;width:min(86vw,360px);height:100%;padding:max(28px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));border-right:1px solid rgba(66,230,149,.35);background:#061a14;box-shadow:18px 0 50px rgba(0,0,0,.5)}.campaign-menu-drawer p{margin:0;color:#42e695;font-size:11px;font-weight:900;letter-spacing:1px}.campaign-menu-drawer h2{margin:5px 0 20px}.campaign-menu-drawer button{width:100%;min-height:50px;margin-top:9px;border:1px solid rgba(66,230,149,.27);border-radius:12px;background:#09251c;color:#eafff5;font-weight:900}.campaign-menu-drawer button.danger{margin-top:22px;border-color:rgba(255,105,115,.4);color:#ffabb1}.campaign-settings-layer{position:fixed;z-index:12000;inset:0;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));overflow:hidden;background:#03110d}.campaign-settings-layer>.settings-screen{height:100%}.dq-campaign>.campaign-exit-backdrop{z-index:12000}

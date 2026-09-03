@@ -1772,15 +1772,6 @@ function Campaign({
           <section className="dq-level-card">
 
             <div className="dq-level-description">
-
-              <small className="dq-level-name">
-                {
-                  selectedPreviewLevel
-                    .title
-                }
-              </small>
-
-
               <strong className="dq-level-task">
                 {
                   selectedPreviewLevel
