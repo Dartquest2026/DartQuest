@@ -61,9 +61,11 @@ function TimedTaskGame({ level, disabled, onComplete }) {
 
   function stop() {
     if (status !== 'running') return
-    setRemainingMs(pauseTimedAttempt(endTimeRef.current))
+    const nextRemaining = pauseTimedAttempt(endTimeRef.current)
+    setRemainingMs(nextRemaining)
     endTimeRef.current = null
-    setStatus('paused'); triggerHaptic('light')
+    setStatus(nextRemaining > 0 ? 'paused' : 'expired')
+    triggerHaptic(nextRemaining > 0 ? 'light' : 'error')
   }
 
   function resume() {
@@ -74,9 +76,11 @@ function TimedTaskGame({ level, disabled, onComplete }) {
 
   function finish() {
     if (!['running', 'paused'].includes(status)) return
-    if (status === 'running') setRemainingMs(pauseTimedAttempt(endTimeRef.current))
+    const nextRemaining = status === 'running' ? pauseTimedAttempt(endTimeRef.current) : remainingMs
+    setRemainingMs(nextRemaining)
     endTimeRef.current = null
-    setStatus('review'); triggerHaptic('medium')
+    setStatus(nextRemaining > 0 ? 'review' : 'expired')
+    triggerHaptic(nextRemaining > 0 ? 'medium' : 'error')
   }
 
   function confirm() {

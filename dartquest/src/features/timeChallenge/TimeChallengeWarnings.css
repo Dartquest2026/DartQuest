@@ -1,0 +1,61 @@
+/* Visual-only countdown warning stages. */
+.time-challenge-play {
+  --ring: var(--dq-green, #42e695);
+}
+
+.time-challenge-play.is-normal {
+  --ring: var(--dq-green, #42e695);
+}
+
+.time-challenge-play.is-warning {
+  --ring: var(--dq-gold, #f4c542);
+}
+
+.time-challenge-play.is-critical {
+  --ring: color-mix(in srgb, var(--dq-gold, #f4c542) 48%, var(--dq-red, #ff8d97));
+}
+
+.time-challenge-play.is-last-seconds,
+.time-challenge-play.is-overtime {
+  --ring: var(--dq-red, #ff8d97);
+}
+
+.time-challenge-play .time-challenge-ring {
+  --ring: inherit;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--ring) 34%, transparent);
+}
+
+.time-challenge-play .time-challenge-ring > div {
+  border-color: color-mix(in srgb, var(--ring) 42%, transparent);
+}
+
+.time-challenge-play .time-challenge-ring strong {
+  color: var(--ring);
+}
+
+.time-challenge-play.is-last-seconds .time-challenge-ring strong {
+  animation: timeChallengeSecondPulse 0.24s ease-out both;
+}
+
+@keyframes timeChallengeSecondPulse {
+  0% {
+    filter: brightness(1.35);
+    transform: scale(0.96);
+  }
+
+  100% {
+    filter: none;
+    transform: scale(1);
+  }
+}
+
+:root[data-animations='off'] .time-challenge-play.is-last-seconds .time-challenge-ring strong,
+:root[data-animations='reduced'] .time-challenge-play.is-last-seconds .time-challenge-ring strong {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .time-challenge-play.is-last-seconds .time-challenge-ring strong {
+    animation: none;
+  }
+}

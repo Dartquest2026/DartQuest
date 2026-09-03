@@ -14,6 +14,7 @@ import {
   getDartVisitPreview,
   getVisibleNumericHistory,
 } from '../src/features/campaign/standardNumericAttempt.js'
+import { getScoreTaskIssue, getScoreTaskMinimumDarts, getScoreTaskStarRules, getScoreTaskStars } from '../src/features/campaign/scoreTaskRating.js'
 
 test('alle geladenen Standard-Level besitzen einen expliziten Task-Typ', () => {
   for (const levels of Object.values(difficultyLevels)) {
@@ -92,4 +93,38 @@ test('Pro-Dart-Vorschau erkennt Zwischenstand, Bust und Checkout ohne vorzeitige
   assert.deepEqual(getDartVisitPreview(level, attempt, [20, 19]), { points:39, rest:40, bust:true, checkout:false })
   assert.deepEqual(getDartVisitPreview(level, attempt, [0, 40]), { points:40, rest:0, bust:false, checkout:true })
   assert.equal(numericAttemptStats(level, attempt).history.length, 0)
+})
+
+test('Score-Minimum berücksichtigt tatsächlich erreichbare Dartwerte', () => {
+  for (const [score, darts] of [[60,1],[100,2],[120,2],[140,3],[170,3],[180,3]]) assert.equal(getScoreTaskMinimumDarts(score), darts, String(score))
+})
+
+test('100 Punkte unterscheiden mathematisches Minimum und Aufnahmegrenzen', () => {
+  assert.equal(getScoreTaskStars({targetScore:100,totalDarts:2,visits:1}),4)
+  assert.equal(getScoreTaskStars({targetScore:100,totalDarts:3,visits:1}),3)
+  assert.equal(getScoreTaskStars({targetScore:100,totalDarts:6,visits:2}),2)
+  assert.equal(getScoreTaskStars({targetScore:100,totalDarts:9,visits:3}),1)
+})
+
+test('140, 170 und 180 Punkte werden korrekt nach Aufnahmen bewertet', () => {
+  for (const score of [140,170,180]) {
+    assert.deepEqual([3,6,9,12].map((darts,index)=>getScoreTaskStars({targetScore:score,totalDarts:darts,visits:index+1})),[4,3,2,1],String(score))
+  }
+  assert.match(getScoreTaskStarRules(180)[0].text,/Erste Aufnahme/)
+  assert.doesNotMatch(getScoreTaskStarRules(180).map((rule)=>rule.text).join(' '),/1 Dart|2 Darts/)
+})
+
+test('Level 90 ist eine objektiv gemessene Score-Aufgabe ohne manuelle Sterneauswahl', () => {
+  const level=difficultyLevels[4].find((item)=>item.id===90)
+  assert.equal(level.taskType,'score'); assert.equal(level.targetScore,180); assert.equal(level.scoreGoal,'singleVisit')
+})
+
+test('wiederholte Score-Ziele bewerten die mathematisch nötigen Aufnahmen gemeinsam', () => {
+  const rating=(visits)=>getScoreTaskStars({targetScore:180,totalDarts:visits*3,visits,scoreGoal:'repeatedVisit',requiredScoringVisits:2})
+  assert.deepEqual([2,3,4,5].map(rating),[4,3,2,1])
+})
+
+test('alle klassifizierten Score-Level sind mathematisch plausibel', () => {
+  const issues=Object.entries(difficultyLevels).flatMap(([difficulty,levels])=>levels.filter((level)=>level.taskType==='score').map((level)=>({difficulty,level,issue:getScoreTaskIssue(level)})).filter((entry)=>entry.issue))
+  assert.deepEqual(issues,[])
 })

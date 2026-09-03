@@ -6,6 +6,7 @@ import Campaign from '../features/campaign/Campaign'
 import CampaignModes from '../features/campaignModes/CampaignModes'
 import CheckoutCampaign from '../features/campaignModes/CheckoutCampaign'
 import RivalCampaign from '../features/campaignModes/RivalCampaign'
+import TimeChallenge from '../features/timeChallenge/TimeChallenge'
 import Multiplayer from '../features/multiplayer/Multiplayer'
 import AuthScreen from '../features/auth/AuthScreen'
 import PasswordRecoveryScreen from '../features/auth/PasswordRecoveryScreen'
@@ -29,6 +30,7 @@ import BottomNav from '../shared/components/BottomNav'
 
 import './App.css'
 import '../shared/styles/BottomNav.css'
+import '../shared/styles/PressFeedback.css'
 import '../features/campaign/LevelModal.css'
 
 const SINGLEPLAYER_DIFFICULTY_STORAGE_KEY =
@@ -473,6 +475,10 @@ function App() {
 
       {activePage === 'rivalCampaign' && (
         <RivalCampaign activeProfile={activeProfile} onProfileRewards={applyProfileRewards} onBack={() => setActivePage('campaignModes')} />
+      )}
+
+      {activePage === 'timeChallengeCampaign' && (
+        <TimeChallenge activeProfile={activeProfile} onBack={() => setActivePage('campaignModes')} />
       )}
 
       {activePage === 'cameraTestCampaign' && (

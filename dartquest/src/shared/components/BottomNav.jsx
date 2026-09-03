@@ -3,6 +3,11 @@ const campaignPages = new Set([
   'singleplayerDifficulty',
   'singleplayerCampaign',
   'multiplayerCampaign',
+  'campaignModes',
+  'checkoutCampaign',
+  'rivalCampaign',
+  'timeChallengeCampaign',
+  'cameraTestCampaign',
 ])
 
 const homePages = new Set(['home', 'singleplayer', 'multiplayer', 'settings'])
@@ -25,6 +30,7 @@ function NavIcon({ name }) {
 }
 
 function BottomNav({ activePage, onChangePage, pendingRequestCount = 0 }) {
+  const { pressedKey, press } = usePressFeedback()
   const activeMainPage = getActiveMainPage(activePage)
   const items = [
     { id: 'home', label: 'Home' },
@@ -38,7 +44,7 @@ function BottomNav({ activePage, onChangePage, pendingRequestCount = 0 }) {
       {items.map((item) => {
         const isActive = activeMainPage === item.id
         return (
-          <button key={item.id} type="button" className={isActive ? 'active' : ''} aria-current={isActive ? 'page' : undefined} onClick={() => onChangePage(item.id)}>
+          <button key={item.id} type="button" className={`${isActive ? 'active ' : ''}${pressedKey === item.id ? 'is-dq-pressed' : ''}`.trim()} aria-current={isActive ? 'page' : undefined} onClick={() => press(item.id, () => onChangePage(item.id))}>
             <span className="bottom-nav-icon">
               <NavIcon name={item.id} />
               {item.id === 'community' && pendingRequestCount > 0 && (
@@ -54,3 +60,4 @@ function BottomNav({ activePage, onChangePage, pendingRequestCount = 0 }) {
 }
 
 export default BottomNav
+import { usePressFeedback } from '../hooks/usePressFeedback.js'

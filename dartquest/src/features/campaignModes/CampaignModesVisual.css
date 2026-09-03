@@ -1,0 +1,196 @@
+.campaign-modes {
+  position: relative;
+  min-height: 100%;
+  padding: 12px 14px calc(92px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 88% 4%, rgba(66, 230, 149, 0.09), transparent 28%),
+    radial-gradient(circle at 12% 72%, rgba(17, 113, 78, 0.09), transparent 31%);
+}
+
+.campaign-modes::before {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(66, 230, 149, 0.018) 1px, transparent 1px);
+  background-size: 100% 34px;
+  content: '';
+  pointer-events: none;
+}
+
+.campaign-modes > * {
+  position: relative;
+}
+
+.campaign-modes header {
+  margin-bottom: 10px;
+}
+
+.campaign-modes header > button {
+  border-color: rgba(66, 230, 149, 0.48);
+  background: linear-gradient(145deg, rgba(10, 43, 32, 0.96), rgba(2, 17, 13, 0.98));
+  box-shadow: inset 0 0 16px rgba(66, 230, 149, 0.05), 0 0 15px rgba(66, 230, 149, 0.08);
+}
+
+.campaign-modes header span {
+  letter-spacing: 1.8px;
+}
+
+.campaign-modes h1 {
+  margin-top: 0;
+  font-size: clamp(29px, 8vw, 37px);
+  line-height: 0.98;
+  letter-spacing: -0.8px;
+  text-transform: uppercase;
+}
+
+.campaign-modes__intro {
+  margin: 9px 0 14px;
+  text-align: left;
+}
+
+.campaign-modes__intro h2 {
+  margin: 0 0 3px;
+  color: var(--dq-green, #42e695);
+  font-size: clamp(15px, 4.2vw, 19px);
+  line-height: 1.15;
+}
+
+.campaign-modes__intro p {
+  margin: 0;
+  color: #9eafa9;
+  font-size: 12px;
+}
+
+.campaign-modes__grid {
+  gap: 8px;
+}
+
+.campaign-modes__grid > button {
+  position: relative;
+  grid-template-columns: 54px minmax(0, 1fr) 22px;
+  min-height: 82px;
+  gap: 11px;
+  padding: 10px 12px;
+  overflow: hidden;
+  border-color: rgba(66, 230, 149, 0.36);
+  border-radius: 15px;
+  background:
+    linear-gradient(100deg, rgba(9, 40, 30, 0.98), rgba(2, 17, 13, 0.98)),
+    #04130f;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025), 0 9px 22px rgba(0, 0, 0, 0.22);
+  isolation: isolate;
+}
+
+.campaign-modes__grid > button::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(66, 230, 149, 0.07), transparent 44%);
+  content: '';
+  opacity: 0;
+}
+
+.campaign-modes__grid > button.is-dq-pressed {
+  border-color: var(--dq-green, #42e695);
+  box-shadow: inset 0 0 20px rgba(66, 230, 149, 0.12), 0 0 20px rgba(66, 230, 149, 0.3);
+}
+
+.campaign-modes__grid > button.is-dq-pressed::after {
+  opacity: 1;
+}
+
+.campaign-mode-icon {
+  position: relative;
+  display: grid;
+  width: 48px;
+  height: 52px;
+  place-items: center;
+  color: var(--dq-green, #42e695);
+  filter: drop-shadow(0 0 7px rgba(66, 230, 149, 0.4));
+}
+
+.campaign-mode-icon::before {
+  position: absolute;
+  inset: 2px 0;
+  border: 1px solid rgba(66, 230, 149, 0.68);
+  background: linear-gradient(145deg, rgba(10, 54, 39, 0.92), rgba(1, 16, 12, 0.96));
+  clip-path: polygon(25% 0, 75% 0, 100% 24%, 100% 76%, 75% 100%, 25% 100%, 0 76%, 0 24%);
+  content: '';
+}
+
+.campaign-mode-icon svg {
+  position: relative;
+  width: 27px;
+  height: 27px;
+  stroke: currentColor;
+}
+
+.campaign-modes__grid span:not(.campaign-mode-icon):not(.campaign-mode-new) {
+  gap: 3px;
+}
+
+.campaign-modes__grid strong {
+  color: #f5faf8;
+  font-size: clamp(14px, 4vw, 17px);
+  letter-spacing: 0.15px;
+  text-transform: uppercase;
+}
+
+.campaign-modes__grid small {
+  color: #aebdb8;
+  font-size: 12px;
+  line-height: 1.28;
+}
+
+.campaign-mode-arrow {
+  color: var(--dq-green, #42e695);
+  font-size: 28px;
+  font-weight: 400;
+  filter: drop-shadow(0 0 6px rgba(66, 230, 149, 0.38));
+}
+
+.campaign-mode-new {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  padding: 2px 7px;
+  border: 1px solid rgba(66, 230, 149, 0.58);
+  border-radius: 999px;
+  background: rgba(9, 74, 50, 0.92);
+  color: #8dffc2;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.7px;
+}
+
+.campaign-modes__grid > button.is-new {
+  border-color: rgba(66, 230, 149, 0.75);
+  box-shadow: inset 0 0 22px rgba(66, 230, 149, 0.07), 0 0 20px rgba(66, 230, 149, 0.13);
+}
+
+@media (max-height: 700px) {
+  .campaign-modes {
+    padding-top: 8px;
+  }
+
+  .campaign-modes header {
+    margin-bottom: 5px;
+  }
+
+  .campaign-modes h1 {
+    font-size: 27px;
+  }
+
+  .campaign-modes__intro {
+    margin: 5px 0 9px;
+  }
+
+  .campaign-modes__grid {
+    gap: 6px;
+  }
+
+  .campaign-modes__grid > button {
+    min-height: 73px;
+    padding-block: 7px;
+  }
+}

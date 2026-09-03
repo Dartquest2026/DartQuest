@@ -1,6 +1,9 @@
 const SIMPLE_CHECKOUT = /^Checke\s+(\d+)(?:\s+(?:in|mit)\s+(?:maximal\s+)?(\d+)\s+Darts?)?$/i
 const SCORE_AT_LEAST = /^Erziele\s+(?:(?:in\s+(\d+)\s+Darts?\s+)|(?:insgesamt\s+))?mindestens\s+(\d+)\s+Punkte(?:\s+mit\s+3\s+Darts?)?$/i
 const SCORE_EXACT = /^(?:Erziele|Schaffe|Erreiche)\s+(?:(?:in\s+(\d+)\s+Darts?\s+))?(\d+)\s+Punkte(?:\s+mit\s+(\d+)\s+Darts?)?$/i
+const SCORE_ONCE_AT_LEAST = /^Erziele\s+(?:mindestens\s+)?einmal\s+(\d+)\s+Punkte$/i
+const SCORE_TWICE_AT_LEAST = /^Erziele\s+zweimal\s+mindestens\s+(\d+)\s+Punkte$/i
+const SCORE_TWICE_EXACT = /^Erziele\s+zweimal\s+(\d+)\s+Punkte$/i
 const AROUND_CLOCK_TIME = /^Around the Clock\s+1[–-]20\s+in maximal\s+(\d+)\s+Minuten?$/i
 
 function positiveInteger(value) {
@@ -26,6 +29,12 @@ export function withCampaignTaskType(level) {
   const checkout = task.match(SIMPLE_CHECKOUT)
   if (checkout) return { ...level, taskType: 'checkout', checkoutScore: Number(checkout[1]), dartLimit: positiveInteger(checkout[2]) }
 
+  const repeatedAtLeast = task.match(SCORE_TWICE_AT_LEAST)
+  const repeatedExact = task.match(SCORE_TWICE_EXACT)
+  if (repeatedAtLeast || repeatedExact) return { ...level, taskType:'score', targetScore:Number((repeatedAtLeast ?? repeatedExact)[1]), comparison:repeatedAtLeast?'atLeast':'exact', scoreGoal:'repeatedVisit', requiredScoringVisits:2 }
+  const onceAtLeast = task.match(SCORE_ONCE_AT_LEAST)
+  if (onceAtLeast) return { ...level, taskType:'score', targetScore:Number(onceAtLeast[1]), comparison:'atLeast', scoreGoal:'singleVisit' }
+
   const atLeast = task.match(SCORE_AT_LEAST)
   if (atLeast) {
     return {
@@ -33,6 +42,7 @@ export function withCampaignTaskType(level) {
       taskType: 'score',
       targetScore: positiveInteger(level.scoreTarget) ?? Number(atLeast[2]),
       comparison: 'atLeast',
+      scoreGoal: task.includes('insgesamt') || atLeast[1] ? 'cumulative' : 'singleVisit',
       dartLimit: positiveInteger(atLeast[1]) ?? (task.includes('mit 3 Darts') ? 3 : positiveInteger(level.perfectDarts)),
     }
   }
@@ -44,6 +54,7 @@ export function withCampaignTaskType(level) {
       taskType: 'score',
       targetScore: positiveInteger(level.scoreTarget) ?? Number(exact[2]),
       comparison: 'exact',
+      scoreGoal: exact[1] ? 'cumulative' : 'singleVisit',
       dartLimit: positiveInteger(exact[1]) ?? positiveInteger(exact[3]) ?? positiveInteger(level.perfectDarts),
     }
   }

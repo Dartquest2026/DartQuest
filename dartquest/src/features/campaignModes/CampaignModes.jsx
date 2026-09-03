@@ -4,6 +4,7 @@ const modes = [
   ['standard', '🗺️', 'Standard-Kampagne', 'Die bisherige DartQuest-Reise mit fünf Schwierigkeitsstufen.'],
   ['checkout', '🎯', 'Checkout-Kampagne', '169 Checkouts – von 2 bis 170.'],
   ['rival', '🤖', 'Rivalen-Kampagne', 'First to 3 gegen immer stärkere KI-Gegner.'],
+  ['timeChallenge', '⏱️', 'Time Challenge', 'Wiederholbare Übungen gegen deine eigene Bestzeit.'],
   ['cameraTest', '📷', 'Testversion Kamera', 'Kamera-Prototyp auf Basis der Rivalen-Kampagne.'],
 ]
 

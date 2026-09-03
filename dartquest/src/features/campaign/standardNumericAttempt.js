@@ -1,4 +1,5 @@
 import { applyVisit, CHECKOUT_FINISH_VALUES, createRivalMatch, DARTBOARD_HIT_VALUES, getMinimumCheckoutDarts, undoPlayerRound } from '../campaignModes/rivalEngine.js'
+import { getScoreTaskStars } from './scoreTaskRating.js'
 
 export function getMinimumCampaignCheckoutDarts(score) {
   const target = Number(score)
@@ -65,8 +66,11 @@ export function getDartVisitPreview(level, attempt, darts) {
     const bust = rest < 0 || rest === 1
     return { points, rest: bust ? stats.rest : rest, bust, checkout: rest === 0 }
   }
-  const totalScore = stats.totalScore + points
-  const complete = level.comparison === 'exact' ? totalScore === level.targetScore : totalScore >= level.targetScore
+  const totalScore = level.scoreGoal === 'singleVisit' || level.scoreGoal === 'repeatedVisit' ? points : stats.totalScore + points
+  const scoringVisit = level.comparison === 'exact' ? points === level.targetScore : points >= level.targetScore
+  const complete = level.scoreGoal === 'repeatedVisit'
+    ? stats.successfulVisits + (scoringVisit ? 1 : 0) >= level.requiredScoringVisits
+    : level.comparison === 'exact' ? totalScore === level.targetScore : totalScore >= level.targetScore
   return { points, rest: Math.max(0, level.targetScore - totalScore), bust: false, checkout: false, complete }
 }
 
@@ -85,21 +89,26 @@ export function numericAttemptStats(level, attempt) {
       complete: attempt.match.winner === 0,
     }
   }
-  const complete = level.comparison === 'exact' ? attempt.totalScore === level.targetScore : attempt.totalScore >= level.targetScore
+  const successfulVisits = attempt.visits.filter((visit) => level.comparison === 'exact' ? visit.points === level.targetScore : visit.points >= level.targetScore).length
+  const complete = level.scoreGoal === 'singleVisit'
+    ? successfulVisits >= 1
+    : level.scoreGoal === 'repeatedVisit'
+      ? successfulVisits >= level.requiredScoringVisits
+      : level.comparison === 'exact' ? attempt.totalScore === level.targetScore : attempt.totalScore >= level.targetScore
+  const scoringBase = level.scoreGoal === 'singleVisit' || level.scoreGoal === 'repeatedVisit' ? Math.max(0, ...attempt.visits.map((visit) => visit.points)) : attempt.totalScore
   return {
-    rest: Math.max(0, level.targetScore - attempt.totalScore), totalScore: attempt.totalScore, totalDarts: attempt.totalDarts,
+    rest: Math.max(0, level.targetScore - scoringBase), totalScore: attempt.totalScore, totalDarts: attempt.totalDarts,
     visits: attempt.visits.length, highestVisit: Math.max(0, ...attempt.visits.map((visit) => visit.points)),
-    average: attempt.totalDarts ? (attempt.totalScore / attempt.totalDarts) * 3 : 0, history: attempt.visits, complete,
+    average: attempt.totalDarts ? (attempt.totalScore / attempt.totalDarts) * 3 : 0, history: attempt.visits, successfulVisits, complete,
   }
 }
 
 export function createNumericAttemptResult(level, attempt, completedAt = Date.now()) {
   const stats = numericAttemptStats(level, attempt)
   const finalVisit = stats.history.at(-1)
-  const minimumScoreDarts = Math.max(1, Math.ceil(level.targetScore / 60))
   const stars = level.taskType === 'checkout'
     ? checkoutStarsForTotalDarts(level.checkoutScore, stats.totalDarts)
-    : stats.totalDarts === minimumScoreDarts ? 4 : stats.totalDarts <= 3 ? 3 : stats.totalDarts <= 6 ? 2 : 1
+    : getScoreTaskStars({ targetScore:level.targetScore, comparison:level.comparison, totalDarts:stats.totalDarts, visits:stats.visits, scoreGoal:level.scoreGoal, requiredScoringVisits:level.requiredScoringVisits })
   return {
     success: stats.complete, stars, darts: stats.totalDarts, totalDarts: stats.totalDarts, visits: stats.visits,
     finishingDart: finalVisit?.darts ?? 3, finalVisitDarts: finalVisit?.darts ?? 3, taskType: level.taskType,

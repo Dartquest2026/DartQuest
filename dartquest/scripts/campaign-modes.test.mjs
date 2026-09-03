@@ -15,6 +15,18 @@ import { BOARD_MODEL_RADII, GROUND_TRUTH_POINTS, NORMALIZED_CENTER, STEEL_BOARD_
 import { findHomography, invertHomography, projectPoint, reprojectionError } from '../src/features/campaignModes/cameraVision/boardHomography.js'
 import { createVideoDisplayTransform, displayPointToVideoPoint, videoPointToDisplayPoint } from '../src/features/campaignModes/cameraVision/coordinateTransforms.js'
 
+test('globales Press-Feedback erhält die Positionstransformation der Kampagnen-Level', () => {
+  const campaign = readFileSync(new URL('../src/features/campaign/Campaign.jsx', import.meta.url), 'utf8')
+  const campaignCss = readFileSync(new URL('../src/features/campaign/Campaign.css', import.meta.url), 'utf8')
+  const pressCss = readFileSync(new URL('../src/shared/styles/PressFeedback.css', import.meta.url), 'utf8')
+
+  assert.match(campaign, /onClick=\{\(\) =>\s*selectMapLevel\(/)
+  assert.match(campaign, /disabled=\{\s*!unlocked\s*\}/)
+  assert.match(campaignCss, /\.dq-node\s*\{[\s\S]*?transform:\s*translate\(-50%, -50%\)/)
+  assert.match(pressCss, /\.is-dq-pressed\s*\{[\s\S]*?scale:\s*0\.98/)
+  assert.doesNotMatch(pressCss, /\.is-dq-pressed\s*\{[\s\S]*?transform:\s*scale/)
+})
+
 test('Kamera-Testmodus ist separat geroutet und schreibt keine Rivalenfortschritte', () => {
   const modes = readFileSync(new URL('../src/features/campaignModes/CampaignModes.jsx', import.meta.url), 'utf8')
   const app = readFileSync(new URL('../src/app/App.jsx', import.meta.url), 'utf8')

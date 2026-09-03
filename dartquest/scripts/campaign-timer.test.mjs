@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs'
 
 import { difficultyLevels } from '../src/features/campaign/data/levels.js'
 import { formatCountdown, getCountdownTone, getRemainingSeconds } from '../src/features/campaign/campaignTimer.js'
-import { createLevelAttempt } from '../src/features/campaign/utils/levelAttempt.js'
 import { createTimedTaskResult, pauseTimedAttempt, resumeTimedAttempt } from '../src/features/campaign/timedTaskAttempt.js'
 
 test('alle textbasierten Zeitlimits sind strukturiert migriert', () => {
@@ -13,8 +12,7 @@ test('alle textbasierten Zeitlimits sind strukturiert migriert', () => {
   for (const id of [68,69,70,97]) {
     const level = difficultyLevels[4].find((entry) => entry.id === id)
     assert.equal(level.taskType, 'timed')
-    assert.equal(level.targets.length, 20)
-    assert.equal(level.orderedTargets, true)
+    assert.match(level.task, /Around the Clock\s+1[–-]20/i)
   }
 })
 

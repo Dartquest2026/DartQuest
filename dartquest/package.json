@@ -24,6 +24,7 @@
     "test:numeric-campaign": "node --test scripts/numeric-campaign.test.mjs",
     "test:campaign-target-grid": "node --test scripts/campaign-target-grid.test.mjs",
     "test:campaign-timer": "node --test scripts/campaign-timer.test.mjs",
+    "test:time-challenge": "node --test scripts/time-challenge.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

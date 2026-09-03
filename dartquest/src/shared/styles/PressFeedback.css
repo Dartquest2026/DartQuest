@@ -1,0 +1,42 @@
+:where(button, [role='button'], a[href]) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:where(button:not(:disabled), [role='button']:not([aria-disabled='true']), a[href]):active,
+:where(button, [role='button'], a[href]).is-dq-pressed {
+  filter: brightness(1.16);
+  scale: 0.98;
+}
+
+.is-dq-pressed {
+  animation: dqPressFeedback 130ms ease-out both;
+  pointer-events: none;
+}
+
+@keyframes dqPressFeedback {
+  45% {
+    filter: brightness(1.24) drop-shadow(0 0 7px rgba(66, 230, 149, 0.48));
+    scale: 0.98;
+  }
+}
+
+:where(button:disabled, [aria-disabled='true']) {
+  cursor: default;
+}
+
+:where(button:disabled, [aria-disabled='true']):active {
+  filter: none;
+  scale: none;
+}
+
+:root[data-animations='off'] .is-dq-pressed,
+:root[data-animations='reduced'] .is-dq-pressed {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-dq-pressed {
+    animation: none;
+  }
+}

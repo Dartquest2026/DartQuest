@@ -12,6 +12,7 @@ export function createTimedTaskResult(level, remainingMs, completedAt = Date.now
   const elapsedMs = limitMs - safeRemainingMs
   return {
     success: true,
+    completed: true,
     timed: true,
     stars: 1,
     darts: null,
