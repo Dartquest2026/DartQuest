@@ -293,7 +293,7 @@ button.multiplayer-entry-card:active {
 
   gap: 11px;
 
-  min-height: 70px;
+  min-height: 60px;
 
   padding: 11px;
 
@@ -321,7 +321,7 @@ button.multiplayer-entry-card:active {
 }
 
 .multiplayer-save-card.occupied {
-  padding: 14px;
+  padding: 14px 14px 13px;
 
   border-color: rgba(66, 230, 149, 0.36);
 
@@ -330,62 +330,97 @@ button.multiplayer-entry-card:active {
 
 .multiplayer-save-title {
   display: flex;
-  flex-direction: column;
-
-  gap: 3px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.multiplayer-save-title strong {
-  color: #ffffff;
-
-  font-size: 16px;
+.multiplayer-save-title > span { color: #92a79f; font-size: 10px; letter-spacing: 0; }
+.multiplayer-save-title .multiplayer-save-mode {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid rgba(66, 230, 149, .28);
+  border-radius: 999px;
+  background: rgba(66, 230, 149, .08);
+  color: #42e695;
+  font-size: 11px;
   font-weight: 900;
 }
 
-.multiplayer-save-title small {
-  color: #91a69f;
-
-  font-size: 8px;
-  font-weight: 800;
+.multiplayer-save-players {
+  display: grid;
+  gap: 4px;
+  margin-top: 11px;
 }
 
-.multiplayer-save-progress,
+.multiplayer-save-player {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 27px;
+}
+
+.multiplayer-save-player strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multiplayer-save-player small {
+  color: #bdcbc6;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.multiplayer-save-player i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--saved-player-color);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--saved-player-color) 55%, transparent);
+}
+
+.multiplayer-save-context {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  color: #b4c3be;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .multiplayer-save-rewards {
   display: flex;
   flex-wrap: wrap;
-
-  gap: 7px 12px;
-}
-
-.multiplayer-save-progress {
-  margin-top: 12px;
-
-  color: #dce8e3;
-
-  font-size: 9px;
-  font-weight: 800;
+  gap: 8px 18px;
 }
 
 .multiplayer-save-rewards {
   margin-top: 9px;
-
-  color: #a8bbb4;
-
-  font-size: 8px;
+  color: #98aaa4;
+  font-size: 12px;
 }
 
 .multiplayer-save-date {
-  margin: 10px 0;
-
-  color: #71877f;
-
-  font-size: 8px;
+  margin: 11px 0 9px;
+  color: #91a39d;
+  font-size: 10px;
 }
 
 button.multiplayer-save-continue {
   width: 100%;
 
-  padding: 9px 12px;
+  min-height: 44px;
+  padding: 10px 12px;
 
   border: 1px solid rgba(66, 230, 149, 0.3);
   border-radius: 11px;
@@ -393,7 +428,7 @@ button.multiplayer-save-continue {
   background: rgba(66, 230, 149, 0.09);
   color: #42e695;
 
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.7px;
 
@@ -446,7 +481,7 @@ button.multiplayer-save-continue {
 }
 
 .multiplayer-player-card.active {
-  border-color: rgba(66, 230, 149, 0.38);
+  border-color: color-mix(in srgb, var(--player-color) 55%, transparent);
 
   opacity: 1;
 
@@ -460,11 +495,11 @@ button.multiplayer-save-continue {
   width: 40px;
   height: 40px;
 
-  border: 1px solid rgba(66, 230, 149, 0.25);
+  border: 1px solid color-mix(in srgb, var(--player-color) 42%, transparent);
   border-radius: 11px;
 
-  background: rgba(66, 230, 149, 0.07);
-  color: #42e695;
+  background: color-mix(in srgb, var(--player-color) 10%, transparent);
+  color: var(--player-color);
 
   font-size: 16px;
   font-weight: 900;
@@ -480,7 +515,7 @@ button.multiplayer-save-continue {
 }
 
 .multiplayer-player-field small {
-  color: #42e695;
+  color: var(--player-color);
 
   font-size: 7px;
   font-weight: 900;
@@ -497,7 +532,7 @@ button.multiplayer-save-continue {
 .multiplayer-player-field input {
   width: 100%;
 
-  padding: 5px 0;
+  padding: 5px 30px 5px 0;
 
   border: 0;
   border-bottom: 1px solid rgba(66, 230, 149, 0.18);
@@ -513,9 +548,19 @@ button.multiplayer-save-continue {
 }
 
 .multiplayer-player-field input:focus {
-  border-color: #42e695;
+  border-color: var(--player-color);
 
   box-shadow: none;
+}
+
+.multiplayer-player-input-wrap { position: relative; display: block; min-width: 0; }
+.multiplayer-player-input-wrap input { display: block; }
+.multiplayer-player-input-wrap input::placeholder { color: #71877f; opacity: 1; }
+button.multiplayer-player-clear {
+  position: absolute; top: 50%; right: 0; transform: translateY(-50%);
+  width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--player-color) 15%, transparent);
+  color: var(--player-color); font-size: 17px; line-height: 1; cursor: pointer;
 }
 
 button.multiplayer-player-toggle,

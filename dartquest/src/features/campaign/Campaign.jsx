@@ -122,7 +122,7 @@ function Campaign({
     getCampaignPlayerCount(settings)
 
   const levels =
-    settings.multiplayer
+    settings.multiplayer && settings.campaignType !== 'versus'
       ? baseLevels.map((level) =>
           scaleLevelForMultiplayer(
             level,
@@ -192,6 +192,9 @@ function Campaign({
   const [saveModalOpen, setSaveModalOpen] =
     useState(false)
 
+  const [multiplayerTurnIndex, setMultiplayerTurnIndex] = useState(0)
+  const [versusProgress, setVersusProgress] = useState({})
+
   const [multiplayerSaves, setMultiplayerSaves] =
     useState([])
 
@@ -221,6 +224,7 @@ function Campaign({
   const [pendingCoinAnimation, setPendingCoinAnimation] = useState(null)
   const [coinAnimation, setCoinAnimation] = useState(null)
   const coinAnimationId = useRef(0)
+  const versusRewardedLevels = useRef(new Set())
   const [mapReturnLevelId, setMapReturnLevelId] = useState(null)
   const campaignPathRef = useRef(null)
   const returnToMapTimer = useRef(null)
@@ -476,6 +480,8 @@ function Campaign({
       coins: progress.coins,
       selectedWorld,
       previewLevelId,
+      activePlayerIndex: multiplayerTurnIndex,
+      versusProgress,
       savedAt,
       lastPlayed: savedAt,
       saveSlotId: slotIndex + 1,
@@ -546,6 +552,9 @@ function Campaign({
     setSelectedWorld(1)
     setPreviewLevelId(1)
     setSelectedLevel(null)
+    setMultiplayerTurnIndex(0)
+    setVersusProgress({})
+    versusRewardedLevels.current = new Set()
 
 
     const isNewMultiplayerGame =
@@ -602,6 +611,9 @@ function Campaign({
 
       setSelectedWorld(restoredWorld)
       setPreviewLevelId(restoredPreviewLevel)
+      setMultiplayerTurnIndex(savedMultiplayerGame.activePlayerIndex ?? 0)
+      setVersusProgress(savedMultiplayerGame.versusProgress ?? {})
+      versusRewardedLevels.current = new Set(Object.keys(savedMultiplayerGame.results ?? {}))
 
       return
     }
@@ -1142,6 +1154,46 @@ function Campaign({
 
   }
 
+  function saveVersusAttempt(playerId, levelId, attempt) {
+    setVersusProgress((current) => ({
+      ...current,
+      [playerId]: {
+        levelId: current[playerId]?.levelId ?? levelId,
+        results: current[playerId]?.results ?? {},
+        attempts: { ...(current[playerId]?.attempts ?? {}), [levelId]: attempt },
+      },
+    }))
+  }
+
+  async function completeVersusPlayerLevel(playerId, level, result) {
+    const rewardKey = String(level.id)
+    const shouldReward = !versusRewardedLevels.current.has(rewardKey)
+    if (shouldReward) versusRewardedLevels.current.add(rewardKey)
+    setVersusProgress((current) => {
+      const playerProgress = current[playerId] ?? { levelId: level.id, results: {}, attempts: {} }
+      if (playerProgress.results[level.id]) return current
+      return {
+        ...current,
+        [playerId]: {
+          levelId: Math.min(level.id + 1, levels.length),
+          results: { ...playerProgress.results, [level.id]: result },
+          attempts: { ...playerProgress.attempts, [level.id]: undefined },
+        },
+      }
+    })
+    setProgress((current) => ({
+      ...current,
+      unlockedLevel: Math.max(current.unlockedLevel, Math.min(level.id + 1, levels.length)),
+      results: current.results[level.id]
+        ? current.results
+        : { ...current.results, [level.id]: result },
+    }))
+    setMultiplayerTurnIndex((current) => (current + 1) % campaignPlayerCount)
+    if (shouldReward && result.success !== false && (result.stars ?? 0) > 0) {
+      await onProfileRewards({ xp: level.rewardXP ?? 0, coins: level.rewardCoins ?? 0 })
+    }
+  }
+
 
   /* =======================================================
      UI
@@ -1184,6 +1236,15 @@ function Campaign({
     ? unlockPathStart
     : mapPathProgress
 
+  const versusPlayers = (settings.players ?? []).filter((player) => player?.active !== false)
+  const versusActivePlayer = versusPlayers[multiplayerTurnIndex] ?? versusPlayers[0]
+  const versusActiveProgress = versusActivePlayer
+    ? versusProgress[versusActivePlayer.id] ?? { levelId: 1, results: {}, attempts: {} }
+    : null
+  const activeModalLevel = settings.multiplayer && settings.campaignType === 'versus' && selectedLevel
+    ? levels.find((candidate) => candidate.id === (versusActiveProgress?.levelId ?? 1)) ?? selectedLevel
+    : selectedLevel
+
   if (activeChallenge) return <RivalCampaign activeProfile={activeProfile} onProfileRewards={onProfileRewards} challenge={activeChallenge} onChallengeComplete={finishChallenge} onBack={() => setActiveChallenge(null)} />
 
   return (
@@ -1195,27 +1256,16 @@ function Campaign({
 
       <header className="dq-header">
 
-        {settings.multiplayer ? (
-          <button
-            type="button"
-            className="dq-header-button dq-header-save"
-            aria-label="Spiel speichern"
-            onClick={openSaveModal}
-          >
-            💾
-          </button>
-        ) : (
-          <button
-            ref={menuButtonRef}
-            type="button"
-            className="dq-header-button"
-            aria-label="Menü"
-            aria-expanded={campaignMenuOpen}
-            onClick={() => setCampaignMenuOpen(true)}
-          >
-            ☰
-          </button>
-        )}
+        <button
+          ref={menuButtonRef}
+          type="button"
+          className="dq-header-button"
+          aria-label="Menü"
+          aria-expanded={campaignMenuOpen}
+          onClick={() => setCampaignMenuOpen(true)}
+        >
+          ☰
+        </button>
 
 
         <div className="dq-logo">
@@ -2088,8 +2138,9 @@ function Campaign({
 
       <LevelModal
         level={
-          selectedLevel
+          activeModalLevel
         }
+        attemptKey={settings.campaignType === 'versus' ? `${versusActivePlayer?.id}-${activeModalLevel?.id}` : activeModalLevel?.id}
 
         inputModeHintEligible={
           selectedLevel?.id === 1
@@ -2112,6 +2163,13 @@ function Campaign({
         players={
           settings.players
         }
+
+        campaignType={settings.campaignType}
+        initialActivePlayerIndex={multiplayerTurnIndex}
+        onActivePlayerChange={setMultiplayerTurnIndex}
+        initialAttempt={versusActiveProgress?.attempts?.[activeModalLevel?.id]}
+        onAttemptChange={saveVersusAttempt}
+        onVersusLevelComplete={completeVersusPlayerLevel}
 
         onClose={
           closeLevel

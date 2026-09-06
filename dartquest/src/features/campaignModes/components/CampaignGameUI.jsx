@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { triggerHaptic } from '../../settings/haptics'
 
 export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'], emptyText = 'Noch nicht geworfen' }) {
-  return <div className="campaign-dart-slots">{labels.map((label, index) => <div key={label} className={values[index] != null ? 'filled' : ''}><small>{label}</small><strong>{values[index] == null ? emptyText : values[index] === 0 ? 'Nicht getroffen' : values[index]}</strong></div>)}</div>
+  return <div className="campaign-dart-slots">{labels.map((label, index) => {
+    const value = values[index]
+    const state = value == null ? 'open' : value === 0 ? 'miss' : 'hit'
+    return <div key={label} className={`dart-slot is-${state}${state !== 'open' ? ' filled' : ''}`}><small>{label}</small><strong>{state === 'open' ? emptyText : state === 'miss' ? 'MISS' : value}</strong></div>
+  })}</div>
 }
 
 export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false, checkoutDartCounts = [], onCheckoutLongPress }) {

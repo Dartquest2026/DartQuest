@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import {
   getMultiplayerSaves,
@@ -17,6 +17,7 @@ const difficultyNames = {
 }
 
 const SHOW_DEFERRED_GAME_MODES = false
+const PLAYER_COLORS = ['#42e695', '#4da3ff', '#ffd34c', '#bd7cff']
 
 const difficulties = [
   {
@@ -68,21 +69,25 @@ function Multiplayer({
       name: activeProfile?.name || 'Spieler 1',
       userId: activeProfile?.id ?? null,
       active: true,
+      color: PLAYER_COLORS[0],
     },
     {
       id: 2,
-      name: 'Spieler 2',
+      name: '',
       active: false,
+      color: PLAYER_COLORS[1],
     },
     {
       id: 3,
-      name: 'Spieler 3',
+      name: '',
       active: false,
+      color: PLAYER_COLORS[2],
     },
     {
       id: 4,
-      name: 'Spieler 4',
+      name: '',
       active: false,
+      color: PLAYER_COLORS[3],
     },
   ])
 
@@ -98,6 +103,7 @@ function Multiplayer({
 
   const [difficulty, setDifficulty] =
     useState(null)
+  const playerNameInputs = useRef({})
 
   const activePlayers = players.filter(
     (player) => player.active,
@@ -189,7 +195,10 @@ function Multiplayer({
 
     onStartCampaign?.({
       playerCount,
-      players: activePlayers,
+      players: activePlayers.map((player) => ({
+        ...player,
+        name: player.name.trim() || `Spieler ${player.id}`,
+      })),
       campaignType,
       difficulty: selectedDifficulty,
       isNewGame: true,
@@ -344,10 +353,6 @@ function Multiplayer({
                   1,
                   Math.ceil(unlockedLevel / 10),
                 )
-                const progress = Math.min(
-                  100,
-                  Math.round(unlockedLevel),
-                )
                 const stars = Object.values(
                   save.results ?? {},
                 ).reduce(
@@ -355,12 +360,9 @@ function Multiplayer({
                     total + (result?.stars ?? 0),
                   0,
                 )
-                const playerNames = (
-                  save.players ?? []
-                )
-                  .map((player) => player.name)
-                  .filter(Boolean)
-                  .join(' & ')
+                const savedPlayers = (save.players ?? [])
+                  .filter((player) => String(player?.name ?? '').trim())
+                const isVersus = (save.campaignType ?? 'coop') === 'versus'
 
                 return (
                   <article
@@ -368,29 +370,32 @@ function Multiplayer({
                     className="multiplayer-save-card occupied"
                   >
                     <div className="multiplayer-save-title">
-                      <span>Speicherplatz {slotId}</span>
-                      <strong>
-                        {playerNames || 'Mehrspieler-Kampagne'}
-                      </strong>
-                      <small>
-                        {(save.campaignType ?? 'coop').toUpperCase()}
-                        {' · '}
-                        {difficultyNames[save.difficulty] ?? 'ANFÄNGER'}
-                        {' · '}
-                        {save.playerCount ?? save.players?.length ?? 0}
-                        {' SPIELER'}
-                      </small>
+                      <span>SPEICHERPLATZ {slotId}</span>
+                      <small className="multiplayer-save-mode">{isVersus ? 'VERSUS' : 'KOOP'}</small>
                     </div>
 
-                    <div className="multiplayer-save-progress">
+                    <div className="multiplayer-save-players">
+                      {savedPlayers.map((player, playerIndex) => {
+                        const personalLevel = save.versusProgress?.[player.id]?.levelId ?? 1
+                        const playerColor = PLAYER_COLORS[Math.max(0, Math.min(3, Number(player.id ?? playerIndex + 1) - 1))]
+                        return <div className="multiplayer-save-player" key={player.id ?? playerIndex}>
+                          <i aria-hidden="true" style={{ '--saved-player-color': playerColor }} />
+                          <strong title={player.name}>{player.name}</strong>
+                          {isVersus && <small>Level {personalLevel}</small>}
+                        </div>
+                      })}
+                    </div>
+
+                    <div className="multiplayer-save-context">
+                      <span>{difficultyNames[save.difficulty] ?? 'ANFÄNGER'}</span>
+                      <b aria-hidden="true">·</b>
                       <span>Welt {world}</span>
-                      <span>Level {unlockedLevel}</span>
-                      <span>Fortschritt {progress} %</span>
+                      {!isVersus && <><b aria-hidden="true">·</b><span>Level {unlockedLevel}</span></>}
                     </div>
 
                     <div className="multiplayer-save-rewards">
-                      <span>⭐ {stars} Sterne</span>
-                      <span>⭐ {save.xp ?? 0} XP</span>
+                      <span>★ {stars} Sterne</span>
+                      <span>XP {save.xp ?? 0}</span>
                       <span>🪙 {save.coins ?? 0} Coins</span>
                     </div>
 
@@ -451,6 +456,7 @@ function Multiplayer({
                   'multiplayer-player-card',
                   player.active ? 'active' : '',
                 ].join(' ')}
+                style={{ '--player-color': player.color }}
               >
 
                 <span className="multiplayer-player-number">
@@ -467,18 +473,28 @@ function Multiplayer({
                   {player.id === 1 ? (
                     <strong>{player.name}</strong>
                   ) : (
-                    <input
-                      type="text"
-                      value={player.name}
-                      maxLength="24"
-                      aria-label={`Name für Spieler ${player.id}`}
-                      onChange={(event) =>
-                        updatePlayerName(
-                          player.id,
-                          event.target.value,
-                        )
-                      }
-                    />
+                    <span className="multiplayer-player-input-wrap">
+                      <input
+                        ref={(node) => { playerNameInputs.current[player.id] = node }}
+                        type="text"
+                        value={player.name}
+                        placeholder={`Spieler ${player.id}`}
+                        maxLength="24"
+                        aria-label={`Name für Spieler ${player.id}`}
+                        onChange={(event) => updatePlayerName(player.id, event.target.value)}
+                      />
+                      {player.name && <button
+                        type="button"
+                        className="multiplayer-player-clear"
+                        aria-label={`Name von Spieler ${player.id} leeren`}
+                        title="Name leeren"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          updatePlayerName(player.id, '')
+                          playerNameInputs.current[player.id]?.focus()
+                        }}
+                      >×</button>}
+                    </span>
                   )}
                 </div>
 

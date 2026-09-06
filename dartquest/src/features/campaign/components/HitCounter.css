@@ -13,15 +13,29 @@
 .campaign-dart-slots>div { height:44px; min-height:44px; padding:3px 4px; border-radius:9px; }
 .campaign-dart-slots small { font-size:8px; line-height:1; }
 .campaign-dart-slots strong { font-size:11px; line-height:1.1; }
+.hit-counter .campaign-dart-slots .dart-slot { transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease; }
+.hit-counter .campaign-dart-slots .dart-slot.is-open { border-color:#29483d; background:#071b15; color:#d4dfdb; }
+.hit-counter .campaign-dart-slots .dart-slot.is-hit { border-color:rgba(66,230,149,.72); background:rgba(20,91,66,.52); box-shadow:inset 0 0 10px rgba(66,230,149,.06),0 0 7px rgba(66,230,149,.12); }
+.hit-counter .campaign-dart-slots .dart-slot.is-hit small { color:#9de5c4; }
+.hit-counter .campaign-dart-slots .dart-slot.is-hit strong { color:#64f0ad; font-size:15px; font-weight:950; }
+.hit-counter .campaign-dart-slots .dart-slot.is-miss { border-color:rgba(255,98,106,.65); background:rgba(91,27,32,.55); box-shadow:inset 0 0 10px rgba(255,98,106,.05); }
+.hit-counter .campaign-dart-slots .dart-slot.is-miss small { color:#e3a3a7; }
+.hit-counter .campaign-dart-slots .dart-slot.is-miss strong { color:#ffabb0; font-size:15px; font-weight:950; letter-spacing:.7px; }
 
 .hit-counter-visit-actions { display:grid; grid-template-columns:minmax(104px,.76fr) 1.24fr; gap:6px; }
 .hit-counter-next-visit,.hit-counter-previous-visit { min-height:38px; padding:4px 7px; border:1px solid rgba(66,230,149,.3); border-radius:10px; color:#fff; font:inherit; font-weight:900; text-transform:uppercase; cursor:pointer; touch-action:manipulation; }
-.hit-counter-next-visit { width:100%; background:#123b2f; }
+.hit-counter-next-visit { position:relative; isolation:isolate; width:100%; overflow:hidden; background:#123b2f; }
+.hit-counter-next-visit { touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.hit-counter-next-visit::before{position:absolute;z-index:2;inset:0;padding:3px;border-radius:inherit;background:conic-gradient(#ff8f96 var(--miss-hold-angle),transparent 0);content:'';opacity:0;pointer-events:none;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.hit-counter-next-visit.is-holding::before{opacity:1;animation:missHoldProgress .6s linear forwards}
+.hit-counter-next-visit.is-long-pressed::before{--miss-hold-angle:360deg;opacity:1}
+.hit-counter-next-visit.is-holding{border-color:rgba(255,98,106,.62);background:rgba(91,27,32,.58);transform:scale(.98)}
+.hit-counter-next-visit.is-tapped{animation:missTapPulse .16s ease-out}
+.hit-counter-next-visit.is-long-pressed { border-color:rgba(255,98,106,.72); background:rgba(91,27,32,.72); box-shadow:0 0 12px rgba(255,98,106,.22),inset 0 0 8px rgba(255,98,106,.08); animation:missLongPressPulse .28s ease-out; }
 .hit-counter-previous-visit { background:rgba(255,255,255,.055); color:#b9cac4; font-size:11px; }
 .hit-counter-next-visit:disabled,.hit-counter-previous-visit:disabled { opacity:.3; cursor:default; }
 
 .hit-counter-targets { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(var(--target-rows,2),46px); height:calc(var(--target-rows,2) * 46px + (var(--target-rows,2) - 1) * 5px); min-height:calc(var(--target-rows,2) * 46px + (var(--target-rows,2) - 1) * 5px); gap:5px; }
-.hit-counter-targets.has-centered-last .hit-target:last-child { grid-column:1 / -1; width:calc((100% - 5px) / 2); justify-self:center; }
 .hit-target { box-sizing:border-box; display:grid; width:100%; min-width:0; height:46px; min-height:46px; place-items:center; padding:0 10px; border:1px solid rgba(66,230,149,.3); border-radius:10px; background:rgba(8,34,27,.72); color:#fff; font:inherit; cursor:pointer; touch-action:manipulation; transition:border-color .15s ease,background .15s ease,box-shadow .15s ease,transform .1s ease; }
 .hit-target-content { display:flex; min-width:0; align-items:center; justify-content:center; gap:clamp(12px,4vw,20px); }
 .hit-target strong { overflow:hidden; color:#00ff7f; font-size:15px; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 0 7px rgba(0,255,127,.38); }
@@ -31,7 +45,7 @@
 .hit-target:disabled { cursor:default; opacity:.38; }
 .hit-target.is-complete:disabled { opacity:.72; }
 .hit-target:not(:disabled):active { transform:scale(.95); }
-.hit-target.is-pressed { animation:scoreKeypadGlow .82s cubic-bezier(.16,.8,.3,1) both; }
+.hit-target.is-pressed { animation:targetTapPulse .16s ease-out both; }
 .hit-target-slot { box-sizing:border-box; width:100%; height:46px; min-height:46px; visibility:hidden; }
 .hit-counter-next { min-height:18px; margin:0; color:#cfe0da; font-size:14px; line-height:18px; text-align:center; }
 .hit-counter-next strong { color:#42e695; }
@@ -51,10 +65,21 @@
   .campaign-dart-slots>div { height:40px; min-height:40px; }
   .hit-counter-next-visit,.hit-counter-previous-visit { min-height:34px; }
   .hit-counter-targets { grid-template-rows:repeat(var(--target-rows,2),42px); height:calc(var(--target-rows,2) * 42px + (var(--target-rows,2) - 1) * 4px); min-height:calc(var(--target-rows,2) * 42px + (var(--target-rows,2) - 1) * 4px); gap:4px; }
-  .hit-counter-targets.has-centered-last .hit-target:last-child { width:calc((100% - 4px) / 2); }
   .hit-target,.hit-target-slot { height:42px; min-height:42px; }
   .hit-counter-next { min-height:16px; font-size:13px; line-height:16px; }
 }
 
 :root[data-animations=reduced] .hit-target.is-pressed,:root[data-animations=off] .hit-target.is-pressed { animation:none; }
 @media (prefers-reduced-motion:reduce) { .hit-target.is-pressed { animation:none; } }
+@keyframes missLongPressPulse { 50% { filter:brightness(1.22); } }
+@property --miss-hold-angle{syntax:'<angle>';inherits:true;initial-value:0deg}
+@keyframes missHoldProgress{to{--miss-hold-angle:360deg}}
+@keyframes missTapPulse{50%{filter:brightness(1.28);box-shadow:0 0 12px rgba(255,98,106,.35);transform:scale(.97)}}
+@keyframes targetTapPulse{50%{filter:brightness(1.45);box-shadow:0 0 14px rgba(66,230,149,.55);transform:scale(.96)}}
+:root[data-animations=reduced] .hit-counter-next-visit.is-long-pressed,
+:root[data-animations=off] .hit-counter-next-visit.is-long-pressed { animation:none; }
+:root[data-animations=off] .hit-counter-next-visit.is-holding::before,
+:root[data-animations=off] .hit-counter-next-visit.is-tapped,
+:root[data-animations=off] .hit-target.is-pressed { animation:none; }
+:root[data-animations=reduced] .hit-counter-next-visit.is-holding::before { animation:none!important; }
+@media (prefers-reduced-motion:reduce) { .hit-counter-next-visit.is-long-pressed { animation:none; }.hit-counter-next-visit.is-holding::before{animation:none!important} }

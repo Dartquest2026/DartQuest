@@ -13,10 +13,15 @@
 .dartboard-field.dartboard-segment--target.dartboard-segment--target,
 .dartboard-bull-outer.dartboard-segment--target,
 .dartboard-bull-inner.dartboard-segment--target { stroke: #00ff7f; stroke-width: 2.8; stroke-opacity: 1; filter: drop-shadow(0 0 4px rgba(0,255,127,.95)) drop-shadow(0 0 9px rgba(0,255,127,.72)); stroke-dasharray: .3 .04; animation: dartTargetOrbit 1.45s linear infinite; }
+.dartboard-field.dartboard-segment--preview:not(.dartboard-segment--active),
+.dartboard-bull-outer.dartboard-segment--preview:not(.dartboard-segment--active),
+.dartboard-bull-inner.dartboard-segment--preview:not(.dartboard-segment--active) { stroke:#7ce8b2; stroke-width:1.7; stroke-opacity:.72; filter:drop-shadow(0 0 3px rgba(66,230,149,.52)); animation:dartSequencePreview .5s ease-in-out both; }
 @keyframes dartTargetOrbit {
   from { stroke-dashoffset: 0; }
   to { stroke-dashoffset: -.34; }
 }
+@keyframes dartSequencePreview { 50% { stroke-opacity:1; filter:drop-shadow(0 0 6px rgba(66,230,149,.68)); } }
+:root[data-animations=off] .dartboard-segment--preview { animation:none!important; }
 @media (prefers-reduced-motion: reduce) {
   .dartboard-field.dartboard-segment--target.dartboard-segment--target,
   .dartboard-bull-outer.dartboard-segment--target,

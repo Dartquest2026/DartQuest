@@ -17,7 +17,8 @@ function ringPath(index, innerRadius, outerRadius) {
 function getDartboardTargetAreas(target) {
   const label = String(target.label ?? '').toUpperCase()
   if (target.targetType === 'number' && target.number) return ['single-inner', 'triple', 'single-outer', 'double'].map((ring) => `${target.number}:${ring}`)
-  if (label === 'SBULL' || label === 'BULL') return ['bull:outer']
+  if (label === 'BULL') return ['bull:outer', 'bull:inner']
+  if (label === 'SBULL') return ['bull:outer']
   if (label === 'DBULL') return ['bull:inner']
   const match = label.match(/^([SDT])(\d+)$/)
   if (!match) return []
@@ -25,9 +26,11 @@ function getDartboardTargetAreas(target) {
   return rings.map((ring) => `${Number(match[2])}:${ring}`)
 }
 
-function Dartboard({ targets, hitCounters, activeTargetId = null }) {
+function Dartboard({ targets, hitCounters, activeTargetId = null, previewTargetId = null }) {
   const highlighted = new Set()
   const highlightedBulls = new Set()
+  const previewed = new Set()
+  const previewedBulls = new Set()
   targets.forEach((target) => {
     if (activeTargetId && target.id !== activeTargetId) return
     if ((hitCounters[target.id] ?? 0) >= target.requiredHits) return
@@ -36,6 +39,13 @@ function Dartboard({ targets, hitCounters, activeTargetId = null }) {
       else highlighted.add(area)
     })
   })
+  if (previewTargetId) {
+    const previewTarget = targets.find((target) => target.id === previewTargetId)
+    if (previewTarget) getDartboardTargetAreas(previewTarget).forEach((area) => {
+      if (area.startsWith('bull:')) previewedBulls.add(area.slice(5))
+      else previewed.add(area)
+    })
+  }
 
   const rings = [
     ['single-inner', 18, 73],
@@ -54,11 +64,11 @@ function Dartboard({ targets, hitCounters, activeTargetId = null }) {
             key={`${number}:${ring}`}
             d={ringPath(index, inner, outer)}
             pathLength="1"
-            className={`dartboard-field ring-${ring} segment-${index % 2 ? 'light' : 'dark'}${highlighted.has(`${number}:${ring}`) ? ' dartboard-segment--target' : ''}`}
+            className={`dartboard-field ring-${ring} segment-${index % 2 ? 'light' : 'dark'}${highlighted.has(`${number}:${ring}`) ? ' dartboard-segment--target dartboard-segment--active' : ''}${previewed.has(`${number}:${ring}`) ? ' dartboard-segment--preview' : ''}`}
           />
         )))}
-        <circle className={`dartboard-bull-outer${highlightedBulls.has('outer') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="17" pathLength="1" />
-        <circle className={`dartboard-bull-inner${highlightedBulls.has('inner') ? ' dartboard-segment--target' : ''}`} cx="120" cy="120" r="7" pathLength="1" />
+        <circle className={`dartboard-bull-outer${highlightedBulls.has('outer') ? ' dartboard-segment--target dartboard-segment--active' : ''}${previewedBulls.has('outer') ? ' dartboard-segment--preview' : ''}`} cx="120" cy="120" r="17" pathLength="1" />
+        <circle className={`dartboard-bull-inner${highlightedBulls.has('inner') ? ' dartboard-segment--target dartboard-segment--active' : ''}${previewedBulls.has('inner') ? ' dartboard-segment--preview' : ''}`} cx="120" cy="120" r="7" pathLength="1" />
         {NUMBERS.map((number, index) => {
           const [x, y] = point(130, index * 18)
           return <text key={number} x={x} y={y} className="dartboard-number">{number}</text>

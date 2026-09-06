@@ -1,7 +1,7 @@
 {
   "name": "dartquest",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "test:help-contact": "node --test scripts/help-contact.test.mjs",
     "test:boss-defeated": "node --test scripts/boss-defeated.test.mjs",
     "test:boss-intro": "node --test scripts/boss-intro.test.mjs",
+    "test:boss-finale": "node --test scripts/boss-finale.test.mjs",
     "test:world-transition": "node --test scripts/world-transition.test.mjs",
     "test:coin-animation": "node --test scripts/coin-animation.test.mjs",
     "test:return-transition": "node --test scripts/return-transition.test.mjs",
@@ -23,6 +24,8 @@
     "test:leaderboard": "node --test scripts/leaderboard.test.mjs",
     "test:numeric-campaign": "node --test scripts/numeric-campaign.test.mjs",
     "test:campaign-target-grid": "node --test scripts/campaign-target-grid.test.mjs",
+    "test:campaign-layout": "node --test scripts/campaign-layout.test.mjs",
+    "test:campaign-multiplayer": "node --test scripts/campaign-multiplayer.test.mjs",
     "test:campaign-timer": "node --test scripts/campaign-timer.test.mjs",
     "test:time-challenge": "node --test scripts/time-challenge.test.mjs",
     "preview": "vite preview"

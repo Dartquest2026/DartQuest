@@ -1371,8 +1371,8 @@ export const beginnerLevels = [
   {
     id: 91,
     world: 10,
-    title: 'Treffe Bull',
-    task: 'Treffe Bull',
+    title: 'Triff Single oder Double Bull',
+    task: 'Triff Single oder Double Bull',
     targets: fieldTargets('Bull'),
     targetHits: 1,
     starVisitThresholds: { four: 1, three: 2, two: 3 },
@@ -1513,18 +1513,19 @@ export const beginnerLevels = [
   {
     id: 100,
     world: 10,
-    title: 'Boss – Treffe S20 → S10 → S5 → S1 → S2',
-    task: 'Treffe S20 → S10 → S5 → S1 → S2',
-    targets: fieldTargets('S20', 'S10', 'S5', 'S1', 'S2'),
+    title: 'Finale Prüfung',
+    task: 'Triff in dieser Reihenfolge: S20 → S10 → S5 → S16 → S8 → S4',
+    targets: fieldTargets('S20', 'S10', 'S5', 'S16', 'S8', 'S4'),
     orderedTargets: true,
-    sequence: ['S20', 'S10', 'S5', 'S1', 'S2'],
-    targetHits: 5,
-    starVisitThresholds: { four: 3, three: 4, two: 5 },
-    perfectDarts: 9,
+    sequence: ['S20', 'S10', 'S5', 'S16', 'S8', 'S4'],
+    targetHits: 6,
+    bossPhases: [
+      { type: 'targets' },
+      { type: 'rival501', startScore: 501, firstTo: 1, rivalLevel: 3, targetAverage: 35 },
+    ],
+    perfectDarts: 6,
     boss: true,
     rewardXP: 250,
     rewardCoins: 150,
   },
 ]
-
-

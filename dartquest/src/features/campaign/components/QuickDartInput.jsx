@@ -1,7 +1,9 @@
 import Dartboard from './Dartboard'
+import { useSequencePreview } from './useSequencePreview'
 import './QuickDartInput.css'
 
 function QuickDartInput({ attempt, minimumDarts, onComplete, disabled = false, inputModeControl }) {
+  const previewTargetId = useSequencePreview(attempt)
   const options = [
     { stars: 4, darts: minimumDarts, text: `${minimumDarts} ${minimumDarts === 1 ? 'Pfeil' : 'Pfeile'} · Perfekt` },
     { stars: 3, darts: minimumDarts + 1, text: `${minimumDarts + 1}–${minimumDarts * 3} Pfeile` },
@@ -11,7 +13,7 @@ function QuickDartInput({ attempt, minimumDarts, onComplete, disabled = false, i
 
   return (
     <section className="quick-dart-input" aria-label="Schnelleingabe">
-      <Dartboard targets={attempt.targets} hitCounters={attempt.hitCounters} />
+      <Dartboard targets={attempt.targets} hitCounters={attempt.hitCounters} activeTargetId={attempt.ordered ? attempt.sequence[attempt.sequenceIndex] : null} previewTargetId={previewTargetId} />
       <header className="hit-counter-visit quick-input-status"><div><span>Aufnahme</span><strong>{attempt.visits}</strong></div><div><span>Darts gesamt</span><strong>{attempt.totalDarts}</strong></div><div className="hit-counter-mode"><span>Zähler</span>{inputModeControl}</div></header>
 
       <div className="quick-dart-input__panel">

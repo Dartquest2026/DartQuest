@@ -66,7 +66,8 @@ function parseExplicitTargets(level) {
   const sequence = Array.isArray(level.sequence)
     ? level.sequence.map((entry) => {
         const id = typeof entry === 'object' ? makeTarget(entry).id : String(entry)
-        return targets.find((target) => target.id === id)?.id ?? id
+        const label = normalizeField(id.replace(/^number:/i, ''))
+        return targets.find((target) => target.id === id || normalizeField(target.label) === label)?.id ?? id
       })
     : ordered
       ? targets.flatMap((target) => Array(target.requiredHits).fill(target.id))
@@ -178,7 +179,13 @@ export function registerTargetHit(attempt, targetId) {
 
 export function nextVisit(attempt) {
   const totalDarts = attempt.totalDarts + 1
-  return { ...attempt, visits: Math.floor(totalDarts / 3) + 1, totalDarts, hitHistory: [...attempt.hitHistory, { targetId: null, miss: true }] }
+  return { ...attempt, visits: Math.floor(totalDarts / 3) + 1, totalDarts, hitHistory: [...attempt.hitHistory, { targetId: null, miss: true, playerId: attempt.playerId }] }
+}
+
+export function fillCurrentVisitWithMisses(attempt) {
+  const dartsInCurrentVisit = attempt.totalDarts % 3
+  const openDarts = dartsInCurrentVisit === 0 ? 3 : 3 - dartsInCurrentVisit
+  return Array.from({ length: openDarts }).reduce((current) => nextVisit(current), attempt)
 }
 
 export function previousVisit(attempt) {

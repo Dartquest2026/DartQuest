@@ -3,7 +3,7 @@ import { getBossUnlockMessage } from '../bossDefeated'
 import { getBossPresentation, getBossPresentationStyle } from '../bossPresentation'
 import './BossDefeatedSequence.css'
 
-function BossDefeatedSequence({ confirmation, onContinue, onPlayNext }) {
+function BossDefeatedSequence({ confirmation, result = null, onContinue, onPlayNext }) {
   const continueButton = useRef(null)
   const handled = useRef(false)
   const historyPushed = useRef(false)
@@ -49,8 +49,10 @@ function BossDefeatedSequence({ confirmation, onContinue, onPlayNext }) {
     <div className="boss-defeated-emblem" aria-hidden="true"><span>{presentation.symbol || '◆'}</span><i /></div>
     <p>BOSS-LEVEL {confirmation.levelId}</p>
     <h2 id="boss-defeated-title">BOSS BESIEGT</h2>
+    {result?.rival501 && <p className="boss-defeated-final-title">ANFÄNGER ABGESCHLOSSEN</p>}
     <div className="boss-defeated-stars" aria-label={`${stars} von 4 Sternen`}>{Array.from({ length: 4 }, (_, index) => <span key={index} className={index < stars ? 'earned' : ''}>★</span>)}</div>
     <div className="boss-defeated-rewards" aria-label="Bestätigte Belohnungen"><span><strong>+{confirmation.awardedXP}</strong> XP</span><span><b aria-hidden="true">🪙</b> <strong>+{confirmation.awardedCoins}</strong> Coins</span></div>
+    {result?.rival501 && <dl className="boss-defeated-final-stats"><div><dt>PHASE 1</dt><dd>{result.targetDarts} Darts</dd></div><div><dt>501 · DEIN AVG</dt><dd>{Number(result.rival501.average ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</dd></div><div><dt>BOSS AVG</dt><dd>{Number(result.rival501.opponentAverage ?? result.rival501.targetAverage ?? 35).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</dd></div></dl>}
     {unlockMessage && <p className="boss-defeated-unlock">{unlockMessage}</p>}
     {!unlockMessage && <p className="boss-defeated-unlock muted">Dein bestätigtes Ergebnis wurde gespeichert.</p>}
     {confirmation.cardPackGranted && <p className="boss-defeated-pack"><span aria-hidden="true">🎴</span><strong>5ER-SAMMELKARTENPAKET</strong> erhalten</p>}

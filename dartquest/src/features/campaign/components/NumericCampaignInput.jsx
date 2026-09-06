@@ -8,8 +8,8 @@ import {
 import { triggerHaptic } from '../../settings/haptics'
 import './NumericCampaignInput.css'
 
-function NumericCampaignInput({ level, disabled, inputMode, onToggleInputMode, inputModeHint, onComplete }) {
-  const [attempt, setAttempt] = useState(() => createNumericAttempt(level))
+function NumericCampaignInput({ level, disabled, inputMode, onToggleInputMode, inputModeHint, onComplete, onVisitComplete, disableCommittedUndo = false, initialAttempt = null, onAttemptChange }) {
+  const [attempt, setAttempt] = useState(() => initialAttempt ?? createNumericAttempt(level))
   const [input, setInput] = useState('')
   const [partialDarts, setPartialDarts] = useState([])
   const [checkoutPrompt, setCheckoutPrompt] = useState(false)
@@ -23,8 +23,10 @@ function NumericCampaignInput({ level, disabled, inputMode, onToggleInputMode, i
 
   function finish(nextAttempt) {
     setAttempt(nextAttempt); setInput(''); setPartialDarts([]); setCheckoutPrompt(false)
+    onAttemptChange?.(nextAttempt)
     const nextStats = numericAttemptStats(level, nextAttempt)
     if (nextStats.complete) onComplete(createNumericAttemptResult(level, nextAttempt))
+    else onVisitComplete?.()
   }
 
   function commit() {
@@ -67,7 +69,7 @@ function NumericCampaignInput({ level, disabled, inputMode, onToggleInputMode, i
       <header><span>Aufnahme</span><span>Punkte</span><span>{level.taskType === 'checkout' ? 'Rest' : 'Gesamt'}</span></header>
       {Array.from({ length: 3 }, (_, index) => visibleHistory[index] ?? null).map((visit, index) => visit ? <div key={historyOffset + index}><span>{historyOffset + index + 1}</span><strong>{visit.points}{visit.bust ? ' · Bust' : ''}</strong><b>{level.taskType === 'checkout' ? visit.rest : stats.history.slice(0, historyOffset + index + 1).reduce((sum, item) => sum + item.points, 0)}</b></div> : <div className="is-empty" key={`empty-${index}`}><span>–</span><strong>{stats.history.length === 0 && index === 0 ? 'Noch keine Aufnahme' : '–'}</strong><b>–</b></div>)}
     </section>
-    <button className="numeric-campaign-undo" type="button" disabled={disabled || (stats.history.length === 0 && partialDarts.length === 0)} onClick={undo}>↶ {partialDarts.length ? 'AKTUELLE AUFNAHME' : 'LETZTE AUFNAHME'}</button>
+    <button className="numeric-campaign-undo" type="button" disabled={disabled || (partialDarts.length === 0 && (stats.history.length === 0 || disableCommittedUndo))} onClick={undo}>↶ {partialDarts.length ? 'AKTUELLE AUFNAHME' : 'LETZTE AUFNAHME'}</button>
     <ScoreKeypad value={input} onChange={(value) => { if (!perDart || value === '' || Number(value) <= 60) setInput(value) }} onConfirm={commit} disabled={disabled} fill quick={perDart ? [0, 1, 5, 20, 25, 40, 50, 60] : undefined} checkoutDartCounts={checkoutDarts} onCheckoutLongPress={confirmCheckout} />
     {checkoutPrompt && <div className="numeric-checkout-prompt" role="dialog" aria-modal="true" aria-labelledby="numeric-checkout-title"><section><span>DOUBLE-OUT</span><h3 id="numeric-checkout-title">Checkout bestätigen</h3><p>{perDart ? `War Dart ${partialDarts.length} ein Doppel oder Bull?` : 'Mit welchem Dart wurde ausgecheckt?'}</p><div>{perDart ? <button type="button" className="confirm-double" onClick={() => confirmCheckout(partialDarts.length)}><strong>JA</strong><small>Checkout</small></button> : checkoutDarts.map((darts) => <button type="button" key={darts} onClick={() => confirmCheckout(darts)}><strong>{darts}</strong><small>{darts === 1 ? 'Dart' : 'Darts'}</small></button>)}</div><button type="button" onClick={() => finish(applyCheckoutVisit(attempt, perDart ? preview.points : Number(input)))}>BUST – AUFNAHME SPEICHERN</button></section></div>}
   </section>
