@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 import { difficultyLevels } from '../src/features/campaign/data/levels.js'
 import { getMinimumCheckoutDarts } from '../src/features/campaignModes/rivalEngine.js'
@@ -8,6 +9,7 @@ import {
   applyScoreVisit,
   checkoutStarsForTotalDarts,
   createNumericAttempt,
+  createNumericAttemptResult,
   numericAttemptStats,
   undoNumericVisit,
   getMinimumCampaignCheckoutDarts,
@@ -15,6 +17,7 @@ import {
   getVisibleNumericHistory,
 } from '../src/features/campaign/standardNumericAttempt.js'
 import { getScoreTaskIssue, getScoreTaskMinimumDarts, getScoreTaskStarRules, getScoreTaskStars } from '../src/features/campaign/scoreTaskRating.js'
+import { scaleLevelForMultiplayer } from '../src/features/campaign/multiplayerLevelScaling.js'
 
 test('alle geladenen Standard-Level besitzen einen expliziten Task-Typ', () => {
   for (const levels of Object.values(difficultyLevels)) {
@@ -75,6 +78,62 @@ test('Punkte-Aufnahmen summieren und Undo stellt die Rohdaten wieder her', () =>
   attempt = undoNumericVisit(attempt)
   assert.equal(numericAttemptStats(level, attempt).totalScore, 60)
   assert.equal(numericAttemptStats(level, attempt).totalDarts, 3)
+})
+
+test('Mindestens-Punkte bleiben über mehrere Aufnahmen zentral kumuliert', () => {
+  const level = { taskType:'score', targetScore:80, comparison:'atLeast', scoreGoal:'singleVisit' }
+  let attempt = createNumericAttempt(level)
+  for (const score of [30, 30]) attempt = applyScoreVisit(attempt, score)
+  assert.deepEqual(numericAttemptStats(level, attempt), {
+    rest:20, totalScore:60, totalDarts:6, visits:2, highestVisit:30, average:30,
+    history:attempt.visits, successfulVisits:0, complete:false,
+  })
+  attempt = applyScoreVisit(attempt, 20)
+  assert.equal(numericAttemptStats(level, attempt).rest, 0)
+  assert.equal(numericAttemptStats(level, attempt).complete, true)
+})
+
+test('Koop-Punkteziel skaliert strukturiert und verliert beim Spielerwechsel keinen Teamstand', () => {
+  const level = scaleLevelForMultiplayer({ task:'Erziele mindestens 80 Punkte', taskType:'score', targetScore:80, comparison:'atLeast', scoreGoal:'singleVisit', perfectDarts:3 }, 2)
+  assert.equal(level.targetScore, 160)
+  assert.equal(level.scoreGoal, 'cumulative')
+  let attempt = createNumericAttempt(level)
+  for (const [score, total, rest] of [[60,60,100],[60,120,40],[30,150,10]]) {
+    attempt = applyScoreVisit(attempt, score)
+    assert.equal(numericAttemptStats(level, attempt).totalScore, total)
+    assert.equal(numericAttemptStats(level, attempt).rest, rest)
+  }
+  attempt = applyScoreVisit(attempt, 20)
+  assert.equal(numericAttemptStats(level, attempt).totalScore, 170)
+  assert.equal(numericAttemptStats(level, attempt).complete, true)
+})
+
+test('Koop-Ziel 200 akzeptiert beliebige Spielerbeiträge', () => {
+  const level = scaleLevelForMultiplayer({ task:'Erziele mindestens 100 Punkte', taskType:'score', targetScore:100, comparison:'atLeast', scoreGoal:'singleVisit', perfectDarts:3 }, 2)
+  let attempt = applyScoreVisit(createNumericAttempt(level), 90)
+  attempt = applyScoreVisit(attempt, 110)
+  assert.deepEqual([numericAttemptStats(level, attempt).totalScore, numericAttemptStats(level, attempt).rest, numericAttemptStats(level, attempt).complete], [200,0,true])
+})
+
+test('Checkout-Matrix finalisiert in Aufnahme- und Pro-Dart-Semantik identisch', () => {
+  for (const checkoutScore of [40,48,52,68,81,100]) {
+    const level = { taskType:'checkout', checkoutScore }
+    const darts = getMinimumCampaignCheckoutDarts(checkoutScore)
+    const wholeVisit = applyCheckoutVisit(createNumericAttempt(level), checkoutScore, true, darts)
+    const perDart = applyCheckoutVisit(createNumericAttempt(level), checkoutScore, true, darts)
+    assert.equal(numericAttemptStats(level, wholeVisit).complete, true, `Aufnahme ${checkoutScore}`)
+    assert.equal(numericAttemptStats(level, perDart).complete, true, `Pro Dart ${checkoutScore}`)
+    assert.equal(createNumericAttemptResult(level, wholeVisit).success, true)
+  }
+})
+
+test('beide Checkout-Eingaben verwenden einen zentralen unveränderlichen Finalisierungsflow', () => {
+  const source = readFileSync(new URL('../src/features/campaign/components/NumericCampaignInput.jsx', import.meta.url), 'utf8')
+  assert.match(source, /function finalizeCheckout\(checkout, darts\)/)
+  assert.match(source, /setPendingCheckout\(\{ attempt, points:nextPreview\.points, suggestedDarts:darts\.length \}\)/)
+  assert.match(source, /onCheckoutLongPress=\{confirmCheckoutLongPress\}/)
+  assert.match(source, /quick=\{perDart \? \[\] : undefined\}/)
+  assert.doesNotMatch(source, /\[0, 1, 5, 20, 25, 40, 50, 60\]/)
 })
 
 test('nach 20 Aufnahmen bleiben intern alle Daten, sichtbar sind nur die letzten drei', () => {

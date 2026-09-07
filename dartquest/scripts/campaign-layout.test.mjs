@@ -77,8 +77,12 @@ test('mobile shell uses the safe viewport once and boss styling has no geometry 
 })
 
 test('star rating and scoring interactions stay inside their allocated shell rows', () => {
-  assert.match(css, /\.quick-dart-input__ratings \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/)
-  assert.match(css, /\.layout-score \.score-keypad,[\s\S]*?height: 100%;[\s\S]*?grid-template-rows: 36px 32px minmax\(0, 1fr\)/)
+  assert.match(css, /\.quick-dart-input__ratings \{ grid-template-columns: minmax\(0, 1fr\); \}/)
+  assert.doesNotMatch(css, /\.quick-dart-input__ratings\s*\{[^}]*grid-template-columns:\s*repeat\(2/)
+  assert.match(css, /\.quick-dart-input__ratings button \{ min-height: 46px; grid-template-columns: minmax\(76px,\.7fr\) minmax\(0,1fr\) 15px;/)
+  assert.match(css, /\.layout-score \.score-keypad,[\s\S]*?height: 100%;/)
+  assert.match(css, /\.layout-score \.score-keypad\.has-quick-scores,[\s\S]*?grid-template-rows: 36px minmax\(72px, \.65fr\) minmax\(0, 1\.35fr\)/)
+  assert.match(css, /\.layout-score \.score-keypad\.no-quick-scores,[\s\S]*?grid-template-rows: 36px minmax\(0, 1fr\)/)
   assert.match(css, /\.layout-score \.score-numbers,[\s\S]*?grid-template-rows: repeat\(4, minmax\(0, 1fr\)\)/)
 })
 

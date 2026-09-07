@@ -66,7 +66,8 @@ export function getDartVisitPreview(level, attempt, darts) {
     const bust = rest < 0 || rest === 1
     return { points, rest: bust ? stats.rest : rest, bust, checkout: rest === 0 }
   }
-  const totalScore = level.scoreGoal === 'repeatedVisit' ? points : stats.totalScore + points
+  const perVisitGoal = level.scoreGoal === 'repeatedVisit' || (level.scoreGoal === 'singleVisit' && level.comparison === 'exact')
+  const totalScore = perVisitGoal ? points : stats.totalScore + points
   const scoringVisit = level.comparison === 'exact' ? points === level.targetScore : points >= level.targetScore
   const complete = level.scoreGoal === 'repeatedVisit'
     ? stats.successfulVisits + (scoringVisit ? 1 : 0) >= level.requiredScoringVisits
@@ -92,8 +93,12 @@ export function numericAttemptStats(level, attempt) {
   const successfulVisits = attempt.visits.filter((visit) => level.comparison === 'exact' ? visit.points === level.targetScore : visit.points >= level.targetScore).length
   const complete = level.scoreGoal === 'repeatedVisit'
       ? successfulVisits >= level.requiredScoringVisits
+      : level.scoreGoal === 'singleVisit' && level.comparison === 'exact'
+        ? successfulVisits >= 1
       : level.comparison === 'exact' ? attempt.totalScore === level.targetScore : attempt.totalScore >= level.targetScore
-  const scoringBase = level.scoreGoal === 'repeatedVisit' ? Math.max(0, ...attempt.visits.map((visit) => visit.points)) : attempt.totalScore
+  const scoringBase = level.scoreGoal === 'repeatedVisit' || (level.scoreGoal === 'singleVisit' && level.comparison === 'exact')
+    ? Math.max(0, ...attempt.visits.map((visit) => visit.points))
+    : attempt.totalScore
   return {
     rest: Math.max(0, level.targetScore - scoringBase), totalScore: attempt.totalScore, totalDarts: attempt.totalDarts,
     visits: attempt.visits.length, highestVisit: Math.max(0, ...attempt.visits.map((visit) => visit.points)),
