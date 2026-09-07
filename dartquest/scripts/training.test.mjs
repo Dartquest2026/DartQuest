@@ -100,3 +100,18 @@ test('active training fits the responsive portrait viewport matrix', () => {
     assert.ok(checkout<=main,`${w}x${h} checkout ${checkout}/${main}`)
   }
 })
+
+test('training builder keeps its start action above the real bottom navigation', () => {
+  const training=readFileSync(new URL('../src/features/training/Training.jsx',import.meta.url),'utf8')
+  const css=readFileSync(new URL('../src/features/training/Training.css',import.meta.url),'utf8')
+  const appCss=readFileSync(new URL('../src/app/App.css',import.meta.url),'utf8')
+  const navCss=readFileSync(new URL('../src/shared/styles/BottomNav.css',import.meta.url),'utf8')
+
+  assert.match(training,/className="training-builder-scroll"[\s\S]*<\/div>\s*<button className="training-start-button"/)
+  assert.match(css,/\.training-builder\s*\{[\s\S]*grid-template-rows:\s*minmax\(0,\s*1fr\) auto;[\s\S]*overflow:\s*hidden;/)
+  assert.match(css,/\.training-builder-scroll\s*\{[\s\S]*overflow-y:\s*auto;/)
+  assert.match(css,/\.training-start-button\s*\{[\s\S]*min-height:\s*56px;[\s\S]*margin:\s*8px 0 0;/)
+  assert.doesNotMatch(css,/\.training-builder\s*\{[^}]*safe-area-inset-bottom/)
+  assert.match(appCss,/\.app-shell\s*>\s*:not\(\.bottom-nav\)\s*\{[\s\S]*flex:\s*1;[\s\S]*min-height:\s*0;/)
+  assert.match(navCss,/\.bottom-nav\s*\{[\s\S]*flex:\s*0 0 auto;[\s\S]*safe-area-inset-bottom/)
+})

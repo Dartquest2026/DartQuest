@@ -42,7 +42,7 @@ function TrainingBuilder({ onBack, onStart }) {
     setTasks((current) => current.map((item) => item.id === normalized.id ? normalized : item))
     setEditing(null)
   }
-  return <main className="training-builder"><header className="training-page-header"><button type="button" onClick={onBack} aria-label="Zurück">‹</button><div><span>DARTQUEST</span><h1>Training erstellen</h1></div></header>
+  return <main className="training-builder"><div className="training-builder-scroll"><header className="training-page-header"><button type="button" onClick={onBack} aria-label="Zurück">‹</button><div><span>DARTQUEST</span><h1>Training erstellen</h1></div></header>
     <p className="training-builder-copy">Wähle Übungen, passe sie an und lege ihre Reihenfolge fest.</p>
     {categories.map((category) => <section className="training-category" key={category}><h2>{category}</h2><div>{TRAINING_TEMPLATES.filter((item) => item.category === category).map((template) => {
       const selected = tasks.find((task) => task.id === template.id)
@@ -51,7 +51,7 @@ function TrainingBuilder({ onBack, onStart }) {
         {selected && <div className="training-template-meta"><span>{describeTrainingTask(selected)} · Max. {getTrainingTaskMaxScore(selected)} Punkte</span><button type="button" onClick={() => setEditing(selected)}>BEARBEITEN ›</button></div>}
       </article>
     })}</div></section>)}
-    {tasks.length > 0 && <section className="training-plan"><h2>DEIN PLAN · {tasks.length} {tasks.length === 1 ? 'AUFGABE' : 'AUFGABEN'}</h2>{tasks.map((task,index) => <div key={task.id}><b>{index+1}</b><span>{task.title}</span><button type="button" disabled={index===0} onClick={() => move(index,-1)} aria-label={`${task.title} nach oben`}>↑</button><button type="button" disabled={index===tasks.length-1} onClick={() => move(index,1)} aria-label={`${task.title} nach unten`}>↓</button></div>)}</section>}
+    {tasks.length > 0 && <section className="training-plan"><h2>DEIN PLAN · {tasks.length} {tasks.length === 1 ? 'AUFGABE' : 'AUFGABEN'}</h2>{tasks.map((task,index) => <div key={task.id}><b>{index+1}</b><span>{task.title}</span><button type="button" disabled={index===0} onClick={() => move(index,-1)} aria-label={`${task.title} nach oben`}>↑</button><button type="button" disabled={index===tasks.length-1} onClick={() => move(index,1)} aria-label={`${task.title} nach unten`}>↓</button></div>)}</section>}</div>
     <button className="training-start-button" type="button" disabled={!tasks.length} onClick={() => onStart(tasks)}>TRAINING STARTEN</button>
     {editing && <ConfigSheet task={editing} onCancel={() => setEditing(null)} onSave={configured} />}
   </main>

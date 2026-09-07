@@ -206,21 +206,35 @@
   color: #fff;
 }
 
-/*
-   WICHTIG:
-   Der Button ist NICHT mehr sticky.
+.training-builder {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 0 12px;
+  overflow: hidden;
+}
 
-   Dadurch steht TRAINING STARTEN immer erst NACH
-   der letzten ausgewählten Aufgabe und verdeckt
-   keine Aufgaben mehr.
-*/
+.training-builder-scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 10px 0 12px;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.training-builder-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .training-start-button {
   position: static;
   display: block;
   width: 100%;
   min-height: 56px;
-  margin: 16px 0 12px;
-  z-index: auto;
+  margin: 8px 0 0;
+  z-index: 5;
 }
 
 .training-start-button:disabled {
