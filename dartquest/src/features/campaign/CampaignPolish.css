@@ -24,16 +24,4 @@
 .level-success-rewards b:last-child { border-color: rgba(255,207,76,.32); color: #ffd76c; }
 .level-success-actions button.primary { background: linear-gradient(135deg,#42e695,#20cdae) !important; color: #03110d !important; }
 
-@media (max-width: 560px) {
-  .level-modal.is-boss-level { max-height: calc(100dvh - max(12px, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important; overflow: hidden !important; }
-  .level-modal.is-boss-level .level-gameplay-layer { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
-  .level-modal.is-boss-level .level-modal-title { font-size: 18px; line-height: 1.05; }
-  .level-modal.is-boss-level .hit-counter { min-height: 0; gap: 4px; }
-  .level-modal.is-boss-level .attempt-dartboard { width: min(55vw, 23dvh, 178px); }
-  .level-modal.is-boss-level .hit-counter-targets { gap: 4px; }
-  .level-modal.is-boss-level .hit-target { min-height: 64px; padding: 3px 7px; gap: 3px; }
-  .level-modal.is-boss-level .hit-target > button { min-height: 29px; }
-  .level-modal.is-boss-level .hit-target-label { font-size: 15px; }
-  .level-modal.is-boss-level .hit-target-progress { font-size: 14px; }
-  .level-modal.is-boss-level .level-giveup-button { min-height: 32px; margin-top: 4px; padding: 4px; }
-}
+/* Boss presentation changes colour and glow only. Gameplay geometry is shared. */
