@@ -1003,7 +1003,7 @@ button.level-input-mode-switch.is-coachmark-target {
     --game-gap: clamp(3px, .7dvh, 7px);
     --game-board-size: clamp(204px, min(34dvh, calc(100vw - 42px)), 310px);
     --game-header-height: 38px;
-    --game-title-height: 48px;
+    --game-title-height: 42px;
     --game-status-height: 42px;
     --game-dart-row-height: 44px;
     --game-action-row-height: 38px;
@@ -1101,7 +1101,7 @@ button.level-input-mode-switch.is-coachmark-target {
     display: grid;
     height: 100%;
     min-height: 0;
-    grid-template-rows: 58px var(--game-status-height) var(--game-dart-row-height) 88px var(--game-undo-height) minmax(244px, 1.5fr);
+    grid-template-rows: 48px var(--game-status-height) var(--game-dart-row-height) 88px var(--game-undo-height) minmax(290px, 1.5fr);
     gap: var(--game-gap);
   }
   .layout-score .numeric-campaign-history,
@@ -1118,7 +1118,7 @@ button.level-input-mode-switch.is-coachmark-target {
     gap: 4px;
   }
   .layout-score .score-keypad.has-quick-scores,
-  .layout-checkout .score-keypad.has-quick-scores { grid-template-rows: 36px minmax(72px, .65fr) minmax(0, 1.35fr); }
+  .layout-checkout .score-keypad.has-quick-scores { grid-template-rows: 36px 92px minmax(0, 1fr); }
   .layout-score .score-keypad.no-quick-scores,
   .layout-checkout .score-keypad.no-quick-scores { grid-template-rows: 36px minmax(0, 1fr); }
   .layout-score .score-display,
@@ -1127,20 +1127,22 @@ button.level-input-mode-switch.is-coachmark-target {
   .layout-checkout .score-quick { min-height: 0; margin: 0; grid-template-rows:repeat(2,minmax(34px,1fr)); gap: 4px; }
   .layout-score .score-numbers,
   .layout-checkout .score-numbers {
+    height: 100%;
     min-height: 0;
+    align-self: stretch;
     grid-template-rows: repeat(4, minmax(0, 1fr));
     gap: 4px;
   }
   .layout-score .score-keypad button,
   .layout-checkout .score-keypad button { min-height: 0; }
-  .layout-score .score-quick button,
-  .layout-checkout .score-quick button { font-size:15px; }
+  .layout-score .score-keypad .score-quick button,
+  .layout-checkout .score-keypad .score-quick button { min-height:44px; font-size:15px; }
 }
 
 @media (max-width: 560px) and (max-height: 700px) {
   .level-modal {
     --game-gap: 3px;
-    --game-title-height: 40px;
+    --game-title-height: 36px;
     --game-status-height: 38px;
     --game-dart-row-height: 40px;
     --game-action-row-height: 36px;
@@ -1152,7 +1154,7 @@ button.level-input-mode-switch.is-coachmark-target {
   .quick-dart-input__ratings button { min-height: 42px; }
   .layout-score .numeric-campaign-input,
   .layout-checkout .numeric-campaign-input {
-    grid-template-rows: 48px var(--game-status-height) var(--game-dart-row-height) 72px var(--game-undo-height) minmax(236px, 1.5fr);
+    grid-template-rows: 44px var(--game-status-height) var(--game-dart-row-height) 72px var(--game-undo-height) minmax(250px, 1.5fr);
   }
   .layout-score .numeric-campaign-history,
   .layout-checkout .numeric-campaign-history { height: 72px; min-height: 72px; }
@@ -1161,9 +1163,11 @@ button.level-input-mode-switch.is-coachmark-target {
   .layout-checkout .numeric-campaign-history header,
   .layout-checkout .numeric-campaign-history div { min-height: 18px; }
   .layout-score .score-keypad.has-quick-scores,
-  .layout-checkout .score-keypad.has-quick-scores { grid-template-rows:34px minmax(64px,.6fr) minmax(0,1.4fr); }
+  .layout-checkout .score-keypad.has-quick-scores { grid-template-rows:34px 68px minmax(0,1fr); }
   .layout-score .score-quick,
   .layout-checkout .score-quick { grid-template-rows:repeat(2,minmax(30px,1fr)); }
+  .layout-score .score-keypad .score-quick button,
+  .layout-checkout .score-keypad .score-quick button { min-height:32px; }
 }
 
 @supports not (height: 100dvh) {

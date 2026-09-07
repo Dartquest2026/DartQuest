@@ -81,21 +81,22 @@ test('star rating and scoring interactions stay inside their allocated shell row
   assert.doesNotMatch(css, /\.quick-dart-input__ratings\s*\{[^}]*grid-template-columns:\s*repeat\(2/)
   assert.match(css, /\.quick-dart-input__ratings button \{ min-height: 46px; grid-template-columns: minmax\(76px,\.7fr\) minmax\(0,1fr\) 15px;/)
   assert.match(css, /\.layout-score \.score-keypad,[\s\S]*?height: 100%;/)
-  assert.match(css, /\.layout-score \.score-keypad\.has-quick-scores,[\s\S]*?grid-template-rows: 36px minmax\(72px, \.65fr\) minmax\(0, 1\.35fr\)/)
+  assert.match(css, /\.layout-score \.score-keypad\.has-quick-scores,[\s\S]*?grid-template-rows: 36px 92px minmax\(0, 1fr\)/)
   assert.match(css, /\.layout-score \.score-keypad\.no-quick-scores,[\s\S]*?grid-template-rows: 36px minmax\(0, 1fr\)/)
-  assert.match(css, /\.layout-score \.score-numbers,[\s\S]*?grid-template-rows: repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(css, /\.layout-score \.score-numbers,[\s\S]*?height: 100%;[\s\S]*?align-self: stretch;[\s\S]*?grid-template-rows: repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(css, /\.layout-score \.score-keypad \.score-quick button,[\s\S]*?min-height:44px/)
 })
 
 test('target, rating and numeric layouts fit the short reference viewport', () => {
   const viewport = 667
   const safeAreaAndFrame = 20 + 6 + 16
   const content = viewport - safeAreaAndFrame
-  const outerChrome = 38 + 40 + 44 + (3 * 3)
+  const outerChrome = 38 + 36 + 44 + (3 * 3)
   const main = content - outerChrome
   const board = viewport * .34
   const target = board + 38 + 40 + 36 + (3 * 44 + 2 * 3) + (4 * 3)
   const rating = board + 38 + (2 * 3) + 134
-  const numeric = 52 + 38 + 40 + 72 + 38 + 236 + (5 * 3)
+  const numeric = 44 + 38 + 40 + 72 + 38 + 250 + (5 * 3)
   assert.ok(target <= main, `target needs ${target}px of ${main}px`)
   assert.ok(rating <= main, `rating needs ${rating}px of ${main}px`)
   assert.ok(numeric <= main, `numeric needs ${numeric}px of ${main}px`)
@@ -113,7 +114,7 @@ test('all requested smartphone viewports keep every gameplay zone inside the she
     const compact = height <= 700
     const gap = compact ? 3 : Math.min(7, Math.max(3, height * .007))
     const board = Math.min(310, Math.max(204, Math.min(height * .34, width - 42)))
-    const title = compact ? 40 : 48
+    const title = compact ? 36 : 42
     const status = compact ? 38 : 42
     const darts = compact ? 40 : 44
     const action = compact ? 36 : 38
@@ -122,8 +123,8 @@ test('all requested smartphone viewports keep every gameplay zone inside the she
     const target = board + status + darts + action + (3 * targetRow + 2 * gap) + (4 * gap)
     const rating = board + status + (2 * gap) + (compact ? 134 : 151)
     const numeric = compact
-      ? 52 + status + darts + 72 + 38 + 236 + (5 * gap)
-      : 64 + status + darts + 88 + 40 + 220 + (5 * gap)
+      ? 44 + status + darts + 72 + 38 + 250 + (5 * gap)
+      : 48 + status + darts + 88 + 40 + 290 + (5 * gap)
     for (const [layout, required] of Object.entries({ target, rating, numeric })) {
       assert.ok(required <= main, `${width}x${height} ${layout} needs ${required}px of ${main}px`)
     }
