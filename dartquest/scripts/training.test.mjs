@@ -86,9 +86,9 @@ test('navigation, shared miss interaction and secure persistence are wired', () 
 
 test('active training fits the responsive portrait viewport matrix', () => {
   const css=readFileSync(new URL('../src/features/training/Training.css',import.meta.url),'utf8')
-  assert.match(css,/height:100dvh/)
+  assert.match(css,/height:\s*100dvh/)
   for(const inset of ['top','right','bottom','left']) assert.match(css,new RegExp(`env\\(safe-area-inset-${inset}\\)`))
-  assert.match(css,/--training-board-size:clamp\(190px,min\(42dvh,calc\(100vw - 48px\)\),350px\)/)
+  assert.match(css,/--training-board-size:\s*clamp\(190px,\s*min\(42dvh,\s*calc\(100vw - 48px\)\),\s*350px\)/)
   const viewports=[{w:375,h:667,safe:26},{w:390,h:844,safe:81},{w:393,h:852,safe:81},{w:430,h:932,safe:93},{w:360,h:800,safe:48}]
   for(const {w,h,safe} of viewports){
     const compact=h<=700
@@ -112,6 +112,6 @@ test('training builder keeps its start action above the real bottom navigation',
   assert.match(css,/\.training-builder-scroll\s*\{[\s\S]*overflow-y:\s*auto;/)
   assert.match(css,/\.training-start-button\s*\{[\s\S]*min-height:\s*56px;[\s\S]*margin:\s*8px 0 0;/)
   assert.doesNotMatch(css,/\.training-builder\s*\{[^}]*safe-area-inset-bottom/)
-  assert.match(appCss,/\.app-shell\s*>\s*:not\(\.bottom-nav\)\s*\{[\s\S]*flex:\s*1;[\s\S]*min-height:\s*0;/)
+  assert.match(appCss,/\.app-shell\s*>\s*:not\(\.bottom-nav\)\s*\{[\s\S]*flex:\s*1 1 auto;[\s\S]*min-height:\s*0;/)
   assert.match(navCss,/\.bottom-nav\s*\{[\s\S]*flex:\s*0 0 auto;[\s\S]*safe-area-inset-bottom/)
 })
