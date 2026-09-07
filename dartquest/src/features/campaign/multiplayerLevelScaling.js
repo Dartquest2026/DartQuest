@@ -30,7 +30,7 @@ function scaleTaskText(task, factor, scaledPerfectDarts) {
   const checkout = task.match(/^Checke\s+(\d+)/i)
 
   if (checkout) {
-    return `Schafft ${factor} erfolgreiche Checkouts von ${checkout[1]}`
+    return `Checkt gemeinsam ${checkout[1]}`
   }
 
   if (task.includes('→')) {
@@ -107,6 +107,8 @@ export function scaleLevelForMultiplayer(level, playerCount) {
       : level.sequence,
     targetHits: scaledTargetHits,
     perfectDarts: scaledPerfectDarts,
+    targetScore: Number.isFinite(level.targetScore) ? level.targetScore * factor : level.targetScore,
+    scoreGoal: isScoring && level.scoreGoal !== 'repeatedVisit' ? 'cumulative' : level.scoreGoal,
     multiplayerGoal,
   }
 }

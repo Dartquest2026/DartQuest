@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import StandardGame from '../standardGames/StandardGame'
+import Training from '../training/Training'
 import './Singleplayer.css'
 
 const modes = [
@@ -12,7 +13,6 @@ const modes = [
   },
   {
     id: 'training',
-    visible: false,
     icon: '🎯',
     title: 'Training',
     description:
@@ -34,14 +34,17 @@ function Singleplayer({
   activeProfile,
 }) {
   const [standardOpen, setStandardOpen] = useState(false)
+  const [trainingOpen, setTrainingOpen] = useState(false)
 
   function openMode(modeId) {
     if (modeId === 'campaign') {
       onOpenCampaign?.()
     }
     if (modeId === 'standard') setStandardOpen(true)
+    if (modeId === 'training') setTrainingOpen(true)
   }
 
+  if (trainingOpen) return <Training activeProfile={activeProfile} onBack={() => setTrainingOpen(false)} />
   if (standardOpen) return <StandardGame initialPlayers={[activeProfile?.name || 'Spieler 1']} activeProfile={activeProfile} onBack={() => setStandardOpen(false)} />
 
   return (

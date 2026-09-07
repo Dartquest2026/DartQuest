@@ -5,6 +5,7 @@ import {
   MAX_MULTIPLAYER_SAVES,
 } from './multiplayerSaves'
 import StandardGame from '../standardGames/StandardGame'
+import Training from '../training/Training'
 
 import './Multiplayer.css'
 
@@ -174,6 +175,11 @@ function Multiplayer({
       return
     }
 
+    if (selectedMode === 'training') {
+      setSelectedMode('modes')
+      return
+    }
+
     if (selectedMode === 'modes') {
       setSelectedMode('players')
       return
@@ -204,6 +210,8 @@ function Multiplayer({
       isNewGame: true,
     })
   }
+
+  if (selectedMode === 'training') return <Training activeProfile={activeProfile} players={activePlayers.map((player) => ({ ...player, name:player.name.trim() || `Spieler ${player.id}` }))} onBack={() => setSelectedMode('modes')} />
 
   return (
     <main className="multiplayer-screen">
@@ -586,9 +594,10 @@ function Multiplayer({
                 </button>
 
 
-                {SHOW_DEFERRED_GAME_MODES && <button
+                <button
                   type="button"
                   className="multiplayer-mode-card"
+                  onClick={() => setSelectedMode('training')}
                 >
 
                   <span className="multiplayer-mode-icon">
@@ -609,7 +618,7 @@ function Multiplayer({
                     ›
                   </span>
 
-                </button>}
+                </button>
 
 
                 {SHOW_DEFERRED_GAME_MODES && <button
@@ -650,6 +659,7 @@ function Multiplayer({
           onBack={() => setSelectedMode('modes')}
         />
       )}
+
 
 
       {/* =====================================================

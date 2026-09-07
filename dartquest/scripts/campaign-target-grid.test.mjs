@@ -77,16 +77,16 @@ test('Long-Press füllt nur offene Darts und Undo bleibt dartweise', () => {
 })
 
 test('Miss-Button trennt Tap, Hold, Bewegung und Pointer-Cancel ohne Folge-Click', () => {
-  const source = readFileSync(new URL('../src/features/campaign/components/HitCounter.jsx', import.meta.url), 'utf8')
+  const source = readFileSync(new URL('../src/shared/hooks/useMissHold.js', import.meta.url), 'utf8')
   assert.match(source, /MISS_HOLD_DURATION_MS = 600/)
   assert.match(source, /elapsed \/ MISS_HOLD_DURATION_MS/)
   assert.match(source, /progress >= 1\) completeMissHold\(button\)/)
-  assert.match(source, /completeMissHold[\s\S]*?360deg[\s\S]*?onFillMisses\(\)/)
+  assert.match(source, /completeMissHold[\s\S]*?360deg[\s\S]*?onFill\(\)/)
   assert.match(source, /cancelMissHold[\s\S]*?removeProperty\('--miss-hold-angle'\)/)
   assert.match(source, /Math\.hypot\([\s\S]*?> 12\) cancelMissHold\(\)/)
-  assert.match(source, /onPointerCancel=\{cancelMissHold\}/)
-  assert.match(source, /suppressMissClick\.current = true/)
-  assert.match(source, /if \(suppressMissClick\.current\) \{[\s\S]*?event\.preventDefault\(\)/)
+  assert.match(source, /onPointerCancel:cancelMissHold/)
+  assert.match(source, /suppressClick\.current = true/)
+  assert.match(source, /if \(suppressClick\.current\) \{[\s\S]*?event\.preventDefault\(\)/)
 })
 
 test('Target-Dartslots unterscheiden offen, Treffer und Miss ohne Größenänderung', () => {

@@ -37,22 +37,23 @@ test('boss 10 through 60 share target layout and the same six-slot grid', () => 
 })
 
 test('viewport tokens produce invariant target anchors per viewport', () => {
-  const contract = (height) => {
+  const contract = (width, height) => {
     const compact = height <= 700
-    const gap = compact ? 4 : Math.min(7, Math.max(4, height * .007))
-    const board = compact ? 220 : Math.min(286, Math.max(220, height * .34))
+    const gap = compact ? 3 : Math.min(7, Math.max(3, height * .007))
+    const board = Math.min(310, Math.max(204, Math.min(height * .34, width - 42)))
     const header = 38
     const title = compact ? 40 : 48
     const status = compact ? 38 : 42
     const darts = compact ? 40 : 44
-    const action = compact ? 34 : 38
-    const targetRow = compact ? 42 : 46
+    const action = compact ? 36 : 38
+    const targetRow = compact ? 44 : 46
     return { gap, targetRow, board, boardTop: header + gap + title + gap, statusTop: header + title + board + gap * 3, dartsTop: header + title + board + status + gap * 4, actionTop: header + title + board + status + darts + gap * 5, targetTop: header + title + board + status + darts + action + gap * 6, targetHeight: targetRow * 3 + gap * 2 }
   }
-  for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }, { width: 430, height: 932 }]) {
-    const reference = contract(viewport.height)
-    for (const count of [1, 2, 3, 4, 5, 6]) assert.deepEqual(contract(viewport.height), reference, `${viewport.width}x${viewport.height}, ${count} targets`)
-    assert.ok(reference.board >= 220 && reference.board <= 286)
+  for (const viewport of [{ width: 375, height: 667 }, { width: 390, height: 844 }, { width: 393, height: 852 }, { width: 430, height: 932 }, { width: 360, height: 800 }]) {
+    const reference = contract(viewport.width, viewport.height)
+    for (const count of [1, 2, 3, 4, 5, 6]) assert.deepEqual(contract(viewport.width, viewport.height), reference, `${viewport.width}x${viewport.height}, ${count} targets`)
+    assert.ok(reference.board >= 204 && reference.board <= 310)
+    assert.ok(reference.board <= viewport.width - 42)
     assert.equal(reference.targetHeight, reference.targetRow * 3 + reference.gap * 2)
   }
 })
@@ -67,6 +68,8 @@ test('give-up owns a fixed final row and numeric history stays at three rows', (
 test('mobile shell uses the safe viewport once and boss styling has no geometry overrides', () => {
   const polish = readFileSync(new URL('../src/features/campaign/CampaignPolish.css', import.meta.url), 'utf8')
   assert.match(css, /\.level-modal-backdrop\s*\{[\s\S]*?height:\s*100dvh;/)
+  assert.match(css, /max\(7px, env\(safe-area-inset-right\)\)/)
+  assert.match(css, /max\(7px, env\(safe-area-inset-left\)\)/)
   assert.match(css, /\.level-modal\s*\{[\s\S]*?height:\s*100% !important;[\s\S]*?max-height:\s*none !important;/)
   assert.doesNotMatch(css, /height:\s*min\(calc\(100dvh[\s\S]*?700px\)/)
   assert.doesNotMatch(polish, /\.level-modal\.is-boss-level \.attempt-dartboard/)
@@ -83,12 +86,42 @@ test('target, rating and numeric layouts fit the short reference viewport', () =
   const viewport = 667
   const safeAreaAndFrame = 20 + 6 + 16
   const content = viewport - safeAreaAndFrame
-  const outerChrome = 38 + 40 + 34 + (3 * 4)
+  const outerChrome = 38 + 40 + 44 + (3 * 3)
   const main = content - outerChrome
-  const target = 220 + 38 + 40 + 34 + (3 * 42 + 2 * 4) + (4 * 4)
-  const rating = 220 + 38 + (2 * 4) + 134
-  const numeric = 56 + 38 + 40 + 80 + 32 + 212 + (5 * 4)
+  const board = viewport * .34
+  const target = board + 38 + 40 + 36 + (3 * 44 + 2 * 3) + (4 * 3)
+  const rating = board + 38 + (2 * 3) + 134
+  const numeric = 52 + 38 + 40 + 72 + 38 + 236 + (5 * 3)
   assert.ok(target <= main, `target needs ${target}px of ${main}px`)
   assert.ok(rating <= main, `rating needs ${rating}px of ${main}px`)
   assert.ok(numeric <= main, `numeric needs ${numeric}px of ${main}px`)
+})
+
+test('all requested smartphone viewports keep every gameplay zone inside the shell', () => {
+  const viewports = [
+    { width:375, height:667, reserved:42 },
+    { width:390, height:844, reserved:103 },
+    { width:393, height:852, reserved:103 },
+    { width:430, height:932, reserved:115 },
+    { width:360, height:800, reserved:70 },
+  ]
+  for (const { width, height, reserved } of viewports) {
+    const compact = height <= 700
+    const gap = compact ? 3 : Math.min(7, Math.max(3, height * .007))
+    const board = Math.min(310, Math.max(204, Math.min(height * .34, width - 42)))
+    const title = compact ? 40 : 48
+    const status = compact ? 38 : 42
+    const darts = compact ? 40 : 44
+    const action = compact ? 36 : 38
+    const targetRow = compact ? 44 : 46
+    const main = height - reserved - 38 - title - 44 - (3 * gap)
+    const target = board + status + darts + action + (3 * targetRow + 2 * gap) + (4 * gap)
+    const rating = board + status + (2 * gap) + (compact ? 134 : 151)
+    const numeric = compact
+      ? 52 + status + darts + 72 + 38 + 236 + (5 * gap)
+      : 64 + status + darts + 88 + 40 + 220 + (5 * gap)
+    for (const [layout, required] of Object.entries({ target, rating, numeric })) {
+      assert.ok(required <= main, `${width}x${height} ${layout} needs ${required}px of ${main}px`)
+    }
+  }
 })

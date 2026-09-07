@@ -95,9 +95,10 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
     return <button type="button" key={number} className={classes} disabled={disabled} onPointerDown={(event) => startHold(number, event)} onPointerMove={moveHold} onPointerUp={endHold} onPointerCancel={cancelHold} onContextMenu={(event) => checkoutAvailable && event.preventDefault()} onClick={() => clickNumber(number)}>{number}</button>
   }
 
-  return <section className={`score-keypad${fill ? ' is-fill' : ''}`}>
+  const hasQuickScores = quick.length > 0
+  return <section className={`score-keypad${fill ? ' is-fill' : ''}${hasQuickScores ? ' has-quick-scores' : ' no-quick-scores'}`}>
     <div className="score-display">{value || '0'}</div>
-    <div className="score-quick">{quick.map((item) => <button type="button" key={item} className={keyClass(`quick-${item}`)} disabled={disabled} onClick={() => press(`quick-${item}`, () => onChange(String(item)))}>{item}</button>)}</div>
+    {hasQuickScores && <div className="score-quick">{quick.map((item) => <button type="button" key={item} className={keyClass(`quick-${item}`)} disabled={disabled} onClick={() => press(`quick-${item}`, () => onChange(String(item)))}>{item}</button>)}</div>}
     <div className="score-numbers">
       {numberButton(1)}
       {numberButton(2)}

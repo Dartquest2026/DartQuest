@@ -2,22 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import Dartboard from './Dartboard'
 import { DartSlots } from '../../campaignModes/components/CampaignGameUI'
 import { useSequencePreview } from './useSequencePreview'
+import { useMissHold } from '../../../shared/hooks/useMissHold'
 import './HitCounter.css'
-
-const MISS_HOLD_DURATION_MS = 600
 
 function HitCounter({ attempt, turnStartIndex = null, canUndo = attempt.totalDarts > 0, displayVisits = attempt.visits, displayTotalDarts = attempt.totalDarts, onHit, onNextVisit, onFillMisses, onPreviousVisit, completionPending, autoPerfectPending = false, onFinish, interactionDisabled = false, inputModeControl }) {
   const [pressedTarget, setPressedTarget] = useState(null)
-  const [missHolding, setMissHolding] = useState(false)
-  const [missTapped, setMissTapped] = useState(false)
   const feedbackTimer = useRef(null)
-  const missFeedbackTimer = useRef(null)
-  const missHoldTimer = useRef(null)
-  const missHoldStartedAt = useRef(null)
-  const missHoldButton = useRef(null)
-  const missHoldOrigin = useRef(null)
-  const suppressMissClick = useRef(false)
-  const longPressTriggered = useRef(false)
+  const { missHolding, missTapped, missButtonProps } = useMissHold({ disabled:interactionDisabled, onMiss:onNextVisit, onFill:onFillMisses })
   const expectedTarget = attempt.sequence[attempt.sequenceIndex]
   const previewTargetId = useSequencePreview(attempt)
   const targetPageSize = 6
@@ -40,84 +31,7 @@ function HitCounter({ attempt, turnStartIndex = null, canUndo = attempt.totalDar
 
   useEffect(() => () => {
     window.clearTimeout(feedbackTimer.current)
-    window.cancelAnimationFrame(missHoldTimer.current)
-    window.clearTimeout(missFeedbackTimer.current)
   }, [])
-
-  function cancelMissHold() {
-    window.cancelAnimationFrame(missHoldTimer.current)
-    missHoldTimer.current = null
-    missHoldStartedAt.current = null
-    missHoldOrigin.current = null
-    missHoldButton.current?.style.removeProperty('--miss-hold-angle')
-    missHoldButton.current = null
-    setMissHolding(false)
-  }
-
-  function completeMissHold(button) {
-    missHoldTimer.current = null
-    missHoldStartedAt.current = null
-    missHoldOrigin.current = null
-    longPressTriggered.current = true
-    suppressMissClick.current = true
-    button.style.setProperty('--miss-hold-angle', '360deg')
-    setMissHolding(false)
-    button.classList.add('is-long-pressed')
-    window.setTimeout(() => button.classList.remove('is-long-pressed'), 280)
-    onFillMisses()
-  }
-
-  function startMissHold(event) {
-    if (interactionDisabled) return
-    cancelMissHold()
-    longPressTriggered.current = false
-    suppressMissClick.current = false
-    missHoldOrigin.current = { x: event.clientX, y: event.clientY }
-    missHoldStartedAt.current = performance.now()
-    missHoldButton.current = event.currentTarget
-    event.currentTarget.style.setProperty('--miss-hold-angle', '0deg')
-    setMissHolding(true)
-    const button = event.currentTarget
-    button.setPointerCapture?.(event.pointerId)
-    const updateHoldProgress = (now) => {
-      if (missHoldStartedAt.current == null || longPressTriggered.current) return
-      const elapsed = now - missHoldStartedAt.current
-      const progress = Math.min(1, elapsed / MISS_HOLD_DURATION_MS)
-      button.style.setProperty('--miss-hold-angle', `${progress * 360}deg`)
-      if (progress >= 1) completeMissHold(button)
-      else missHoldTimer.current = window.requestAnimationFrame(updateHoldProgress)
-    }
-    missHoldTimer.current = window.requestAnimationFrame(updateHoldProgress)
-  }
-
-  function moveMissHold(event) {
-    const origin = missHoldOrigin.current
-    if (!origin || longPressTriggered.current) return
-    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 12) cancelMissHold()
-  }
-
-  function endMissHold() {
-    const wasLongPress = longPressTriggered.current
-    const hadActiveHold = missHoldTimer.current != null
-    cancelMissHold()
-    suppressMissClick.current = true
-    if (!wasLongPress && hadActiveHold) {
-      setMissTapped(true)
-      window.clearTimeout(missFeedbackTimer.current)
-      missFeedbackTimer.current = window.setTimeout(() => setMissTapped(false), 160)
-      onNextVisit()
-    }
-  }
-
-  function clickMiss(event) {
-    if (suppressMissClick.current) {
-      suppressMissClick.current = false
-      event.preventDefault()
-      return
-    }
-    // Keyboard activation has no preceding pointer sequence.
-    if (event.detail === 0 && !interactionDisabled) onNextVisit()
-  }
 
   function pressTarget(targetId) {
     setPressedTarget(targetId)
@@ -140,7 +54,7 @@ function HitCounter({ attempt, turnStartIndex = null, canUndo = attempt.totalDar
 
       <div className="hit-counter-visit-actions">
         <button className="hit-counter-previous-visit" type="button" onClick={onPreviousVisit} disabled={interactionDisabled || !canUndo}>↶ Letzten Dart</button>
-        <button className={`hit-counter-next-visit${missHolding ? ' is-holding' : ''}${missTapped ? ' is-tapped' : ''}`} type="button" onPointerDown={startMissHold} onPointerMove={moveMissHold} onPointerLeave={cancelMissHold} onPointerUp={endMissHold} onPointerCancel={cancelMissHold} onClick={clickMiss} onContextMenu={(event) => event.preventDefault()} disabled={interactionDisabled}>
+        <button className={`hit-counter-next-visit${missHolding ? ' is-holding' : ''}${missTapped ? ' is-tapped' : ''}`} type="button" {...missButtonProps} disabled={interactionDisabled}>
           {completionPending ? 'Nicht getroffen · +1 Dart' : 'Nicht getroffen'}
         </button>
       </div>
