@@ -87,6 +87,13 @@ test('star rating and scoring interactions stay inside their allocated shell row
   assert.match(css, /\.layout-score \.score-keypad \.score-quick button,[\s\S]*?min-height:44px/)
 })
 
+test('target input modes share one stable interaction slot below the status row', () => {
+  assert.match(css, /--game-interaction-slot-height: calc\(var\(--game-dart-row-height\) \+ var\(--game-action-row-height\) \+ 3 \* var\(--game-target-row-height\) \+ 4 \* var\(--game-gap\)\)/)
+  assert.match(css, /\.level-gameplay-layer > \.hit-counter \{[\s\S]*?align-content: start;[\s\S]*?grid-template-rows: var\(--game-board-size\) var\(--game-status-height\)/)
+  assert.match(css, /\.quick-dart-input \{[\s\S]*?align-content: start;[\s\S]*?grid-template-rows: var\(--game-board-size\) var\(--game-status-height\) var\(--game-interaction-slot-height\)/)
+  assert.match(css, /\.quick-dart-input__panel \{[^}]*height:var\(--game-interaction-slot-height\);[^}]*align-self:stretch;/)
+})
+
 test('target, rating and numeric layouts fit the short reference viewport', () => {
   const viewport = 667
   const safeAreaAndFrame = 20 + 6 + 16
@@ -121,7 +128,8 @@ test('all requested smartphone viewports keep every gameplay zone inside the she
     const targetRow = compact ? 44 : 46
     const main = height - reserved - 38 - title - 44 - (3 * gap)
     const target = board + status + darts + action + (3 * targetRow + 2 * gap) + (4 * gap)
-    const rating = board + status + (2 * gap) + (compact ? 134 : 151)
+    const interaction = darts + action + (3 * targetRow) + (4 * gap)
+    const rating = board + status + interaction + (2 * gap)
     const numeric = compact
       ? 44 + status + darts + 72 + 38 + 250 + (5 * gap)
       : 48 + status + darts + 88 + 40 + 290 + (5 * gap)

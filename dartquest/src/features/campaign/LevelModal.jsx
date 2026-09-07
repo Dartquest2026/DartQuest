@@ -29,8 +29,7 @@ import { triggerHaptic } from '../settings/haptics'
 import { getBossPresentation, getBossPresentationStyle } from './bossPresentation'
 import { createBossFinaleResult, isMultiPhaseBoss } from './bossFinale'
 import { getCampaignPlayers, nextCampaignPlayerIndex, shouldRotateCampaignTurn } from './multiplayerTurns'
-
-const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
+import { getPreferredInputMode, setPreferredInputMode } from '../settings/settingsStorage'
 
 function formatTaskForDisplay(task) {
   return String(task ?? '').replace(/\s+mit maximal\s+\d+\s+Darts?$/i, '')
@@ -94,10 +93,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
   const [bossPhase, setBossPhase] = useState('targets')
   const [phaseOneResult, setPhaseOneResult] = useState(null)
   const minimumDarts = getMinimumDarts(level)
-  const [inputMode, setInputMode] = useState(() => {
-    const savedMode = localStorage.getItem(INPUT_MODE_STORAGE_KEY)
-    return savedMode === 'quick' ? 'quick' : 'counter'
-  })
+  const [inputMode, setInputMode] = useState(() => getPreferredInputMode(level.taskType))
   const [pendingInputMode, setPendingInputMode] = useState(null)
   const [showInputModeHint, setShowInputModeHint] = useState(() => (
     inputModeHintEligible && Number(level?.id) === 1 && !hasConfirmedInputModeHint(profileId, difficulty)
@@ -418,7 +414,7 @@ function LevelModalAttempt({ level, difficulty = 1, profileId, inputModeHintElig
     }
     setInputMode(nextMode)
     setPendingInputMode(null)
-    localStorage.setItem(INPUT_MODE_STORAGE_KEY, nextMode)
+    setPreferredInputMode(level.taskType, nextMode)
     triggerHaptic('light')
   }
 

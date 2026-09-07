@@ -1008,6 +1008,7 @@ button.level-input-mode-switch.is-coachmark-target {
     --game-dart-row-height: 44px;
     --game-action-row-height: 38px;
     --game-target-row-height: 46px;
+    --game-interaction-slot-height: calc(var(--game-dart-row-height) + var(--game-action-row-height) + 3 * var(--game-target-row-height) + 4 * var(--game-gap));
     --game-undo-height: 40px;
     --game-giveup-height: 44px;
     box-sizing: border-box;
@@ -1049,7 +1050,7 @@ button.level-input-mode-switch.is-coachmark-target {
     display: grid;
     height: 100%;
     min-height: 0;
-    align-content: space-between;
+    align-content: start;
     grid-template-rows: var(--game-board-size) var(--game-status-height) var(--game-dart-row-height) var(--game-action-row-height) calc(3 * var(--game-target-row-height) + 2 * var(--game-gap));
     gap: var(--game-gap);
   }
@@ -1086,11 +1087,11 @@ button.level-input-mode-switch.is-coachmark-target {
     display: grid;
     height: 100%;
     min-height: 0;
-    align-content: stretch;
-    grid-template-rows: var(--game-board-size) var(--game-status-height) minmax(0, 1fr);
+    align-content: start;
+    grid-template-rows: var(--game-board-size) var(--game-status-height) var(--game-interaction-slot-height);
     gap: var(--game-gap);
   }
-  .quick-dart-input__panel { align-self: center; }
+  .quick-dart-input__panel { box-sizing:border-box; height:var(--game-interaction-slot-height); align-self:stretch; align-content:start; }
   .quick-dart-input__ratings { grid-template-columns: minmax(0, 1fr); }
   .quick-dart-input__ratings button { min-height: 46px; grid-template-columns: minmax(76px,.7fr) minmax(0,1fr) 15px; gap: 6px; padding: 5px 9px; }
   .quick-dart-input__ratings b { grid-column: auto; font-size: 14px; }

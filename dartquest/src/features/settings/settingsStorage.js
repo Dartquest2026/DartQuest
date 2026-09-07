@@ -1,5 +1,6 @@
 export const SETTINGS_STORAGE_KEY = 'dartquest-settings-v1'
 export const INPUT_MODE_STORAGE_KEY = 'dartquest-gameplay-input-mode'
+export const INPUT_PREFERENCES_STORAGE_KEY = 'dartquest-gameplay-input-preferences-v1'
 
 export const DEFAULT_SETTINGS = Object.freeze({
   sound: true,
@@ -9,6 +10,39 @@ export const DEFAULT_SETTINGS = Object.freeze({
 })
 
 const ANIMATION_MODES = new Set(['full', 'reduced', 'off'])
+const INPUT_MODES = new Set(['counter', 'quick'])
+const INPUT_PREFERENCE_TYPES = new Set(['target', 'score', 'checkout'])
+
+export function getInputPreferenceType(taskType) {
+  if (taskType === 'targets') return 'target'
+  return INPUT_PREFERENCE_TYPES.has(taskType) ? taskType : null
+}
+
+function readInputPreferences(storage) {
+  try {
+    const value = JSON.parse(storage.getItem(INPUT_PREFERENCES_STORAGE_KEY) || '{}')
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  } catch {
+    return {}
+  }
+}
+
+export function getPreferredInputMode(taskType, storage = localStorage) {
+  const preferenceType = getInputPreferenceType(taskType)
+  const preferred = preferenceType ? readInputPreferences(storage)[preferenceType] : null
+  if (INPUT_MODES.has(preferred)) return preferred
+  const legacyDefault = storage.getItem(INPUT_MODE_STORAGE_KEY)
+  return INPUT_MODES.has(legacyDefault) ? legacyDefault : DEFAULT_SETTINGS.inputMode
+}
+
+export function setPreferredInputMode(taskType, mode, storage = localStorage) {
+  const preferenceType = getInputPreferenceType(taskType)
+  if (!preferenceType || !INPUT_MODES.has(mode)) return getPreferredInputMode(taskType, storage)
+  const preferences = readInputPreferences(storage)
+  preferences[preferenceType] = mode
+  storage.setItem(INPUT_PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
+  return mode
+}
 
 export function normalizeSettings(value = {}) {
   return {

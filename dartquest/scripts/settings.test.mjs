@@ -3,8 +3,10 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import {
   applySettings,
+  getPreferredInputMode,
   loadSettings,
   saveSettings,
+  setPreferredInputMode,
   vibrate,
 } from '../src/features/settings/settingsStorage.js'
 import { HAPTIC_PATTERNS, isHapticsSupported, triggerHaptic } from '../src/features/settings/haptics.js'
@@ -30,6 +32,35 @@ test('settings persist and migrate the existing input mode', () => {
   assert.equal(loadSettings(memory).inputMode, 'quick')
   const saved = saveSettings({ sound: false, animations: 'off', haptics: false, inputMode: 'counter' }, memory)
   assert.deepEqual(loadSettings(memory), saved)
+})
+
+test('input mode preferences persist independently for target, score and checkout', () => {
+  const memory = storage({ 'dartquest-gameplay-input-mode': 'counter' })
+  assert.equal(getPreferredInputMode('targets', memory), 'counter')
+  assert.equal(getPreferredInputMode('checkout', memory), 'counter')
+  setPreferredInputMode('checkout', 'quick', memory)
+  setPreferredInputMode('score', 'counter', memory)
+  setPreferredInputMode('targets', 'quick', memory)
+  assert.equal(getPreferredInputMode('checkout', memory), 'quick')
+  assert.equal(getPreferredInputMode('score', memory), 'counter')
+  assert.equal(getPreferredInputMode('targets', memory), 'quick')
+})
+
+test('input preferences survive reload and reject invalid or obsolete values', () => {
+  const memory = storage()
+  setPreferredInputMode('checkout', 'quick', memory)
+  const reloadedStorage = storage({ ...memory })
+  assert.equal(getPreferredInputMode('checkout', reloadedStorage), 'quick')
+  assert.equal(setPreferredInputMode('targets', 'obsolete', reloadedStorage), 'counter')
+  reloadedStorage['dartquest-gameplay-input-preferences-v1'] = '{broken'
+  assert.equal(getPreferredInputMode('score', reloadedStorage), 'counter')
+})
+
+test('level attempts initialize synchronously from their structured task preference', async () => {
+  const source = await readFile(new URL('../src/features/campaign/LevelModal.jsx', import.meta.url), 'utf8')
+  assert.match(source, /useState\(\(\) => getPreferredInputMode\(level\.taskType\)\)/)
+  assert.match(source, /setPreferredInputMode\(level\.taskType, nextMode\)/)
+  assert.doesNotMatch(source, /task\.includes|title\.includes/)
 })
 
 test('reduced-motion overrides full animations without removing the selected value', () => {
