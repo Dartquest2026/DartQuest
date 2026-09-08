@@ -1,14 +1,15 @@
-import { getTrainingTaskEventCount, getTrainingTaskMaxScore, getTrainingTarget } from './trainingTemplates.js'
+import { getTrainingTaskEventCount, getTrainingTaskMaxScore, getTrainingTarget, isTrainingProgression, isTrainingTargetHit } from './trainingTemplates.js'
 
 export function calculateTrainingTaskScore(task, event) {
   if (!task.scored) return 0
+  if (isTrainingProgression(task) && !isTrainingTargetHit(task, event)) return 0
   if (task.type === 'highscore') return Math.min(180, Math.max(0, Number(event.value) || 0))
   if (task.type === 'checkout') return task.configuration.scoring[event.darts ?? 'miss'] ?? 0
   return task.configuration.scoring[event.result] ?? 0
 }
 
 export function createTrainingProgress(tasks) {
-  return { currentTaskIndex:0, finished:false, taskStates:tasks.map(() => ({ events:[], score:0, complete:false })) }
+  return { currentTaskIndex:0, finished:false, taskStates:tasks.map(() => ({ events:[], score:0, complete:false, targetIndex:0, hitsOnTarget:0 })) }
 }
 
 export function recordTrainingEvent(progress, tasks, input) {
@@ -18,15 +19,27 @@ export function recordTrainingEvent(progress, tasks, input) {
   const current = progress.taskStates[taskIndex]
   const points = calculateTrainingTaskScore(task, input)
   const dartsPerRound = task.type === 'highscore' || task.type === 'checkout' ? 1 : task.configuration.dartsPerRound || 3
-  const event = { result:input.result, value:input.value ?? null, darts:input.darts ?? null, points, dartNumber:(current.events.length % dartsPerRound) + 1, round:Math.floor(current.events.length / dartsPerRound) + 1, target:getTrainingTarget(task, current.events.length) }
+  const event = { result:input.result, value:input.value ?? null, darts:input.darts ?? null, points, dartNumber:(current.events.length % dartsPerRound) + 1, round:Math.floor(current.events.length / dartsPerRound) + 1, target:getTrainingTarget(task, current) }
   const events = [...current.events, event]
-  const taskComplete = events.length >= getTrainingTaskEventCount(task)
-  const taskStates = progress.taskStates.map((state,index) => index === taskIndex ? { events, score:state.score + points, complete:taskComplete } : state)
+  let targetIndex = current.targetIndex ?? 0
+  let hitsOnTarget = current.hitsOnTarget ?? 0
+  let fieldComplete = false
+  if (isTrainingProgression(task) && isTrainingTargetHit(task, input)) {
+    hitsOnTarget += 1
+    if (hitsOnTarget >= task.configuration.hitsPerTarget) {
+      targetIndex += 1
+      hitsOnTarget = 0
+      fieldComplete = true
+    }
+  }
+  const taskComplete = isTrainingProgression(task) ? targetIndex >= task.configuration.targets.length : events.length >= getTrainingTaskEventCount(task)
+  const taskStates = progress.taskStates.map((state,index) => index === taskIndex ? { ...state, events, score:state.score + points, complete:taskComplete, targetIndex, hitsOnTarget } : state)
   const lastTask = taskIndex === tasks.length - 1
   return {
     progress:{ ...progress, currentTaskIndex:taskComplete && !lastTask ? taskIndex + 1 : taskIndex, finished:taskComplete && lastTask, taskStates },
     visitComplete:taskComplete || events.length % dartsPerRound === 0,
     taskComplete,
+    fieldComplete,
     event,
   }
 }

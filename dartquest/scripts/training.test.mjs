@@ -31,11 +31,90 @@ test('configuration is bounded and maximum follows the customized task', () => {
   assert.equal(getTrainingTaskMaxScore(task),36)
 })
 
-test('round-the-board uses stable target order and advances after configured darts', () => {
-  const task = createTrainingTask('round-doubles')
-  assert.equal(getTrainingTarget(task,0),'D1')
-  assert.equal(getTrainingTarget(task,2),'D1')
-  assert.equal(getTrainingTarget(task,3),'D2')
+test('progression advances several fields inside one visit for each ring', () => {
+  for (const ring of ['single','double','triple']) {
+    const task = createTrainingTask(`round-${ring}s`)
+    let progress = createTrainingProgress([task])
+    for (let dart=1; dart<=3; dart+=1) {
+      const outcome = recordTrainingEvent(progress,[task],{result:ring})
+      progress = outcome.progress
+      assert.equal(outcome.fieldComplete,true)
+      assert.equal(outcome.visitComplete,dart===3)
+      assert.equal(getTrainingTarget(task,progress.taskStates[0]),`${ring[0].toUpperCase()}${dart+1}`)
+      assert.equal(outcome.event.target,`${ring[0].toUpperCase()}${dart}`)
+    }
+  }
+})
+
+test('three hits per field survive misses, wrong rings and visit boundaries', () => {
+  const task=createTrainingTask('round-singles',{configuration:{hitsPerTarget:3}})
+  let progress=createTrainingProgress([task])
+  for (const result of ['single','miss','double','triple','single']) progress=recordTrainingEvent(progress,[task],{result}).progress
+  assert.equal(getTrainingTarget(task,progress.taskStates[0]),'S1')
+  assert.equal(progress.taskStates[0].hitsOnTarget,2)
+  assert.equal(progress.taskStates[0].score,2)
+  progress=recordTrainingEvent(progress,[task],{result:'single'}).progress
+  assert.equal(getTrainingTarget(task,progress.taskStates[0]),'S2')
+  assert.equal(progress.taskStates[0].hitsOnTarget,0)
+})
+
+test('clock follows board order and each ring hit counts once', () => {
+  const task=createTrainingTask('around-board-order',{configuration:{hitsPerTarget:2}})
+  let progress=createTrainingProgress([task])
+  progress=recordTrainingEvent(progress,[task],{result:'triple'}).progress
+  assert.equal(progress.taskStates[0].hitsOnTarget,1)
+  assert.equal(getTrainingTarget(task,progress.taskStates[0]),'1')
+  progress=recordTrainingEvent(progress,[task],{result:'double'}).progress
+  assert.equal(getTrainingTarget(task,progress.taskStates[0]),'18')
+})
+
+test('progression is unlimited by misses and ends exactly on the last required hit', () => {
+  for (const id of ['round-singles','round-doubles','round-triples','around-board-order']) {
+    const task=createTrainingTask(id,{configuration:{hitsPerTarget:3}})
+    const result=task.configuration.ring==='segment'?'triple':task.configuration.ring
+    let progress=createTrainingProgress([task])
+    for(let i=0;i<70;i+=1) progress=recordTrainingEvent(progress,[task],{result:'miss'}).progress
+    assert.equal(progress.finished,false)
+    assert.equal(progress.taskStates[0].targetIndex,0)
+    assert.equal(getTrainingTaskEventCount(task),null)
+    for(let i=0;i<59;i+=1) progress=recordTrainingEvent(progress,[task],{result}).progress
+    assert.equal(progress.finished,false)
+    progress=recordTrainingEvent(progress,[task],{result}).progress
+    assert.equal(progress.finished,true)
+    assert.equal(progress.taskStates[0].targetIndex,20)
+    assert.equal(getTrainingTarget(task,progress.taskStates[0]),null)
+    assert.equal(progress.taskStates[0].score,getTrainingTaskMaxScore(task))
+    assert.equal(recordTrainingEvent(progress,[task],{result}).progress,progress)
+  }
+})
+
+test('hits-per-field configuration is bounded and max score uses matching rings', () => {
+  for (const [value,expected] of [[undefined,1],[0,1],[-2,1],[3,3],[21,20],['4',4]]) {
+    const task=createTrainingTask('round-singles',{configuration:{hitsPerTarget:value}})
+    assert.equal(task.configuration.hitsPerTarget,expected)
+    assert.equal(getTrainingTaskMaxScore(task),20*expected)
+  }
+  assert.equal(getTrainingTaskMaxScore(createTrainingTask('round-doubles')),40)
+  assert.equal(getTrainingTaskMaxScore(createTrainingTask('round-triples')),60)
+  assert.equal(getTrainingTaskMaxScore(createTrainingTask('around-board-order')),60)
+  const task=createTrainingTask('round-singles',{scored:false})
+  const next=recordTrainingEvent(createTrainingProgress([task]),[task],{result:'single'}).progress
+  assert.equal(next.taskStates[0].targetIndex,1)
+  assert.equal(next.taskStates[0].score,0)
+})
+
+test('miss hold retains field progress and other sequence drills keep dart-based targets', () => {
+  const task=createTrainingTask('round-doubles',{configuration:{hitsPerTarget:3}})
+  const initial=recordTrainingEvent(createTrainingProgress([task]),[task],{result:'double'}).progress
+  const outcome=fillTrainingVisitWithMisses(initial,[task])
+  assert.equal(outcome.visitComplete,true)
+  assert.equal(outcome.progress.taskStates[0].hitsOnTarget,1)
+  assert.equal(outcome.progress.taskStates[0].events.length,3)
+  assert.equal(getTrainingTarget(task,outcome.progress.taskStates[0]),'D1')
+  assert.equal(initial.taskStates[0].events.length,1)
+  const fixed=createTrainingTask('20-19-18')
+  assert.deepEqual([0,1,2,3].map(index=>getTrainingTarget(fixed,index)),['20','19','18','20'])
+  assert.equal(getTrainingTaskEventCount(fixed),21)
 })
 
 test('long-press fill records only the remaining darts of a visit', () => {
@@ -58,6 +137,20 @@ test('multiplayer progress remains independent while turns can be interleaved', 
   assert.equal(melissa.currentTaskIndex,0)
   assert.equal(daniel.taskStates[0].score,9)
   assert.equal(melissa.taskStates[0].score,1)
+})
+
+test('progression keeps per-player fields and moves to the next task on the final hit', () => {
+  const tasks=[createTrainingTask('round-doubles'),createTrainingTask('round-singles')]
+  let first=createTrainingProgress(tasks)
+  const second=recordTrainingEvent(createTrainingProgress(tasks),tasks,{result:'double'}).progress
+  for(let i=0;i<19;i+=1) first=recordTrainingEvent(first,tasks,{result:'double'}).progress
+  const outcome=recordTrainingEvent(first,tasks,{result:'double'})
+  assert.equal(outcome.taskComplete,true)
+  assert.equal(outcome.visitComplete,true)
+  assert.equal(outcome.progress.currentTaskIndex,1)
+  assert.equal(getTrainingTarget(tasks[1],outcome.progress.taskStates[1]),'S1')
+  assert.equal(getTrainingTarget(tasks[0],second.taskStates[0]),'D2')
+  assert.equal(outcome.progress.finished,false)
 })
 
 test('unscored warm-up style task does not distort totals', () => {
@@ -88,14 +181,17 @@ test('active training fits the responsive portrait viewport matrix', () => {
   const css=readFileSync(new URL('../src/features/training/Training.css',import.meta.url),'utf8')
   assert.match(css,/height:\s*100dvh/)
   for(const inset of ['top','right','bottom','left']) assert.match(css,new RegExp(`env\\(safe-area-inset-${inset}\\)`))
-  assert.match(css,/--training-board-size:\s*clamp\(190px,\s*min\(42dvh,\s*calc\(100vw - 48px\)\),\s*350px\)/)
-  const viewports=[{w:375,h:667,safe:26},{w:390,h:844,safe:81},{w:393,h:852,safe:81},{w:430,h:932,safe:93},{w:360,h:800,safe:48}]
+  assert.match(css,/max-width: 430px;\s*margin: 0 auto;/)
+  assert.match(css,/\.training-hit-buttons\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\);/)
+  const viewports=[{w:375,h:667,safe:26},{w:390,h:844,safe:81},{w:393,h:852,safe:81},{w:430,h:932,safe:93},{w:360,h:800,safe:48}, ...[1280,1440,1920].map(w=>({w,h:900,safe:14}))]
   for(const {w,h,safe} of viewports){
     const compact=h<=700
-    const board=Math.min(350,Math.max(190,Math.min(h*.42,w-48)))
-    const main=h-safe-44
-    const target=(compact?38:44)+board+(compact?48:54)+(compact?44:48)+(compact?88:94)
-    const checkout=(compact?38:44)+board+(compact?48:54)+(compact?126:144)
+    const board=Math.min(310,w*.78,h-(compact?474:516)-safe)
+    const gap=compact?3:Math.min(6,Math.max(3,h*.006))
+    const main=h-safe-(compact?36:44)
+    const target=(compact?32:44)+board+(compact?38:54)+(compact?40:48)+(compact?212:242)+4*gap+4
+    const checkout=44+board+54+144+3*gap+4
+    assert.ok(board>0 && board<=Math.min(w,430)-16)
     assert.ok(target<=main,`${w}x${h} target ${target}/${main}`)
     assert.ok(checkout<=main,`${w}x${h} checkout ${checkout}/${main}`)
   }

@@ -343,6 +343,10 @@
   position: fixed;
   z-index: 9000;
   inset: 0;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  box-shadow: 0 0 0 100vmax var(--dq-bg, #03110d);
   box-sizing: border-box;
   height: 100dvh;
   padding:
@@ -394,11 +398,11 @@
   min-height: 0;
   grid-template-rows:
     44px
-    minmax(0, 1fr)
+    var(--training-board-size)
     54px
     48px
-    minmax(94px, auto);
-  align-content: stretch;
+    242px;
+  align-content: space-between;
   gap: clamp(3px, 0.6dvh, 6px);
   padding-top: 4px;
 }
@@ -424,8 +428,8 @@
 }
 
 .training-game .attempt-dartboard {
-  width: clamp(178px, min(29dvh, calc(100vw - 56px)), 270px);
-  height: clamp(178px, min(29dvh, calc(100vw - 56px)), 270px);
+  width: var(--training-board-size);
+  height: var(--training-board-size);
   margin: auto;
 }
 
@@ -463,11 +467,19 @@
 }
 
 .training-game .campaign-dart-slots > div {
+  height: 100%;
   min-height: 48px;
   padding: 3px;
 }
 
-.training-hit-buttons,
+.training-hit-buttons {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 56px;
+  gap: 6px;
+  align-self: start;
+}
+
 .training-checkout-buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -492,7 +504,15 @@
   color: var(--training-player-color);
 }
 
+.training-hit-buttons button {
+  width: 100%;
+  min-height: 56px;
+  padding: 4px 10px;
+  text-align: center;
+}
+
 .training-hit-buttons .training-miss {
+  border-color: #ff687366;
   background: #351218;
   color: #ffabb1;
 }
@@ -528,7 +548,7 @@
 }
 
 .training-game-main:has(.score-keypad) {
-  grid-template-rows: 44px 54px minmax(0, 1fr);
+  grid-template-rows: 44px auto 54px minmax(0, 1fr);
 }
 
 .training-game-main:has(.score-keypad) > p {
@@ -538,7 +558,7 @@
 }
 
 .training-game-main:has(.training-checkout-buttons) {
-  grid-template-rows: 44px minmax(150px, 1fr) 54px minmax(0, auto);
+  grid-template-rows: 44px var(--training-board-size) 54px minmax(0, auto);
 }
 
 /* =========================================================
@@ -658,36 +678,22 @@
    ========================================================= */
 
 @media (max-height: 700px) {
+  .training-game > header { height: 36px; }
+
   .training-game-main {
-    grid-template-rows:
-      38px
-      minmax(0, 1fr)
-      48px
-      44px
-      minmax(88px, auto);
+    height: calc(100% - 36px);
+    grid-template-rows: 32px var(--training-board-size) 38px 40px 212px;
     gap: 3px;
   }
 
-  .training-game-main h1 {
-    font-size: 17px;
-  }
-
-  .training-game .attempt-dartboard {
-    width: clamp(170px, min(27dvh, calc(100vw - 56px)), 190px);
-    height: clamp(170px, min(27dvh, calc(100vw - 56px)), 190px);
-  }
-
-  .training-hit-buttons button,
-  .training-checkout-buttons button {
-    min-height: 42px;
-  }
-
-  .training-game .campaign-dart-slots > div {
-    min-height: 44px;
-  }
+  .training-game-main h1 { font-size: 17px; }
+  .training-game-main > p { top: 47px; }
+  .training-game .campaign-dart-slots > div { min-height: 40px; }
+  .training-hit-buttons { grid-auto-rows: 50px; gap: 4px; }
+  .training-hit-buttons button { min-height: 50px; }
 
   .training-game-main:has(.score-keypad) {
-    grid-template-rows: 38px 46px minmax(0, 1fr);
+    grid-template-rows: 32px auto 46px minmax(0, 1fr);
   }
 
   .training-game .score-keypad {
@@ -720,49 +726,44 @@
   height: 100%;
 }
 
+.training-game-main[data-progression] h1 {
+  font-size: clamp(14px, 4vw, 17px);
+}
+
+.training-game-main[data-progression] > p {
+  color: #a4efc9;
+}
+
+.training-game-main[data-field-complete] .attempt-dartboard {
+  animation: training-field-complete 450ms ease-out;
+}
+
+@keyframes training-field-complete {
+  from { filter: drop-shadow(0 0 12px #42e695); }
+  to { filter: drop-shadow(0 0 0 transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .training-game-main[data-field-complete] .attempt-dartboard { animation: none; }
+}
+
+:root[data-animations='off'] .training-game-main .attempt-dartboard,
+:root[data-animations='reduced'] .training-game-main .attempt-dartboard {
+  animation: none;
+}
+
+/* Reserve four input rows for all segment tasks to keep the board stable.
+   Subtract controls and safe areas before sizing the board on short screens. */
 .training-game {
-  --training-board-size:
-    clamp(190px, min(42dvh, calc(100vw - 48px)), 350px);
-}
-
-.training-game-main {
-  grid-template-rows:
-    44px
-    var(--training-board-size)
-    54px
-    48px
-    minmax(94px, auto);
-  align-content: space-between;
-}
-
-.training-game .attempt-dartboard {
-  width: var(--training-board-size);
-  height: var(--training-board-size);
-}
-
-.training-game-main:has(.training-checkout-buttons) {
-  grid-template-rows:
-    44px
-    var(--training-board-size)
-    54px
-    minmax(0, auto);
+  --training-board-size: min(310px, 78vw, calc(100dvh - 516px - max(7px, env(safe-area-inset-top)) - max(7px, env(safe-area-inset-bottom))));
 }
 
 @media (max-height: 700px) {
-  .training-game-main {
-    grid-template-rows:
-      38px
-      var(--training-board-size)
-      48px
-      44px
-      minmax(88px, auto);
+  .training-game {
+    --training-board-size: min(310px, 78vw, calc(100dvh - 474px - max(7px, env(safe-area-inset-top)) - max(7px, env(safe-area-inset-bottom))));
   }
+}
 
-  .training-game-main:has(.training-checkout-buttons) {
-    grid-template-rows:
-      38px
-      var(--training-board-size)
-      48px
-      minmax(0, auto);
-  }
+@media (orientation: landscape) and (max-height: 560px) {
+  .training-game { --training-board-size: 190px; }
 }

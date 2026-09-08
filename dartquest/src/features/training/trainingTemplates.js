@@ -9,10 +9,10 @@ export const TRAINING_TEMPLATES = Object.freeze([
   { id:'33-darts-20', category:'SCORING', type:'segment', title:'33 Darts auf 20', description:'Nutze 33 Darts für das 20er-Segment.', defaults:{ target:20, totalDarts:33, dartsPerRound:3, scoring:segmentScoring } },
   { id:'33-darts-19', category:'SCORING', type:'segment', title:'33 Darts auf 19', description:'Nutze 33 Darts für das 19er-Segment.', defaults:{ target:19, totalDarts:33, dartsPerRound:3, scoring:segmentScoring } },
   { id:'33-darts-bull', category:'SCORING', type:'bull', title:'33 Darts Bull', description:'Sammle Treffer auf Outer Bull und Bullseye.', defaults:{ totalDarts:33, dartsPerRound:3, scoring:bullScoring } },
-  { id:'round-singles', category:'SINGLES', type:'sequence', title:'Round the Board – Singles', description:'Spiele die Singles von 1 bis 20.', defaults:{ targets:Array.from({length:20},(_,i)=>i+1), ring:'single', dartsPerTarget:3, scoring:segmentScoring } },
-  { id:'round-doubles', category:'DOUBLES', type:'sequence', title:'Round the Board – Doubles', description:'Spiele D1 bis D20.', defaults:{ targets:Array.from({length:20},(_,i)=>i+1), ring:'double', dartsPerTarget:3, scoring:segmentScoring } },
-  { id:'round-triples', category:'TRIPLES', type:'sequence', title:'Round the Board – Triples', description:'Spiele T1 bis T20.', defaults:{ targets:Array.from({length:20},(_,i)=>i+1), ring:'triple', dartsPerTarget:3, scoring:segmentScoring } },
-  { id:'around-board-order', category:'AROUND THE CLOCK', type:'sequence', title:'Around the Clock – Board Order', description:'Folge dem Board im Uhrzeigersinn.', defaults:{ targets:BOARD_ORDER, ring:'segment', dartsPerTarget:1, scoring:segmentScoring } },
+  { id:'round-singles', category:'SINGLES', type:'sequence', title:'Round the Board – Singles', description:'Spiele die Singles von 1 bis 20.', defaults:{ targets:Array.from({length:20},(_,i)=>i+1), ring:'single', hitsPerTarget:1, scoring:segmentScoring } },
+  { id:'round-doubles', category:'DOUBLES', type:'sequence', title:'Round the Board – Doubles', description:'Spiele D1 bis D20.', defaults:{ targets:Array.from({length:20},(_,i)=>i+1), ring:'double', hitsPerTarget:1, scoring:segmentScoring } },
+  { id:'round-triples', category:'TRIPLES', type:'sequence', title:'Round the Board – Triples', description:'Spiele T1 bis T20.', defaults:{ targets:Array.from({length:20},(_,i)=>i+1), ring:'triple', hitsPerTarget:1, scoring:segmentScoring } },
+  { id:'around-board-order', category:'AROUND THE CLOCK', type:'sequence', title:'Around the Clock – Board Order', description:'Folge dem Board im Uhrzeigersinn.', defaults:{ targets:BOARD_ORDER, ring:'segment', hitsPerTarget:1, scoring:segmentScoring } },
   { id:'20-19-18', category:'SCORING', type:'sequence', title:'20 – 19 – 18', description:'Jede Aufnahme folgt der Reihenfolge 20, 19, 18.', defaults:{ targets:[20,19,18], ring:'segment', dartsPerTarget:1, repeatRounds:7, scoring:segmentScoring } },
   { id:'bull-training', category:'SCORING', type:'bull', title:'Bull Training', description:'Drei Darts pro Runde auf Bull.', defaults:{ rounds:10, dartsPerRound:3, scoring:bullScoring } },
   { id:'highscore', category:'SCORING', type:'highscore', title:'Highscore', description:'Addiere den echten Score jeder Aufnahme.', defaults:{ rounds:7 } },
@@ -22,6 +22,7 @@ export const TRAINING_TEMPLATES = Object.freeze([
 
 export function clampTrainingConfig(template, values = {}) {
   const config = structuredClone({ ...template.defaults, ...values })
+  if ('hitsPerTarget' in config) config.hitsPerTarget = Math.min(20, Math.max(1, Math.round(Number(config.hitsPerTarget) || 1)))
   if ('target' in config) config.target = Math.min(20, Math.max(1, Math.round(Number(config.target) || 1)))
   if ('rounds' in config) config.rounds = Math.min(50, Math.max(1, Math.round(Number(config.rounds) || 1)))
   if ('repeatRounds' in config) config.repeatRounds = Math.min(30, Math.max(1, Math.round(Number(config.repeatRounds) || 1)))
@@ -37,16 +38,27 @@ export function createTrainingTask(templateId, overrides = {}) {
   return { id:template.id, templateId:template.id, type:template.type, category:template.category, title:template.title, description:template.description, scored:overrides.scored ?? true, configuration:clampTrainingConfig(template, overrides.configuration) }
 }
 
+export function isTrainingProgression(task) {
+  return task.type === 'sequence' && task.configuration.hitsPerTarget != null
+}
+
+export function isTrainingTargetHit(task, event) {
+  const ring = task.configuration.ring
+  return ring === 'segment' ? ['single', 'double', 'triple'].includes(event.result) : event.result === ring
+}
+
 export function describeTrainingTask(task) {
   const config = task.configuration
   if (task.type === 'highscore') return `${config.rounds} Aufnahmen · ${config.rounds * 3} Darts`
   if (task.type === 'checkout') return `${config.targets.length} Checkouts · max. ${config.maxDarts} Darts`
+  if (isTrainingProgression(task)) return `${config.targets.length} Felder · ${config.hitsPerTarget} Treffer pro Feld`
   const darts = getTrainingTaskEventCount(task)
   return `${Math.ceil(darts / (config.dartsPerRound || 3))} Aufnahmen · ${darts} Darts`
 }
 
 export function getTrainingTaskEventCount(task) {
   const config = task.configuration
+  if (isTrainingProgression(task)) return null
   if (task.type === 'highscore' || task.type === 'checkout') return task.type === 'highscore' ? config.rounds : config.targets.length
   if (config.totalDarts) return config.totalDarts
   if (task.type === 'sequence') return config.targets.length * (config.dartsPerTarget || 1) * (config.repeatRounds || 1)
@@ -58,18 +70,24 @@ export function getTrainingTaskMaxScore(task) {
   const config = task.configuration
   if (task.type === 'highscore') return config.rounds * 180
   if (task.type === 'checkout') return config.targets.length * Math.max(...Object.values(config.scoring))
+  if (isTrainingProgression(task)) {
+    const rings = config.ring === 'segment' ? ['single', 'double', 'triple'] : [config.ring]
+    return config.targets.length * config.hitsPerTarget * Math.max(...rings.map((ring) => config.scoring[ring] ?? 0))
+  }
   const maximum = task.type === 'bull' ? config.scoring.bullseye : task.type === 'sequence' && config.ring === 'double' ? config.scoring.double : task.type === 'sequence' && config.ring === 'triple' ? config.scoring.triple : Math.max(...Object.values(config.scoring))
   return getTrainingTaskEventCount(task) * maximum
 }
 
-export function getTrainingTarget(task, eventIndex) {
+export function getTrainingTarget(task, stateOrIndex = 0) {
+  const eventIndex = typeof stateOrIndex === 'number' ? stateOrIndex : stateOrIndex.events.length
   const config = task.configuration
   if (task.type === 'bull') return 'BULL'
   if (task.type === 'segment') return String(config.target)
   if (task.type === 'checkout') return String(config.targets[eventIndex] ?? config.targets.at(-1))
   if (task.type !== 'sequence') return null
   const span = config.dartsPerTarget || 1
-  const index = Math.floor(eventIndex / span) % config.targets.length
+  const index = isTrainingProgression(task) ? (stateOrIndex.targetIndex ?? 0) : Math.floor(eventIndex / span) % config.targets.length
+  if (index >= config.targets.length) return null
   const prefix = config.ring === 'double' ? 'D' : config.ring === 'triple' ? 'T' : config.ring === 'single' ? 'S' : ''
   return `${prefix}${config.targets[index]}`
 }
