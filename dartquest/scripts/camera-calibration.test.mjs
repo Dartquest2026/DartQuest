@@ -56,10 +56,11 @@ test('Board model contains six regions, six rings and twenty correctly ordered s
   assert.equal(model.rings.length,6); assert.equal(model.boundaries.length,20)
   assert.equal(model.labels[5].number,6)
 })
-test('Live view has no image analysis or automatic overlay repositioning path', () => {
+test('Live view shares the overlay between legacy and worker-based locator without dart analysis', () => {
   const source = readFileSync(new URL('../src/features/campaignModes/components/CameraPreview.jsx', import.meta.url),'utf8')
-  assert.doesNotMatch(source,/detectBoard|trackBoard|smoothBoard|calibrateBoard|detectNewDart|getImageData|drawImage/)
-  assert.match(source,/current\.calibration\.inverseHomography/)
+  assert.doesNotMatch(source,/detectBoard|trackBoard|smoothBoard|calibrateBoard|detectNewDart|getImageData/)
+  assert.match(source,/calibration\.inverseHomography/)
+  assert.match(source,/new BoardLocatorController/)
   assert.match(source,/mode: 'preview'/)
   assert.match(source,/mode: 'confirmed'/)
 })

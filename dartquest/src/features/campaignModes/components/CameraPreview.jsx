@@ -5,6 +5,7 @@ import { createVideoDisplayTransform, clientPointToVideoPoint, videoPointToDispl
 import { CALIBRATION_STORAGE_KEY, calibrateFourPoints, cameraGeometryCompatible, restoreCalibration } from '../cameraVision/manualBoardCalibration.js'
 import './CameraPreview.css'
 import CameraDatasetPanel from './CameraDatasetPanel.jsx'
+import { BoardLocatorController, LOCATOR_STATES } from '../cameraVision/boardLocatorController.js'
 
 const MODEL = createBoardOverlayGeometry()
 const DEFAULT_ZOOM = { value: 1, min: 1, max: 1, step: .1, hardware: false }
@@ -22,10 +23,14 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   const [session, setSession] = useState(EMPTY), [debug, setDebug] = useState(false)
   const [zoom, setZoom] = useState(DEFAULT_ZOOM), [zoomBusy, setZoomBusy] = useState(false), [notice, setNotice] = useState('')
   const [datasetOpen, setDatasetOpen] = useState(false)
+  const locatorRef = useRef(null), autoRef = useRef(null), legacyRef = useRef(false), freezeRef = useRef(null)
+  const [locator, setLocator] = useState({ state: 'SEARCHING' }), [legacy, setLegacy] = useState(false), [frozen, setFrozen] = useState(false)
+  const receiveLocator = useCallback((value) => { autoRef.current = value; setLocator(value) }, [])
   const updateSession = useCallback((value) => { sessionRef.current = value; setSession(value) }, [])
   const invalidate = useCallback((message) => { updateSession(EMPTY); setNotice(message) }, [updateSession])
 
   const stopCamera = useCallback(() => {
+    locatorRef.current?.stop(); locatorRef.current = null; autoRef.current = null
     requestRef.current += 1; cancelAnimationFrame(loopRef.current)
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null; trackRef.current = null
@@ -43,15 +48,16 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, width, height)
     if (!video.videoWidth || !video.videoHeight) return
     const current = sessionRef.current
-    if (current.geometry && !cameraGeometryCompatible(current.geometry, geometryFor(video, trackRef.current))) {
+    if (legacyRef.current && current.geometry && !cameraGeometryCompatible(current.geometry, geometryFor(video, trackRef.current))) {
       invalidate('Kamerageometrie geändert. Bitte neu kalibrieren.'); return
     }
     const transform = createVideoDisplayTransform(video.videoWidth, video.videoHeight, width, height)
     context.save(); context.beginPath()
     context.rect(Math.max(0, transform.x), Math.max(0, transform.y), Math.min(width, transform.width), Math.min(height, transform.height)); context.clip()
     context.lineWidth = 1.4; context.strokeStyle = '#ffe35b'; context.fillStyle = '#ffe35b'
-    if (current.calibration) {
-      const project = (point) => videoPointToDisplayPoint(projectPoint(current.calibration.inverseHomography, point), transform)
+    const calibration = legacyRef.current ? current.calibration : autoRef.current?.calibration
+    if (calibration) {
+      const project = (point) => videoPointToDisplayPoint(projectPoint(calibration.inverseHomography, point), transform)
       for (const points of [...MODEL.rings.map((ring) => ring.points), ...MODEL.boundaries]) {
         context.beginPath()
         points.forEach((point, i) => { const p = project(point); if (i) context.lineTo(p.x, p.y); else context.moveTo(p.x, p.y) }); context.stroke()
@@ -64,7 +70,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
         for (const label of MODEL.labels) { const p = project(label.point); context.fillText(label.number, p.x, p.y + 4) }
       }
     }
-    if (current.mode !== 'confirmed' || debugRef.current) {
+    if (legacyRef.current && (current.mode !== 'confirmed' || debugRef.current)) {
       context.fillStyle = '#ff65d8'; context.font = 'bold 12px sans-serif'; context.textAlign = 'left'
       current.points.forEach((point, index) => {
         const p = videoPointToDisplayPoint(point, transform)
@@ -72,11 +78,29 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
         context.fillText(['20', '6', '3', '11'][index], p.x + 7, p.y - 7)
       })
     }
+    const result = autoRef.current?.result ?? autoRef.current?.diagnostic
+    if (debugRef.current && !legacyRef.current && result?.center) {
+      const toDisplay = (point) => videoPointToDisplayPoint({ x: point.x * video.videoWidth / result.sourceSize.width, y: point.y * video.videoHeight / result.sourceSize.height }, transform)
+      const bull = toDisplay(result.bullCenter)
+      context.strokeStyle = '#ff65d8'; context.lineWidth = 2
+      context.beginPath(); context.arc(bull.x, bull.y, 5, 0, Math.PI * 2); context.stroke()
+      const ellipse = result.boardEllipse
+      if (ellipse) {
+        const center = toDisplay(ellipse.center), sx = transform.width / result.sourceSize.width, sy = transform.height / result.sourceSize.height
+        context.save(); context.translate(center.x, center.y); context.scale(sx, sy); context.strokeStyle = '#61d9ff'; context.lineWidth = 1 / Math.max(sx, sy)
+        context.beginPath(); context.ellipse(0, 0, ellipse.rx, ellipse.ry, ellipse.rotation, 0, Math.PI * 2); context.stroke(); context.restore()
+      }
+      context.fillStyle = '#61d9ff'
+      for (const point of result.landmarks) { const p = toDisplay(point); context.fillRect(p.x - 1, p.y - 1, 2, 2) }
+      const top = toDisplay(projectPoint(result.unitTransform, { x: 0, y: -1.05 }))
+      context.strokeStyle = '#ff65d8'; context.beginPath(); context.moveTo(bull.x, bull.y); context.lineTo(top.x, top.y); context.stroke()
+      context.fillStyle = '#ff65d8'; context.fillText('20 ↑', top.x + 4, top.y)
+    }
     context.restore()
   }, [invalidate])
 
   const startCamera = useCallback(async () => {
-    stopCamera(); setError(''); setStatus('starting'); setZoom(DEFAULT_ZOOM); invalidate('')
+    stopCamera(); setError(''); setStatus('starting'); setZoom(DEFAULT_ZOOM); invalidate(''); setFrozen(false)
     if (!navigator.mediaDevices?.getUserMedia) { setError('Auf diesem Gerät/Browser ist keine Kamera verfügbar.'); setStatus('error'); return }
     const request = requestRef.current
     try {
@@ -89,6 +113,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
       video.srcObject = stream; await video.play()
       if (request !== requestRef.current) return
       setStatus('active')
+      locatorRef.current = new BoardLocatorController(video, receiveLocator)
       const geometry = geometryFor(video, track)
       try {
         const saved = localStorage.getItem(CALIBRATION_STORAGE_KEY), restored = restoreCalibration(saved, geometry)
@@ -101,7 +126,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
         if (request !== requestRef.current) return
         stopCamera(); invalidate(''); setError('Kamerastream beendet. Bitte erneut starten.'); setStatus('error')
       }
-      const tick = () => { if (request !== requestRef.current) return; drawOverlay(); loopRef.current = requestAnimationFrame(tick) }
+      const tick = (now) => { if (request !== requestRef.current) return; if (!legacyRef.current && !zoomBusyRef.current) locatorRef.current?.tick(now); drawOverlay(); loopRef.current = requestAnimationFrame(tick) }
       loopRef.current = requestAnimationFrame(tick)
     } catch (cameraError) {
       if (request !== requestRef.current) return
@@ -109,17 +134,17 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
       const denied = cameraError?.name === 'NotAllowedError' || cameraError?.name === 'SecurityError'
       setError(denied ? 'Kamerazugriff nicht erlaubt.' : 'Die Kamera konnte nicht gestartet werden.'); setStatus('error')
     }
-  }, [drawOverlay, invalidate, stopCamera, updateSession])
+  }, [drawOverlay, invalidate, stopCamera, updateSession, receiveLocator])
 
   async function changeZoom(direction) {
     if (!zoom.hardware || !trackRef.current || zoomBusyRef.current) return
     const track = trackRef.current, request = requestRef.current
     const value = Math.min(zoom.max, Math.max(zoom.min, zoom.value + direction * zoom.step))
     if (value === zoom.value) return
-    zoomBusyRef.current = true; setZoomBusy(true); invalidate('Zoom wird geändert. Anschließend bitte neu kalibrieren.')
+    zoomBusyRef.current = true; setZoomBusy(true); locatorRef.current?.reset(); invalidate('Zoom wird geändert. Board wird anschließend neu gesucht.')
     try {
       await track.applyConstraints({ advanced: [{ zoom: value }] })
-      if (request === requestRef.current) { setZoom((current) => ({ ...current, value: track.getSettings?.().zoom ?? value })); setNotice('Zoom geändert. Bitte neu kalibrieren.') }
+      if (request === requestRef.current) { setZoom((current) => ({ ...current, value: track.getSettings?.().zoom ?? value })); locatorRef.current?.reset(); setNotice('Zoom geändert. Board wird neu gesucht.') }
     } catch { if (request === requestRef.current) setNotice('Zoom konnte nicht geändert werden. Bitte neu kalibrieren.') }
     finally { zoomBusyRef.current = false; setZoomBusy(false) }
   }
@@ -160,10 +185,23 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   useEffect(() => { void startCamera(); return stopCamera }, [startCamera, stopCamera])
   useEffect(() => { debugRef.current = debug }, [debug])
   useEffect(() => {
-    const changed = () => { if (sessionRef.current.geometry) invalidate('Gerät gedreht. Bitte neu kalibrieren.') }
+    const changed = () => { locatorRef.current?.freeze(null); setFrozen(false); if (sessionRef.current.geometry) invalidate('Gerät gedreht. Legacy-Kalibrierung bitte erneuern.') }
     window.addEventListener('orientationchange', changed); window.screen.orientation?.addEventListener('change', changed)
     return () => { window.removeEventListener('orientationchange', changed); window.screen.orientation?.removeEventListener('change', changed) }
   }, [invalidate])
+
+  function toggleLegacy() {
+    legacyRef.current = !legacyRef.current; setLegacy(legacyRef.current)
+    locatorRef.current?.freeze(null); setFrozen(false)
+  }
+  function toggleFreeze() {
+    if (frozen) { locatorRef.current?.freeze(null); setFrozen(false); return }
+    const video = videoRef.current, canvas = freezeRef.current
+    if (!video?.videoWidth || video.readyState < 2) return
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight
+    canvas.getContext('2d').drawImage(video, 0, 0)
+    locatorRef.current?.freeze(canvas); setFrozen(true)
+  }
 
   function getCaptureContext() {
     const video = videoRef.current, stage = stageRef.current, current = sessionRef.current
@@ -174,25 +212,34 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
       video, settings,
       viewport: { width: bounds.width, height: bounds.height, layoutWidth: stage.clientWidth, layoutHeight: stage.clientHeight, objectFit: 'contain', objectPosition: '50% 50%', windowWidth: window.innerWidth, windowHeight: window.innerHeight, devicePixelRatio: window.devicePixelRatio ?? null },
       orientation: { type: window.screen.orientation?.type ?? null, angle: window.screen.orientation?.angle ?? window.orientation ?? null },
-      calibration: compatible ? current.calibration : null,
-      calibrationState: compatible ? current.mode : 'idle',
+      calibration: legacyRef.current ? compatible ? current.calibration : null : autoRef.current?.calibration ?? null,
+      calibrationState: legacyRef.current ? compatible ? current.mode : 'idle' : autoRef.current?.state ?? 'SEARCHING',
     }
   }
 
   return <section className={`camera-preview${datasetOpen ? ' has-dataset' : ''}`} aria-label="Live-Kamerabild">
     <div ref={stageRef} className="camera-stage">
-      <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} aria-label="Kalibrierpunkte im Kamerabild setzen" className={`camera-detection-canvas${session.mode === 'collecting' ? ' is-manual' : ''}`} onPointerDown={setManualPoint} />
+      <video ref={videoRef} autoPlay playsInline muted /><canvas ref={freezeRef} className={`camera-frozen-frame${frozen ? ' is-visible' : ''}`} /><canvas ref={overlayRef} aria-label="Kalibrierpunkte im Kamerabild setzen" className={`camera-detection-canvas${legacy && session.mode === 'collecting' ? ' is-manual' : ''}`} onPointerDown={setManualPoint} />
       {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
       {status === 'error' && <div className="camera-message camera-error" role="alert"><p>{error}</p><button type="button" onClick={() => void startCamera()}>ERNEUT VERSUCHEN</button></div>}
       {status === 'active' && <>
-        <span className="camera-status">{session.mode === 'confirmed' ? '● Overlay fixiert' : '● Kamera aktiv'}</span>
+        <span className="camera-status">● Kamera aktiv{frozen ? ' · FRAME EINGEFROREN' : ''}</span>
         <div className="camera-debug-actions"><button type="button" aria-pressed={debug} onClick={() => setDebug((value) => !value)}>Debug {debug ? 'an' : 'aus'}</button></div>
-        <div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" aria-label="Vergrößern" disabled={zoomBusy || !zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" aria-label="Verkleinern" disabled={zoomBusy || !zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div>
+        <div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" aria-label="Vergrößern" disabled={frozen || zoomBusy || !zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" aria-label="Verkleinern" disabled={frozen || zoomBusy || !zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div>
       </>}
     </div>
+    {status === 'active' && <div className="camera-locator-controls">
+      <strong aria-live="polite">{legacy ? 'LEGACY · MANUELL' : `${LOCATOR_STATES[locator.state] ?? 'BOARD GESUCHT'}${locator.result ? ` · ${locator.result.confidence}` : ''}`}</strong>
+      {!legacy && <small>PoC · 20 oben vorausgesetzt · {locator.error ?? 'Board möglichst vollständig zeigen.'}</small>}
+      {debug && <>
+        <div className="camera-calibration-buttons"><button type="button" onClick={toggleLegacy}>{legacy ? 'AUTOMATISCH SUCHEN' : 'LEGACY · 4 PUNKTE'}</button>{!legacy && <><button type="button" onClick={toggleFreeze}>{frozen ? 'LIVE FORTSETZEN' : 'FRAME EINFRIEREN'}</button><button type="button" onClick={() => locatorRef.current?.reanalyse()}>{frozen ? 'NEU ANALYSIEREN' : 'ERNEUT SUCHEN'}</button></>}</div>
+        {!legacy && <small>ANALYSE {locator.full ? 'DETECTION' : 'TRACKING'} · {locator.analysisMs?.toFixed(0) ?? '–'} ms · CENTER {locator.result?.center.x.toFixed(1) ?? '–'} / {locator.result?.center.y.toFixed(1) ?? '–'} (Analysebild) · ROT {locator.result ? (locator.result.rotation * 180 / Math.PI).toFixed(1) : '–'}° · LANDMARKS {locator.result?.landmarks.length ?? 0} · TRACK ERROR {locator.tracking?.error?.toFixed(1) ?? '–'} · FULL VOR {locator.lastFull != null ? ((locator.receivedAt - locator.lastFull) / 1000).toFixed(1) : '–'} s</small>}
+      </>}
+      {!debug && locator.state === 'ERROR' && <button type="button" onClick={() => locatorRef.current?.reanalyse()}>ERNEUT SUCHEN</button>}
+    </div>}
     <div className="camera-data-toolbar"><button type="button" className="camera-data-toggle" aria-expanded={datasetOpen} onClick={() => setDatasetOpen((value) => !value)}>KI DATEN · {datasetOpen ? 'SCHLIESSEN' : 'ENTWICKLUNG'}</button></div>
-    {datasetOpen && <CameraDatasetPanel getCaptureContext={getCaptureContext} captureDisabled={status !== 'active' || zoomBusy} />}
-    {status === 'active' && !datasetOpen && <div className="camera-calibration-controls">
+    {datasetOpen && <CameraDatasetPanel getCaptureContext={getCaptureContext} captureDisabled={status !== 'active' || zoomBusy || frozen} />}
+    {status === 'active' && !datasetOpen && legacy && <div className="camera-calibration-controls">
       <p aria-live="polite">{session.mode === 'collecting' ? `${session.points.length + 1}/4 – Markiere ${MANUAL_BOARD_POINTS[session.points.length].label}` : session.mode === 'preview' ? 'Vorschau: Bull, Ringe und Segmentgrenzen prüfen.' : session.mode === 'confirmed' ? 'Board kalibriert – Overlay bleibt fest.' : 'Board mit vier Punkten kalibrieren.'}</p>
       {session.mode === 'collecting' && <small>Äußere Kante des Double-Rings, mittig im Segment antippen.</small>}
       {notice && <small role="status">{notice}</small>}

@@ -34,3 +34,5 @@
 .rival-game.camera-test-game:has(.camera-preview) .rival-history{display:none}
 .rival-game.camera-test-game:has(.camera-preview) .rival-scoreboard article{min-height:58px;padding:3px}
 @media(max-height:500px){.rival-game.camera-test-game:has(.camera-preview) .rival-scoreboard{display:none}.camera-preview{min-height:230px}}
+.camera-frozen-frame{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 50%;background:#000;pointer-events:none}.camera-frozen-frame.is-visible{display:block}
+.camera-locator-controls{display:grid;flex:0 0 auto;gap:5px;padding:8px;background:#041a12;color:#e8f5f0;min-width:0}.camera-locator-controls strong{font-size:12px}.camera-locator-controls small{font-size:10px;line-height:1.4;overflow-wrap:anywhere}.camera-locator-controls button{min-height:44px;background:#10382b;color:#fff;border:1px solid #42e69566;border-radius:8px;font-size:11px;padding:6px}
