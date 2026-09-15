@@ -1,3 +1,4 @@
+import { trainingStrategies, normalizeStrategyConfig } from './trainingStrategies.js'
 export const BOARD_ORDER = [1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5, 20]
 const segmentScoring = Object.freeze({ miss: 0, single: 1, double: 2, triple: 3 })
 const bullScoring = Object.freeze({ miss: 0, bull: 1, bullseye: 2 })
@@ -17,7 +18,12 @@ export const TRAINING_TEMPLATES = Object.freeze([
   { id:'bull-training', category:'SCORING', type:'bull', title:'Bull Training', description:'Drei Darts pro Runde auf Bull.', defaults:{ rounds:10, dartsPerRound:3, scoring:bullScoring } },
   { id:'highscore', category:'SCORING', type:'highscore', title:'Highscore', description:'Addiere den echten Score jeder Aufnahme.', defaults:{ rounds:7 } },
   { id:'three-dart-checkouts', category:'CHECKOUTS', type:'checkout', title:'3-Dart-Checkouts', description:'Löse jede Zahl mit maximal drei Darts.', defaults:{ targets:Array.from({length:30},(_,i)=>3+i*2), maxDarts:3, scoring:{ 1:3, 2:2, 3:1, miss:0 } } },
-  { id:'catch-40', category:'CHECKOUTS', type:'checkout', title:'Catch 40 · 61–100', description:'Checke jede Zahl mit maximal sechs Darts.', defaults:{ targets:Array.from({length:40},(_,i)=>61+i), maxDarts:6, scoring:{ 2:3, 3:2, 4:1, 5:1, 6:1, miss:0 } } },
+  { id:'catch-40', category:'CHECKOUTS', type:'catch40', title:'Catch 40 · 61–100', description:'Checke jede Zahl mit maximal sechs Darts.', defaults:{ start:61, end:100, outMode:'double', targets:Array.from({length:40},(_,i)=>61+i), maxDarts:6, scoring:{ 2:3, 3:2, 4:1, 5:1, 6:1, miss:0 } } },
+  { id:'finish-41-60', category:'CHECKOUTS', type:'checkoutRange', title:'41?60 Finish Training', description:'Checke 41 bis 60 mit maximal 3 Darts.', defaults:{start:41,end:60,maxDarts:3,outMode:'double'} },
+  { id:'random-checkout', category:'CHECKOUTS', type:'randomCheckout', title:'Random Checkout', description:'L?se wechselnde Checkout-Zahlen.', defaults:{start:41,end:60,maxDarts:3,outMode:'double',count:10,repeatUntilSuccess:true} },
+  { id:'nine-darts-double-out', category:'CHECKOUTS', type:'nineDarts', title:'9 Darts Double Out', description:'Steigere dein Checkout-Level bis 170.', defaults:{start:121,end:170,maxDarts:9,outMode:'double',failureMode:'base'} },
+  { id:'bobs-27', category:'DOUBLES', type:'bobs27', title:"Bob's 27", description:'Arbeite dich durch D1 bis D20.', defaults:{startScore:27,startDouble:1,endDouble:20,dartsPerDouble:3} },
+  { id:'jdc-challenge', category:'CHALLENGES', type:'jdc', title:'JDC Challenge', description:'Dreiteilige Allround-Challenge.', defaults:{} },
 ])
 
 export function clampTrainingConfig(template, values = {}) {
@@ -29,7 +35,7 @@ export function clampTrainingConfig(template, values = {}) {
   if ('dartsPerRound' in config) config.dartsPerRound = Math.min(6, Math.max(1, Math.round(Number(config.dartsPerRound) || 3)))
   if ('totalDarts' in config) config.totalDarts = Math.min(180, Math.max(1, Math.round(Number(config.totalDarts) || 1)))
   if (config.scoring) config.scoring = Object.fromEntries(Object.entries(config.scoring).map(([key,value]) => [key, Math.min(20, Math.max(0, Math.round(Number(value) || 0)))]))
-  return config
+  return normalizeStrategyConfig(template, config)
 }
 
 export function createTrainingTask(templateId, overrides = {}) {
@@ -42,13 +48,15 @@ export function isTrainingProgression(task) {
   return task.type === 'sequence' && task.configuration.hitsPerTarget != null
 }
 
-export function isTrainingTargetHit(task, event) {
+export function isTrainingTargetHit(task, event, state) {
   const ring = task.configuration.ring
+  if (state && getTrainingTarget(task,state) === 'BULL') return ring === 'double' ? event.result === 'bullseye' : ['bull','bullseye'].includes(event.result)
   return ring === 'segment' ? ['single', 'double', 'triple'].includes(event.result) : event.result === ring
 }
 
 export function describeTrainingTask(task) {
   const config = task.configuration
+  if (trainingStrategies[task.type]) return trainingStrategies[task.type].description(config)
   if (task.type === 'highscore') return `${config.rounds} Aufnahmen · ${config.rounds * 3} Darts`
   if (task.type === 'checkout') return `${config.targets.length} Checkouts · max. ${config.maxDarts} Darts`
   if (isTrainingProgression(task)) return `${config.targets.length} Felder · ${config.hitsPerTarget} Treffer pro Feld`
@@ -58,6 +66,7 @@ export function describeTrainingTask(task) {
 
 export function getTrainingTaskEventCount(task) {
   const config = task.configuration
+  if (trainingStrategies[task.type]) return trainingStrategies[task.type].eventCount?.(config) ?? null
   if (isTrainingProgression(task)) return null
   if (task.type === 'highscore' || task.type === 'checkout') return task.type === 'highscore' ? config.rounds : config.targets.length
   if (config.totalDarts) return config.totalDarts
@@ -68,11 +77,12 @@ export function getTrainingTaskEventCount(task) {
 export function getTrainingTaskMaxScore(task) {
   if (!task.scored) return 0
   const config = task.configuration
+  if (trainingStrategies[task.type]) return trainingStrategies[task.type].maximum(config)
   if (task.type === 'highscore') return config.rounds * 180
   if (task.type === 'checkout') return config.targets.length * Math.max(...Object.values(config.scoring))
   if (isTrainingProgression(task)) {
     const rings = config.ring === 'segment' ? ['single', 'double', 'triple'] : [config.ring]
-    return config.targets.length * config.hitsPerTarget * Math.max(...rings.map((ring) => config.scoring[ring] ?? 0))
+    return config.targets.filter(v=>v!==25).length * config.hitsPerTarget * Math.max(...rings.map((ring) => config.scoring[ring] ?? 0)) + (config.includeBull ? 2*config.hitsPerTarget : 0)
   }
   const maximum = task.type === 'bull' ? config.scoring.bullseye : task.type === 'sequence' && config.ring === 'double' ? config.scoring.double : task.type === 'sequence' && config.ring === 'triple' ? config.scoring.triple : Math.max(...Object.values(config.scoring))
   return getTrainingTaskEventCount(task) * maximum
@@ -81,6 +91,7 @@ export function getTrainingTaskMaxScore(task) {
 export function getTrainingTarget(task, stateOrIndex = 0) {
   const eventIndex = typeof stateOrIndex === 'number' ? stateOrIndex : stateOrIndex.events.length
   const config = task.configuration
+  if (trainingStrategies[task.type]) return trainingStrategies[task.type].target(config, typeof stateOrIndex === 'number' ? trainingStrategies[task.type].initial(config) : stateOrIndex)
   if (task.type === 'bull') return 'BULL'
   if (task.type === 'segment') return String(config.target)
   if (task.type === 'checkout') return String(config.targets[eventIndex] ?? config.targets.at(-1))
@@ -89,5 +100,6 @@ export function getTrainingTarget(task, stateOrIndex = 0) {
   const index = isTrainingProgression(task) ? (stateOrIndex.targetIndex ?? 0) : Math.floor(eventIndex / span) % config.targets.length
   if (index >= config.targets.length) return null
   const prefix = config.ring === 'double' ? 'D' : config.ring === 'triple' ? 'T' : config.ring === 'single' ? 'S' : ''
-  return `${prefix}${config.targets[index]}`
+  const targets = stateOrIndex.targetOrder ?? config.targets
+  return targets[index] === 25 ? 'BULL' : `${prefix}${targets[index]}`
 }

@@ -4,6 +4,7 @@
   "version": "0.1.3",
   "type": "module",
   "scripts": {
+    "test:camera-calibration": "node --test scripts/camera-calibration.test.mjs",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

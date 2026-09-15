@@ -5,9 +5,9 @@ import { readFileSync } from 'node:fs'
 import { calculateTrainingTaskScore, createTrainingProgress, fillTrainingVisitWithMisses, recordTrainingEvent, summarizeTrainingPlayer } from '../src/features/training/trainingEngine.js'
 import { createTrainingTask, getTrainingTaskEventCount, getTrainingTaskMaxScore, getTrainingTarget, TRAINING_TEMPLATES } from '../src/features/training/trainingTemplates.js'
 
-test('MVP library contains all 15 data-driven training templates', () => {
-  assert.equal(TRAINING_TEMPLATES.length, 15)
-  assert.deepEqual(TRAINING_TEMPLATES.map((item) => item.id), ['segment-custom','segment-20','segment-19','33-darts-20','33-darts-19','33-darts-bull','round-singles','round-doubles','round-triples','around-board-order','20-19-18','bull-training','highscore','three-dart-checkouts','catch-40'])
+test('MVP library contains all 20 data-driven training templates', () => {
+  assert.equal(TRAINING_TEMPLATES.length, 20)
+  assert.deepEqual(TRAINING_TEMPLATES.map((item) => item.id), ['segment-custom','segment-20','segment-19','33-darts-20','33-darts-19','33-darts-bull','round-singles','round-doubles','round-triples','around-board-order','20-19-18','bull-training','highscore','three-dart-checkouts','catch-40','finish-41-60','random-checkout','nine-darts-double-out','bobs-27','jdc-challenge'])
 })
 
 test('central score and maximum calculations cover segment, bull, highscore and checkout', () => {
@@ -210,4 +210,98 @@ test('training builder keeps its start action above the real bottom navigation',
   assert.doesNotMatch(css,/\.training-builder\s*\{[^}]*safe-area-inset-bottom/)
   assert.match(appCss,/\.app-shell\s*>\s*:not\(\.bottom-nav\)\s*\{[\s\S]*flex:\s*1 1 auto;[\s\S]*min-height:\s*0;/)
   assert.match(navCss,/\.bottom-nav\s*\{[\s\S]*flex:\s*0 0 auto;[\s\S]*safe-area-inset-bottom/)
+})
+
+function play(id, inputs, configuration={}) {
+  const task=createTrainingTask(id,{configuration})
+  let progress=createTrainingProgress([task])
+  for(const input of inputs) progress=recordTrainingEvent(progress,[task],typeof input==='string'?{result:input}:input).progress
+  return {task,progress,state:progress.taskStates[0]}
+}
+const finish=darts=>({result:'checkout',darts})
+test('41–60 retries failures and advances only on valid finishes',()=>{
+  assert.equal(play('finish-41-60',['miss']).state.currentTarget,41)
+  assert.equal(play('finish-41-60',[finish(2)]).state.currentTarget,42)
+  assert.equal(play('finish-41-60',[finish(1)]).state.events.length,0)
+  assert.equal(play('finish-41-60',[finish(2)],{end:41}).progress.finished,true)
+})
+test('Catch 40 scores 2, 3, 5 darts and the 99 exception',()=>{
+  for(const [darts,points] of [[2,3],[3,2],[5,1]]) assert.equal(play('catch-40',[finish(darts)]).state.score,points)
+  assert.equal(play('catch-40',[finish(3)],{start:99,end:99}).state.score,3)
+  assert.equal(play('catch-40',['miss']).state.currentTarget,62)
+})
+test('Bob adds every double and subtracts a missed block once; zero ends',()=>{
+  const {state}=play('bobs-27',['double','double','double','miss','miss','miss'])
+  assert.equal(state.events[2].points,2)
+  assert.equal(state.score,29)
+  assert.equal(state.doubleHits,3)
+  assert.deepEqual(state.missedDoubles,[2])
+  assert.equal(play('bobs-27',['miss','miss','miss'],{startScore:2}).progress.finished,true)
+})
+test('9 Darts checkpoints, previous fallback, and three-dart base are protected',()=>{
+  assert.equal(play('nine-darts-double-out',[finish(6)]).state.currentTarget,122)
+  assert.equal(play('nine-darts-double-out',[...Array(3).fill(finish(6)),'miss']).state.currentTarget,121)
+  assert.equal(play('nine-darts-double-out',[...Array(7).fill(finish(6)),'miss']).state.currentTarget,126)
+  assert.equal(play('nine-darts-double-out',[...Array(3).fill(finish(6)),'miss'],{failureMode:'previous'}).state.currentTarget,123)
+  const bonus=play('nine-darts-double-out',[finish(3),'miss'],{start:132})
+  assert.equal(bonus.state.currentBase,133)
+  assert.equal(bonus.state.currentTarget,133)
+})
+test('random retains failed target, changes after success, and counts successes',()=>{
+  const task=createTrainingTask('random-checkout',{configuration:{count:2}})
+  let p=createTrainingProgress([task]); const first=p.taskStates[0].currentTarget
+  p=recordTrainingEvent(p,[task],{result:'miss'}).progress
+  assert.equal(p.taskStates[0].currentTarget,first)
+  p=recordTrainingEvent(p,[task],finish(3)).progress
+  assert.notEqual(p.taskStates[0].currentTarget,first)
+  p=recordTrainingEvent(p,[task],finish(3)).progress
+  assert.equal(p.finished,true)
+  assert.equal(p.taskStates[0].attempts,3)
+})
+test('JDC plays all 57 darts, both 15s, Bull, bonuses and persists part scores',()=>{
+  const inputs=[...Array.from({length:6},()=>['single','double','triple']).flat(),...Array(20).fill('double'),'bullseye',...Array.from({length:6},()=>['single','double','triple']).flat()]
+  const {state,progress,task}=play('jdc-challenge',inputs)
+  assert.equal(progress.finished,true)
+  assert.equal(state.score,3330)
+  assert.deepEqual(state.partScores,[1050,1050,1230])
+  assert.equal(state.shanghaiBonuses,12)
+  assert.equal(state.doubleHits,21)
+  assert.equal(state.events[15].target,'15')
+  assert.equal(state.events[39].target,'15')
+  const raw=summarizeTrainingPlayer({id:1,name:'Test'},progress,[task]).tasks[0].rawData
+  assert.equal(raw.totalDarts,57)
+  assert.equal(raw.part3Score,1230)
+})
+test('round board descending, shuffled unique fields, Bull and immediate transitions',()=>{
+  const descending=play('around-board-order',['single','double','triple'],{order:'descending'})
+  assert.equal(getTrainingTarget(descending.task,descending.state),'17')
+  const random=play('around-board-order',[],{order:'random',includeBull:true})
+  assert.equal(new Set(random.state.targetOrder).size,21)
+  assert.equal(random.state.targetOrder.at(-1),25)
+  const bull=play('round-doubles',[...Array(20).fill('double'),'bullseye'],{includeBull:true})
+  assert.equal(bull.progress.finished,true)
+  assert.equal(bull.state.score,42)
+})
+test('out mode validation distinguishes straight, double and master',()=>{
+  assert.equal(play('finish-41-60',[finish(1)],{start:45,end:45,outMode:'master'}).progress.finished,true)
+  assert.equal(play('finish-41-60',[finish(1)],{start:45,end:45,outMode:'double'}).state.events.length,0)
+  assert.equal(play('finish-41-60',[finish(1)],{start:19,end:19,outMode:'straight'}).progress.finished,true)
+})
+
+test('miss fill respects Bob blocks and JDC single-dart double targets',()=>{
+  const bob=createTrainingTask('bobs-27',{configuration:{dartsPerDouble:4}})
+  let p=recordTrainingEvent(createTrainingProgress([bob]),[bob],{result:'double'}).progress
+  p=fillTrainingVisitWithMisses(p,[bob]).progress
+  assert.equal(p.taskStates[0].events.length,4)
+  assert.equal(p.taskStates[0].score,29)
+  const jdc=play('jdc-challenge',Array(18).fill('miss'))
+  const next=fillTrainingVisitWithMisses(jdc.progress,[jdc.task]).progress
+  assert.equal(next.taskStates[0].events.length,19)
+  assert.equal(getTrainingTarget(jdc.task,next.taskStates[0]),'D2')
+})
+test('unscored strategy keeps rule state but excludes score from results',()=>{
+  const task=createTrainingTask('bobs-27',{scored:false})
+  const p=recordTrainingEvent(createTrainingProgress([task]),[task],{result:'double'}).progress
+  assert.equal(p.taskStates[0].score,29)
+  assert.equal(summarizeTrainingPlayer({id:1,name:'Test'},p,[task]).totalScore,0)
 })

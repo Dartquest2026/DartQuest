@@ -767,3 +767,13 @@
 @media (orientation: landscape) and (max-height: 560px) {
   .training-game { --training-board-size: 190px; }
 }
+.training-config-field { display:grid; gap:8px; min-width:0; grid-column:1/-1; }
+.training-config-field>span { color:#b4c9bf; font-size:12px; }
+.training-config-field input { width:100%; box-sizing:border-box; min-height:42px; border:1px solid #29483d; border-radius:9px; background:#071b15; color:white; padding:8px; }
+.training-chips { display:flex; flex-wrap:wrap; gap:7px; }
+.training-chips button { min-height:42px; padding:8px 12px; border:1px solid #29483d; border-radius:9px; background:#071b15; color:#b4c9bf; }
+.training-chips button[aria-pressed=true] { background:#123b2f; border-color:#42e695; color:#42e695; }
+.training-rules { margin:16px 0; color:#b4c9bf; line-height:1.5; }
+.training-rules summary { color:#42e695; cursor:pointer; }
+.training-game-main { overflow-y:auto; }
+.training-checkout-buttons { flex-shrink:0; }

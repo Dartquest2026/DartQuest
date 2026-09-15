@@ -31,7 +31,29 @@ export const BOARD_MODEL_RADII = Object.freeze({
 
 export const SEGMENT_BOUNDARY_ANGLES = Object.freeze(Array.from({ length: 20 }, (_, index) => -Math.PI / 2 - Math.PI / 20 + index * Math.PI / 10))
 
-const DART_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5]
+export const DART_ORDER = Object.freeze([20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5])
+// Sector centres at the OUTSIDE edge of the double wire (170 mm).
+export const MANUAL_BOARD_POINTS = Object.freeze(['oben die 20', 'rechts die 6', 'unten die 3', 'links die 11'].map((label, index) => ({
+  label, target: normalizedBoardPoint(-Math.PI / 2 + index * Math.PI / 2, BOARD_MODEL_RADII.doubleOuter),
+})))
+
+export const BOARD_REGIONS = Object.freeze([
+  ['bullseye', 0, BOARD_MODEL_RADII.innerBull],
+  ['singleBull', BOARD_MODEL_RADII.innerBull, BOARD_MODEL_RADII.outerBull],
+  ['innerSingle', BOARD_MODEL_RADII.outerBull, BOARD_MODEL_RADII.tripleInner],
+  ['triple', BOARD_MODEL_RADII.tripleInner, BOARD_MODEL_RADII.tripleOuter],
+  ['outerSingle', BOARD_MODEL_RADII.tripleOuter, BOARD_MODEL_RADII.doubleInner],
+  ['double', BOARD_MODEL_RADII.doubleInner, BOARD_MODEL_RADII.doubleOuter],
+].map(([name, innerRadius, outerRadius]) => Object.freeze({ name, innerRadius, outerRadius })))
+
+export function createBoardOverlayGeometry() {
+  return {
+    rings: Object.entries(BOARD_MODEL_RADII).map(([name, radius]) => ({ name, points: Array.from({ length: 181 }, (_, i) => normalizedBoardPoint(i * Math.PI / 90, radius)) })),
+    boundaries: SEGMENT_BOUNDARY_ANGLES.map((angle) => [normalizedBoardPoint(angle, BOARD_MODEL_RADII.outerBull), normalizedBoardPoint(angle, BOARD_MODEL_RADII.doubleOuter)]),
+    labels: DART_ORDER.map((number, i) => ({ number, point: normalizedBoardPoint(-Math.PI / 2 + i * Math.PI / 10, BOARD_MODEL_RADII.doubleOuter * 1.07) })),
+    center: { x: NORMALIZED_CENTER, y: NORMALIZED_CENTER },
+  }
+}
 export const GROUND_TRUTH_BOUNDARY_INDICES = Object.freeze([1, 3, 6, 8, 11, 13, 16, 18])
 export const GROUND_TRUTH_POINTS = Object.freeze(GROUND_TRUTH_BOUNDARY_INDICES.map((boundaryIndex, index) => ({
   id: `K${index + 1}`,
