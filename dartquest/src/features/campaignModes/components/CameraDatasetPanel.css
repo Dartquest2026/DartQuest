@@ -1,0 +1,13 @@
+﻿.camera-dataset-panel{display:grid;gap:8px;padding:10px 10px max(10px,env(safe-area-inset-bottom));min-width:0;background:#041a12;color:#e8f5f0}
+.camera-dataset-panel button,.camera-dataset-panel a,.camera-dataset-panel summary{min-height:44px;padding:10px;border:1px solid #42e69566;border-radius:8px;background:#10382b;color:#fff;font-size:12px;font-weight:800;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.camera-dataset-panel a{display:flex;align-items:center;text-decoration:none}
+.camera-dataset-panel button:disabled{opacity:.45;cursor:default}
+.camera-dataset-panel button[aria-pressed=true]{border-color:#7dffbc;background:#236247;box-shadow:inset 0 0 0 1px #7dffbc}
+.dataset-categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dataset-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.dataset-actions>*{flex:1 1 100px;min-width:0}
+.camera-dataset-panel p{margin:0;font-size:12px}.camera-dataset-panel small{font-size:11px;line-height:1.4;overflow-wrap:anywhere}.camera-dataset-panel .dataset-capture{min-height:50px;background:#1b6849}
+.dataset-preview{display:grid;gap:6px}.dataset-preview img{width:100%;max-height:42dvh;object-fit:contain;background:#000}
+.dataset-counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;font-size:11px;margin:8px 0}.dataset-records{display:grid;gap:5px;margin:8px 0}
+.camera-preview.has-dataset{overflow:visible;flex-shrink:0}.camera-preview.has-dataset .camera-stage{flex:none;height:clamp(240px,48dvh,560px)}
+.camera-data-toggle{min-height:44px;padding:8px 12px;background:#10382b;color:#fff;border:1px solid #42e69566;border-radius:8px;font-size:12px;font-weight:800}
+.camera-data-toolbar{display:flex;gap:6px;padding:6px;background:#041a12}.camera-data-toolbar>*{flex:1}

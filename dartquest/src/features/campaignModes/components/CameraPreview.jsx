@@ -4,6 +4,7 @@ import { projectPoint } from '../cameraVision/boardHomography.js'
 import { createVideoDisplayTransform, clientPointToVideoPoint, videoPointToDisplayPoint } from '../cameraVision/coordinateTransforms.js'
 import { CALIBRATION_STORAGE_KEY, calibrateFourPoints, cameraGeometryCompatible, restoreCalibration } from '../cameraVision/manualBoardCalibration.js'
 import './CameraPreview.css'
+import CameraDatasetPanel from './CameraDatasetPanel.jsx'
 
 const MODEL = createBoardOverlayGeometry()
 const DEFAULT_ZOOM = { value: 1, min: 1, max: 1, step: .1, hardware: false }
@@ -20,6 +21,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
   const [status, setStatus] = useState('starting'), [error, setError] = useState('')
   const [session, setSession] = useState(EMPTY), [debug, setDebug] = useState(false)
   const [zoom, setZoom] = useState(DEFAULT_ZOOM), [zoomBusy, setZoomBusy] = useState(false), [notice, setNotice] = useState('')
+  const [datasetOpen, setDatasetOpen] = useState(false)
   const updateSession = useCallback((value) => { sessionRef.current = value; setSession(value) }, [])
   const invalidate = useCallback((message) => { updateSession(EMPTY); setNotice(message) }, [updateSession])
 
@@ -78,7 +80,7 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     if (!navigator.mediaDevices?.getUserMedia) { setError('Auf diesem Gerät/Browser ist keine Kamera verfügbar.'); setStatus('error'); return }
     const request = requestRef.current
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' } } })
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } })
       if (request !== requestRef.current) { stream.getTracks().forEach((track) => track.stop()); return }
       const track = stream.getVideoTracks()[0], capabilities = track.getCapabilities?.() ?? {}, settings = track.getSettings?.() ?? {}
       streamRef.current = stream; trackRef.current = track
@@ -163,7 +165,21 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
     return () => { window.removeEventListener('orientationchange', changed); window.screen.orientation?.removeEventListener('change', changed) }
   }, [invalidate])
 
-  return <section className="camera-preview" aria-label="Live-Kamerabild">
+  function getCaptureContext() {
+    const video = videoRef.current, stage = stageRef.current, current = sessionRef.current
+    const settings = trackRef.current?.getSettings?.() ?? {}
+    const compatible = current.geometry && cameraGeometryCompatible(current.geometry, geometryFor(video, trackRef.current))
+    const bounds = stage.getBoundingClientRect()
+    return {
+      video, settings,
+      viewport: { width: bounds.width, height: bounds.height, layoutWidth: stage.clientWidth, layoutHeight: stage.clientHeight, objectFit: 'contain', objectPosition: '50% 50%', windowWidth: window.innerWidth, windowHeight: window.innerHeight, devicePixelRatio: window.devicePixelRatio ?? null },
+      orientation: { type: window.screen.orientation?.type ?? null, angle: window.screen.orientation?.angle ?? window.orientation ?? null },
+      calibration: compatible ? current.calibration : null,
+      calibrationState: compatible ? current.mode : 'idle',
+    }
+  }
+
+  return <section className={`camera-preview${datasetOpen ? ' has-dataset' : ''}`} aria-label="Live-Kamerabild">
     <div ref={stageRef} className="camera-stage">
       <video ref={videoRef} autoPlay playsInline muted /><canvas ref={overlayRef} aria-label="Kalibrierpunkte im Kamerabild setzen" className={`camera-detection-canvas${session.mode === 'collecting' ? ' is-manual' : ''}`} onPointerDown={setManualPoint} />
       {status === 'starting' && <p className="camera-message" aria-live="polite">Kamera wird gestartet …</p>}
@@ -174,7 +190,9 @@ const CameraPreview = forwardRef(function CameraPreview(_, forwardedRef) {
         <div className="camera-zoom-controls" aria-label="Kamerazoom"><button type="button" aria-label="Vergrößern" disabled={zoomBusy || !zoom.hardware || zoom.value >= zoom.max} onClick={() => void changeZoom(1)}>+</button><span>{zoom.value.toFixed(1)}×</span><button type="button" aria-label="Verkleinern" disabled={zoomBusy || !zoom.hardware || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)}>−</button></div>
       </>}
     </div>
-    {status === 'active' && <div className="camera-calibration-controls">
+    <div className="camera-data-toolbar"><button type="button" className="camera-data-toggle" aria-expanded={datasetOpen} onClick={() => setDatasetOpen((value) => !value)}>KI DATEN · {datasetOpen ? 'SCHLIESSEN' : 'ENTWICKLUNG'}</button></div>
+    {datasetOpen && <CameraDatasetPanel getCaptureContext={getCaptureContext} captureDisabled={status !== 'active' || zoomBusy} />}
+    {status === 'active' && !datasetOpen && <div className="camera-calibration-controls">
       <p aria-live="polite">{session.mode === 'collecting' ? `${session.points.length + 1}/4 – Markiere ${MANUAL_BOARD_POINTS[session.points.length].label}` : session.mode === 'preview' ? 'Vorschau: Bull, Ringe und Segmentgrenzen prüfen.' : session.mode === 'confirmed' ? 'Board kalibriert – Overlay bleibt fest.' : 'Board mit vier Punkten kalibrieren.'}</p>
       {session.mode === 'collecting' && <small>Äußere Kante des Double-Rings, mittig im Segment antippen.</small>}
       {notice && <small role="status">{notice}</small>}
