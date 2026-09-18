@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
 import { resetCurrentProfileProgress } from './progressReset'
 import { deleteOwnAccount, getAvatarUrl, removeOwnAvatar, uploadOwnAvatar } from './avatarStorage'
+import CardCollection from '../cards/CardCollection'
 import './Profile.css'
 
 function Avatar({ profile, version }) {
@@ -9,7 +10,8 @@ function Avatar({ profile, version }) {
   return <div className="profile-avatar">{url ? <img src={url} alt={`Profilbild von ${profile.name}`} /> : profile.name.slice(0, 1).toUpperCase()}</div>
 }
 
-function Profile({ activeProfile, onLogout, onProfileUpdated, onAccountDeleted }) {
+function Profile({ activeProfile, onLogout, onProfileUpdated, onAccountDeleted, onSpendCoins }) {
+  const [showCards, setShowCards] = useState(false)
   const [resetModalOpen, setResetModalOpen] = useState(false)
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -25,6 +27,8 @@ function Profile({ activeProfile, onLogout, onProfileUpdated, onAccountDeleted }
   const level = Number(activeProfile.playerLevel) || 1
   const levelXp = xp % XP_PER_PLAYER_LEVEL
   const xpPercent = Math.min(100, (levelXp / XP_PER_PLAYER_LEVEL) * 100)
+
+  if (showCards) return <CardCollection activeProfile={activeProfile} onSpendCoins={onSpendCoins} onBack={() => setShowCards(false)} />
 
   async function changeAvatar(event) {
     const file = event.currentTarget.files?.[0]
@@ -69,7 +73,7 @@ function Profile({ activeProfile, onLogout, onProfileUpdated, onAccountDeleted }
     </section>
     {message && <p className="profile-message">{message}</p>}{error && !deleteModalOpen && <p className="profile-error">{error}</p>}
     <section className="profile-section"><h3>STATISTIKEN</h3><div className="profile-stat-grid"><div><span>GESAMT-XP</span><strong>{xp.toLocaleString('de-DE')}</strong></div><div><span>LEVEL</span><strong>{level}</strong></div><div><span>COINS</span><strong>{(activeProfile.coins ?? 0).toLocaleString('de-DE')}</strong></div></div></section>
-    <section className="profile-section"><h3>ERFOLGE</h3><p>Noch keine öffentlichen Erfolge.</p></section>
+    <section className="profile-section"><h3>SAMMLUNG</h3><button className="profile-collection-link" type="button" onClick={() => setShowCards(true)}>🎴 <span><strong>Sammelkarten</strong><small>Sammlung &amp; Kartenpakete öffnen</small></span></button></section>
     <section className="profile-section profile-settings"><h3>PROFIL &amp; ACCOUNT</h3><button type="button" onClick={() => setAvatarMenuOpen(true)}>🖼 <span><strong>Profilbild ändern</strong><small>Kamera oder Bilddatei verwenden</small></span></button><button type="button" onClick={onLogout}>↪ <span><strong>Abmelden</strong><small>Diese Sitzung beenden</small></span></button></section>
     <section className="profile-data-card"><p>DATEN &amp; FORTSCHRITT</p><button type="button" onClick={() => setResetModalOpen(true)}><span>⚠</span><span><strong>Fortschritt zurücksetzen</strong><small>Lokalen Kampagnenfortschritt sowie Profil-XP und Coins zurücksetzen</small></span></button></section>
     <section className="profile-account-card"><p>GEFAHRENBEREICH</p><button type="button" onClick={() => { setPassword(''); setDeleteConfirmed(false); setError(''); setDeleteModalOpen(true) }}><span>🗑</span><span><strong>KONTO LÖSCHEN</strong><small>Profil, Spieldaten und Login dauerhaft entfernen</small></span></button></section>

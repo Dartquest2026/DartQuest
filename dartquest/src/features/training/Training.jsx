@@ -1,146 +1,99 @@
-import { trainingConfigFields, TRAINING_RULES } from './trainingConfig'
-import { trainingStrategies, trainingVisitSize, checkoutOptions, jdcStage, trainingConfigError } from './trainingStrategies'
-import { useMemo, useState } from 'react'
-import Dartboard from '../campaign/components/Dartboard'
-import { DartSlots, ScoreKeypad } from '../campaignModes/components/CampaignGameUI'
-import { triggerHaptic } from '../settings/haptics'
-import { useMissHold } from '../../shared/hooks/useMissHold'
-import { createTrainingProgress, fillTrainingVisitWithMisses, recordTrainingEvent, summarizeTrainingPlayer } from './trainingEngine'
-import { createTrainingTask, describeTrainingTask, getTrainingTarget, getTrainingTaskEventCount, getTrainingTaskMaxScore, isTrainingProgression, TRAINING_TEMPLATES } from './trainingTemplates'
-import { saveTrainingSession } from './trainingStorage'
+import {useEffect,useMemo,useState} from 'react'
+import {ScoreKeypad} from '../campaignModes/components/CampaignGameUI'
+import {TRAINING_TEMPLATES,createTrainingTask,describeTrainingTask,moveTrainingTask,updateTrainingTaskAt} from './trainingTemplates'
+import {create201State,get201Average,get201CheckoutDartCounts,record201Visit} from './trainingGames/game201'
+import {createBullFinisherState,recordBullFinisherVisit} from './trainingGames/bullFinisher'
+import {advanceRandomCheckoutVisit,createRandomCheckoutState,getRandomCheckoutDartOptions,recordRandomCheckout} from './trainingGames/randomCheckout'
+import {saveTrainingSession} from './trainingStorage'
+import TrainingInfoModal from './TrainingInfoModal'
 import './Training.css'
 
-const percent = (value) => `${value.toLocaleString('de-DE', { maximumFractionDigits:1 })} %`
+const makeState=task=>task.type==='201'?create201State(task.configuration):task.type==='bullFinisher'?createBullFinisherState():createRandomCheckoutState(task.configuration)
+const resultLabel={direct:'+3 DIREKTES BULL',checkout:'+2 CHECKOUT',rescue:'+1 BULL-RETTUNG',miss:'0 KEIN FINISH'}
+const bullFinisherActions=[
+  {value:'direct',points:'3 PUNKTE',label:'DIREKTES BULL',description:'Bull 50 mit Dart 1'},
+  {value:'checkout',points:'2 PUNKTE',label:'REGULÄRER CHECKOUT',description:'Double-Out mit Dart 2 oder 3'},
+  {value:'rescue',points:'1 PUNKT',label:'BULL-RETTUNG',description:'Letzter Dart trifft Bull 50'},
+  {value:'miss',points:'0 PUNKTE',label:'KEIN FINISH',description:'Kein Checkout und keine Bull-Rettung'},
+]
 
-function ConfigSheet({ task, onCancel, onSave }) {
-  const [configuration, setConfiguration] = useState(task.configuration)
-  const [scored, setScored] = useState(task.scored)
-  const update = (key, value) => setConfiguration((current) => ({ ...current, [key]:value }))
-  const scoring = configuration.scoring ?? {}
-  const preview = createTrainingTask(task.templateId, { scored, configuration })
-  const configError = trainingConfigError(preview)
-  const updateScore = (key, value) => setConfiguration((current) => ({ ...current, scoring:{ ...current.scoring, [key]:value } }))
-  return <div className="training-sheet-backdrop" role="presentation" onClick={onCancel}><section className="training-sheet" role="dialog" aria-modal="true" aria-labelledby="training-edit-title" onClick={(event) => event.stopPropagation()}>
-    <span>AUFGABE BEARBEITEN</span><h2 id="training-edit-title">{task.title}</h2>
-    <div className="training-config-fields">
-      {trainingConfigFields(task).map(field => <div className="training-config-field" key={field.key}><span>{field.label}</span>{field.options ? <div className="training-chips">{field.options.map(([value,label])=><button type="button" key={String(value)} aria-pressed={configuration[field.key]===value} onClick={()=>update(field.key,value)}>{label}</button>)}</div> : <><div className="training-chips">{field.presets?.map(value=><button type="button" key={value} aria-pressed={Number(configuration[field.key])===value} onClick={()=>update(field.key,value)}>{value}</button>)}</div><input aria-label={field.label} type="number" min={field.min} max={field.max} value={configuration[field.key]} onChange={e=>update(field.key,e.target.value)} /></>}</div>)}
-      {task.type==='randomCheckout'&&<div className="training-config-field"><span>Zahlenbereich</span><div className="training-chips">{[[41,60],[61,80],[81,100]].map(([start,end])=><button type="button" key={start} aria-pressed={Number(configuration.start)===start&&Number(configuration.end)===end} onClick={()=>setConfiguration(c=>({...c,start,end}))}>{start}?{end}</button>)}</div></div>}
-      {(trainingStrategies[task.type] ? [] : Object.keys(scoring)).map((key) => <label key={key}>{key === 'miss' ? 'Miss' : /^\d+$/.test(key) ? `${key} Dart${key === '1' ? '' : 's'}` : key}<input type="number" min="0" max="20" value={scoring[key]} onChange={(e) => updateScore(key, e.target.value)} /></label>)}
-    </div>
-    {TRAINING_RULES[task.type]&&<details className="training-rules"><summary>REGELN</summary><p>{TRAINING_RULES[task.type]}</p></details>}
-    <label className="training-scored"><input type="checkbox" checked={scored} onChange={(e) => setScored(e.target.checked)} /> Für Gesamtwertung zählen</label>
-    {configError&&<p role="alert">{configError}</p>}
-    <p aria-live="polite">Maximale Punktzahl: {getTrainingTaskMaxScore(preview)}</p>
-    <div className="training-sheet-actions"><button type="button" onClick={onCancel}>ABBRECHEN</button><button type="button" disabled={Boolean(configError)} onClick={() => onSave({ ...task, scored, configuration })}>ÜBERNEHMEN</button></div>
+function Chips({value,values,onChange,suffix=''}){return <div className="training-chips">{values.map(item=><button key={item} type="button" aria-pressed={Number(value)===item} onClick={()=>onChange(item)}>{item}{suffix}</button>)}</div>}
+
+function Config({task,onClose,onSave,actionLabel}){
+  const [c,setC]=useState(task.configuration)
+  const update=(key,value)=>setC(current=>({...current,[key]:value}))
+  return <div className="training-sheet-backdrop" onClick={onClose}><section className="training-sheet" onClick={event=>event.stopPropagation()}>
+    <span>SPIEL EINSTELLEN</span><h2>{task.title}</h2>
+    {task.type==='201'&&<><label>DART-LIMIT<Chips value={c.dartLimit} values={[9,12,15,18]} onChange={value=>update('dartLimit',value)}/><small>{Number(c.dartLimit)/3} Aufnahmen</small></label><label>ERFOLGE ZUM ABSCHLUSS<Chips value={c.successGoal} values={[5,10,20]} onChange={value=>update('successGoal',value)}/></label></>}
+    {task.type==='randomCheckout'&&<>
+      <h3>BEREICH</h3><div className="training-range"><label>VON<input type="number" min="2" max="170" value={c.from} onChange={e=>update('from',e.target.value)}/></label><label>BIS<input type="number" min="2" max="170" value={c.to} onChange={e=>update('to',e.target.value)}/></label></div>
+      <label>MAX. AUFNAHMEN<Chips value={c.maxVisits} values={[1,2,3]} onChange={value=>update('maxVisits',value)}/></label>
+      <label>TRAININGSZIEL<div className="training-chips"><button aria-pressed={c.goalType!=='checkoutCount'} onClick={()=>update('goalType','time')}>ZEIT</button><button aria-pressed={c.goalType==='checkoutCount'} onClick={()=>update('goalType','checkoutCount')}>CHECKOUTS</button></div></label>
+      {c.goalType!=='checkoutCount'?<label>ZEIT<Chips value={c.minutes} values={[10,15,20]} suffix=" MIN" onChange={value=>update('minutes',value)}/></label>:<label>ANZAHL CHECKOUT-AUFGABEN<Chips value={c.targetCheckoutCount} values={[10,20,30]} onChange={value=>update('targetCheckoutCount',value)}/><input type="number" min="1" max="200" value={c.targetCheckoutCount} onChange={e=>update('targetCheckoutCount',e.target.value)} aria-label="Eigene Checkout-Anzahl"/></label>}
+    </>}
+    <div className="training-sheet-actions"><button onClick={onClose}>ABBRECHEN</button><button onClick={()=>onSave(createTrainingTask(task.id,{configuration:c}))}>{actionLabel}</button></div>
   </section></div>
 }
 
-function TrainingBuilder({ onBack, onStart }) {
-  const [tasks, setTasks] = useState([])
-  const [editing, setEditing] = useState(null)
-  const categories = [...new Set(TRAINING_TEMPLATES.map((item) => item.category))]
-  const toggle = (template) => setTasks((current) => current.some((task) => task.id === template.id) ? current.filter((task) => task.id !== template.id) : [...current, createTrainingTask(template.id)])
-  const move = (index, direction) => setTasks((current) => { const target=index+direction; if(target<0||target>=current.length)return current; const copy=[...current]; [copy[index],copy[target]]=[copy[target],copy[index]]; return copy })
-  const configured = (task) => {
-    const normalized = createTrainingTask(task.templateId, { scored:task.scored, configuration:task.configuration })
-    setTasks((current) => current.map((item) => item.id === normalized.id ? normalized : item))
-    setEditing(null)
-  }
-  return <main className="training-builder"><div className="training-builder-scroll"><header className="training-page-header"><button type="button" onClick={onBack} aria-label="Zurück">‹</button><div><span>DARTQUEST</span><h1>Training erstellen</h1></div></header>
-    <p className="training-builder-copy">Wähle Übungen, passe sie an und lege ihre Reihenfolge fest.</p>
-    {categories.map((category) => <section className="training-category" key={category}><h2>{category}</h2><div>{TRAINING_TEMPLATES.filter((item) => item.category === category).map((template) => {
-      const selected = tasks.find((task) => task.id === template.id)
-      return <article className={selected ? 'is-selected' : ''} key={template.id}>
-        <button className="training-template-toggle" type="button" onClick={() => toggle(template)} aria-pressed={Boolean(selected)}><i>{selected ? '✓' : '+'}</i><span><strong>{template.title}</strong><small>{template.description}</small></span></button>
-        {selected && <div className="training-template-meta"><span>{describeTrainingTask(selected)} · Max. {getTrainingTaskMaxScore(selected)} Punkte</span><button type="button" onClick={() => setEditing(selected)}>BEARBEITEN ›</button></div>}
-      </article>
-    })}</div></section>)}
-    {tasks.length > 0 && <section className="training-plan"><h2>DEIN PLAN · {tasks.length} {tasks.length === 1 ? 'AUFGABE' : 'AUFGABEN'}</h2>{tasks.map((task,index) => <div key={task.id}><b>{index+1}</b><span>{task.title}</span><button type="button" disabled={index===0} onClick={() => move(index,-1)} aria-label={`${task.title} nach oben`}>↑</button><button type="button" disabled={index===tasks.length-1} onClick={() => move(index,1)} aria-label={`${task.title} nach unten`}>↓</button></div>)}</section>}</div>
-    <button className="training-start-button" type="button" disabled={!tasks.length} onClick={() => onStart(tasks)}>TRAINING STARTEN</button>
-    {editing && <ConfigSheet task={editing} onCancel={() => setEditing(null)} onSave={configured} />}
+function Builder({onBack,onStart}){
+  const [selected,setSelected]=useState([]),[editing,setEditing]=useState(null),[infoId,setInfoId]=useState(null)
+  function toggle(template){const index=selected.findIndex(task=>task.id===template.id);if(index>=0){setSelected(current=>current.filter((_,itemIndex)=>itemIndex!==index));return}setEditing({task:createTrainingTask(template.id),index:null})}
+  function save(task){setSelected(current=>editing.index==null?[...current,task]:updateTrainingTaskAt(current,editing.index,task));setEditing(null)}
+  function move(index,direction){setSelected(current=>moveTrainingTask(current,index,direction))}
+  return <main className="training-builder"><div className="training-builder-scroll"><header className="training-page-header"><button onClick={onBack}>‹</button><div><span>DARTQUEST</span><h1>Training erstellen</h1></div></header><section className="training-category"><h2>VERFÜGBARE ÜBUNGEN</h2><div>{TRAINING_TEMPLATES.map(template=>{const chosen=selected.some(task=>task.id===template.id);return <article className={chosen?'is-selected':''} key={template.id}><button className="training-template-toggle" aria-pressed={chosen} onClick={()=>toggle(template)}><i>{chosen?'−':'+'}</i><span><strong>{template.title}</strong><small>{template.description}</small></span></button><button className="training-template-info" type="button" aria-label={`${template.title} erklären`} onClick={()=>setInfoId(template.id)}>i</button></article>})}</div></section></div><div className="training-builder-bottom">{selected.length>0&&<section className="training-plan"><h2>DEIN TRAININGSPLAN</h2><div className="training-plan-scroll">{selected.map((task,index)=><div className="training-plan-entry" key={task.id}><b>{index+1}</b><span><strong>{task.title}</strong><small>{describeTrainingTask(task)}</small></span><button onClick={()=>setEditing({task,index})}>BEARBEITEN</button><button disabled={index===0} onClick={()=>move(index,-1)} aria-label={`${task.title} nach oben`}>↑</button><button disabled={index===selected.length-1} onClick={()=>move(index,1)} aria-label={`${task.title} nach unten`}>↓</button></div>)}</div></section>}<button className="training-start-button" disabled={!selected.length} onClick={()=>onStart(selected)}>TRAINING STARTEN</button></div>{editing&&<Config task={editing.task} onClose={()=>setEditing(null)} onSave={save} actionLabel={editing.index==null?'HINZUFÜGEN':'SPEICHERN'}/>}<TrainingInfoModal templateId={infoId} onClose={()=>setInfoId(null)}/></main>
+}
+
+function Stats({task,state,seconds}){
+  if(task.type==='201')return <><div className="training-target">{state.remaining}</div><div className="training-metrics"><div><span>REST</span><strong>{state.remaining}</strong></div><div><span>DARTS</span><strong>{state.dartsThisRound} / {state.config.dartLimit}</strong></div><div><span>ERFOLGE</span><strong>{state.successes} / {state.config.successGoal}</strong></div></div><p>3-DART-AVERAGE · {get201Average(state).toFixed(2)}</p></>
+  if(task.type==='bullFinisher')return <><div className="training-target">50 <small>REST</small></div><div className="training-metrics"><div><span>PUNKTE</span><strong>{state.points} / 20</strong></div><div><span>AUFNAHME</span><strong>{state.totalVisits+1}</strong></div></div></>
+  const min=Math.floor(seconds/60),sec=seconds%60
+  return <div className="random-checkout-hud">
+    {state.config.goalType==='time'?<div className={`training-timer ${seconds<=60?'is-urgent':seconds<=180?'is-warning':''}`}>{String(min).padStart(2,'0')}:{String(sec).padStart(2,'0')}</div>:<div className="random-task-progress"><span>AUFGABE</span><strong>{Math.min(state.attempts.length+1,state.config.targetCheckoutCount)} / {state.config.targetCheckoutCount}</strong></div>}
+    <span className="random-checkout-label">CHECKOUT</span><div className="training-target">{state.currentTarget}</div>
+    <div className="training-metrics"><div><span>ERFOLGE</span><strong>{state.successes}{state.config.goalType==='checkoutCount'?` / ${state.config.targetCheckoutCount}`:''}</strong></div><div><span>PERFEKT</span><strong>{state.perfectCheckouts}</strong></div></div>
+    <small>AUFNAHME {state.currentVisit} VON {state.config.maxVisits}</small>
+  </div>
+}
+
+function Game({tasks,players,activeProfile,onExit}){
+  const [taskIndex,setTaskIndex]=useState(0),task=tasks[taskIndex]
+  const [states,setStates]=useState(()=>players.map(()=>makeState(tasks[0])))
+  const [active,setActive]=useState(0),[score,setScore]=useState(''),[checkoutPrompt,setCheckoutPrompt]=useState(null),[history,setHistory]=useState([]),[notice,setNotice]=useState(''),[result,setResult]=useState(null),[taskResult,setTaskResult]=useState(null)
+  const [seconds,setSeconds]=useState(()=>task.type==='randomCheckout'&&task.configuration.goalType!=='checkoutCount'?task.configuration.minutes*60:0)
+  const state=states[active]
+
+  useEffect(()=>{if(task.type!=='randomCheckout'||task.configuration.goalType==='checkoutCount'||result)return;const timer=setInterval(()=>setSeconds(value=>Math.max(0,value-1)),1000);return()=>clearInterval(timer)},[task.type,task.configuration.goalType,result])
+  // The timeout deliberately snapshots the active match when the shared clock reaches zero.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(()=>{if(task.type==='randomCheckout'&&task.configuration.goalType!=='checkoutCount'&&seconds===0&&!result)endTimedTask(states)},[seconds])
+
+  function sessionResult(next,currentTask=task){const summaries=next.map((item,index)=>({playerId:players[index].id,playerName:players[index].name,gameId:currentTask.id,rawData:item}));return{mode:players.length>1?'versus':'solo',plan:[currentTask],playerResults:summaries,totalScore:0,maxScore:0,percentage:0}}
+  async function finish(next){const final=sessionResult(next);setResult(final);if(players.length===1)await saveTrainingSession(activeProfile?.id,final)}
+  function endTimedTask(next){if(taskIndex===tasks.length-1)void finish(next);else void completePlanTask(next)}
+  async function completePlanTask(next){if(players.length===1)await saveTrainingSession(activeProfile?.id,sessionResult(next));setTaskResult({title:task.title,nextTitle:tasks[taskIndex+1].title})}
+  function continuePlan(){const nextIndex=taskIndex+1;setTaskIndex(nextIndex);setStates(players.map(()=>makeState(tasks[nextIndex])));setActive(0);setHistory([]);setNotice('');setScore('');setTaskResult(null);setSeconds(tasks[nextIndex].type==='randomCheckout'&&tasks[nextIndex].configuration.goalType!=='checkoutCount'?tasks[nextIndex].configuration.minutes*60:0)}
+  function commit(nextState,label=''){setHistory(current=>[...current,{states:structuredClone(states),active,notice}]);let next=states.map((item,index)=>index===active?nextState:item);setNotice(label);setCheckoutPrompt(null);if(task.type==='randomCheckout'&&players.length>1){if(active===0)next[1]={...next[1],currentTarget:state.currentTarget};else next[0]={...next[0],currentTarget:nextState.currentTarget}}setStates(next);const completed=nextState.complete;if(task.type==='bullFinisher'&&players.length>1&&next.some(item=>item.complete)){const equalVisits=Math.max(...next.filter(item=>item.complete).map(item=>item.totalVisits));const waiting=next.findIndex(item=>item.totalVisits<equalVisits);if(waiting<0){finish(next);return}setActive(waiting);return}if(completed){if(players.length>1){finish(next);return}if(taskIndex===tasks.length-1)finish(next);else void completePlanTask(next);return}if(players.length>1&&!(task.type==='randomCheckout'&&nextState.currentVisit>1))setActive((active+1)%players.length)}
+  function submit201(){const points=Number(score);if(!Number.isInteger(points)||points<0||points>180)return;const options=get201CheckoutDartCounts(state);if(points===state.remaining&&options.length){setCheckoutPrompt({points,options});return}commit(record201Visit(state,{score:points}),'AUFNAHME ERFASST');setScore('')}
+  function checkout201(darts){if(!get201CheckoutDartCounts(state).includes(darts))return;commit(record201Visit(state,{score:state.remaining,darts,checkout:true}),`CHECKOUT · ${darts} DART${darts>1?'S':''}`);setScore('')}
+  function undo(){const previous=history.at(-1);if(!previous)return;setStates(previous.states);setActive(previous.active);setNotice('LETZTE AUFNAHME ZURÜCKGENOMMEN');setHistory(current=>current.slice(0,-1));setCheckoutPrompt(null);setScore('')}
+
+  if(result)return <main className="training-results"><header><span>DARTQUEST TRAINING</span><h1>Training beendet</h1></header>{result.playerResults.map(player=><section key={player.playerId}><h2>{player.playerName}</h2><strong>{task.title}</strong><small>{task.type==='201'?`${player.rawData.successes} Erfolge · Ø ${get201Average(player.rawData).toFixed(2)}`:task.type==='bullFinisher'?`${player.rawData.points} Punkte · ${player.rawData.totalVisits} Aufnahmen`:`${player.rawData.successes}/${player.rawData.attempts.length} Checkouts · ${player.rawData.perfectCheckouts} perfekt`}</small></section>)}<button onClick={onExit}>TRAINING VERLASSEN</button></main>
+
+  const randomDarts=task.type==='randomCheckout'?getRandomCheckoutDartOptions(state):[]
+  return <main className="training-game" style={{'--training-player-color':players[active].color||'#42e695'}}><header><div><span>AM ZUG</span><strong>{players[active].name}</strong></div><div><button disabled={!history.length} onClick={undo}>UNDO</button><button onClick={onExit}>BEENDEN</button></div></header>
+    <section className={`training-game-main${task.type==='randomCheckout'?' is-random-checkout':task.type==='201'?' is-201':task.type==='bullFinisher'?' is-bull-finisher':''}`}><h1>{task.type==='201'?`201 TRAINING · STUFE ${state.startValue}`:task.title}</h1><Stats task={task} state={state} seconds={seconds}/>{notice&&<p className="training-notice">{notice}</p>}
+      {task.type==='201'&&<><div className="training-x01-history"><header><span>SCORE</span><span>REST</span><span>DARTS</span></header>{state.visits.slice(-4).map((visit,index)=><div key={`${visit.createdAt}-${index}`}><strong>{visit.bust?'BUST':visit.enteredScore}</strong><span>{visit.rest}</span><small>{visit.darts}</small></div>)}</div><ScoreKeypad value={score} onChange={setScore} onConfirm={submit201} disabled={false} fill checkoutDartCounts={get201CheckoutDartCounts(state)} onCheckoutLongPress={checkout201}/></>}
+      {task.type==='bullFinisher'&&<div className="bull-finisher-actions">{bullFinisherActions.map(action=><button key={action.value} className={`is-${action.value}`} onClick={()=>commit(recordBullFinisherVisit(state,action.value,action.value==='direct'?1:3),resultLabel[action.value])}><strong>{action.points}</strong><span>{action.label}</span><small>{action.description}</small></button>)}</div>}
+      {task.type==='randomCheckout'&&<div className="training-action-grid random-checkout-actions">{[1,2,3].map(n=><button key={n} disabled={!randomDarts.includes(n)} onClick={()=>commit(recordRandomCheckout(state,{success:true,dartsUsed:n}),`${(state.currentVisit-1)*3+n} DARTS GESAMT`)}>{n} DART{n>1?'S':''}</button>)}<button onClick={()=>{const next=advanceRandomCheckoutVisit(state);commit(next,next.currentVisit>state.currentVisit?`AUFNAHME ${next.currentVisit}`:'NICHT GESCHAFFT')}}>{state.currentVisit<state.config.maxVisits?'NÄCHSTE AUFNAHME':'NICHT GESCHAFFT'}</button></div>}
+    </section>
+    {checkoutPrompt&&<div className="checkout-dialog dq-checkout-dialog"><section role="dialog" aria-modal="true"><span>DOUBLE OUT</span><h2>Mit wie vielen Darts ausgecheckt?</h2><div className="checkout-dart-choice">{[1,2,3].map(dart=><button key={dart} disabled={!checkoutPrompt.options.includes(dart)} onClick={()=>checkout201(dart)}>{dart}</button>)}</div><button onClick={()=>{commit(record201Visit(state,{score:checkoutPrompt.points}),'BUST');setScore('')}}>KEIN CHECKOUT · BUST</button><button onClick={()=>setCheckoutPrompt(null)}>ABBRECHEN</button></section></div>}
+    {taskResult&&<div className="training-task-result"><section><span>ÜBUNG ABGESCHLOSSEN</span><h2>{taskResult.title}</h2><p>Als Nächstes: {taskResult.nextTitle}</p><button onClick={continuePlan}>WEITER</button></section></div>}
   </main>
 }
 
-function TrainingMissButton({ disabled, onMiss, onFill }) {
-  const { missHolding, missTapped, missButtonProps } = useMissHold({ disabled, onMiss, onFill })
-  return <button type="button" className={`training-miss hit-counter-next-visit${missHolding?' is-holding':''}${missTapped?' is-tapped':''}`} disabled={disabled} {...missButtonProps}>NICHT GETROFFEN</button>
-}
-
-function TrainingGameplay({ tasks, players, activeProfile, onExit }) {
-  const [progresses, setProgresses] = useState(() => players.map(() => createTrainingProgress(tasks)))
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [scoreInput, setScoreInput] = useState('')
-  const [taskResult, setTaskResult] = useState(null)
-  const [finalResult, setFinalResult] = useState(null)
-  const [saving, setSaving] = useState(false)
-  const [history,setHistory] = useState([])
-  const player = players[activeIndex]
-  const progress = progresses[activeIndex]
-  const task = tasks[progress.currentTaskIndex]
-  const taskState = progress.taskStates[progress.currentTaskIndex]
-  const progressionTask = isTrainingProgression(task)
-  const eventCount = getTrainingTaskEventCount(task)
-  const target = getTrainingTarget(task, taskState)
-  const isCheckout = task.type === 'checkout' || trainingStrategies[task.type]?.checkout
-  const dartsPerRound = trainingVisitSize(task,taskState)
-  const dartsInCurrentVisit = taskState.events.length % dartsPerRound
-  const currentVisit = dartsInCurrentVisit ? taskState.events.slice(-dartsInCurrentVisit) : []
-  const slots = Array.from({length:Math.min(3,dartsPerRound)},(_,index) => currentVisit[index]?.result === 'miss' ? 0 : currentVisit[index] ? `${currentVisit[index].result.toUpperCase()} +${currentVisit[index].points}` : null)
-  const boardTarget = target === 'BULL' ? { id:'target',label:'BULL',requiredHits:1 } : target && !isCheckout ? (/^[SDT]/.test(target) ? { id:'target',label:target,requiredHits:1 } : { id:'target',label:target,targetType:'number',number:Number(target),requiredHits:1 }) : null
-
-  async function completeTraining(nextProgresses) {
-    const playerResults = players.map((item,index) => summarizeTrainingPlayer(item,nextProgresses[index],tasks))
-    const totalScore = playerResults.reduce((sum,item) => sum + item.totalScore,0)
-    const maxScore = playerResults.reduce((sum,item) => sum + item.maxScore,0)
-    const result = { mode:players.length > 1 ? 'versus' : 'solo', plan:tasks, playerResults, totalScore, maxScore, percentage:maxScore ? totalScore/maxScore*100 : 0 }
-    setFinalResult(result); setSaving(true)
-    await saveTrainingSession(activeProfile?.id,result)
-    setSaving(false)
-  }
-
-  function nextPlayer(nextProgresses) {
-    if (nextProgresses.every((item) => item.finished)) { completeTraining(nextProgresses); return }
-    for (let offset=1; offset<=players.length; offset+=1) { const candidate=(activeIndex+offset)%players.length; if(!nextProgresses[candidate].finished){ setActiveIndex(candidate); return } }
-  }
-
-  function apply(input, fill=false) {
-    const outcome = fill ? fillTrainingVisitWithMisses(progress,tasks) : recordTrainingEvent(progress,tasks,input)
-    const nextProgresses = progresses.map((item,index) => index===activeIndex ? outcome.progress : item)
-    if(outcome.progress===progress) return
-    setHistory(h=>[...h,{progresses,activeIndex}])
-    setProgresses(nextProgresses)
-    if (task.type !== 'highscore') triggerHaptic(input.result === 'miss' || fill ? 'error' : 'light')
-    if (outcome.taskComplete && players.length === 1 && !outcome.progress.finished) setTaskResult({ task, state:outcome.progress.taskStates[progress.currentTaskIndex] })
-    if (outcome.progress.finished && players.length === 1) completeTraining(nextProgresses)
-    else if (outcome.visitComplete && !(outcome.taskComplete && players.length === 1)) nextPlayer(nextProgresses)
-  }
-
-  if (finalResult) return <main className="training-results"><header><span>DARTQUEST TRAINING</span><h1>Training beendet</h1></header>{finalResult.playerResults.map((result) => <section key={result.playerId}><h2>{result.playerName}</h2><strong>{result.totalScore} / {result.maxScore}</strong><b>{percent(result.percentage)}</b>{result.tasks.map((item) => <div key={item.taskId}><span>{item.title}</span><small>{item.maxScore ? `${item.score} / ${item.maxScore} · ${percent(item.percentage)}` : 'Aufwärmaufgabe'}</small></div>)}</section>)}{players.length>1&&<p className="training-winner">GEWINNER · {[...finalResult.playerResults].sort((a,b)=>b.percentage-a.percentage)[0].playerName}</p>}<button type="button" disabled={saving} onClick={onExit}>{saving?'ERGEBNIS WIRD GESPEICHERT …':'TRAINING VERLASSEN'}</button></main>
-
-  const checkoutChoices = isCheckout ? checkoutOptions(Number(target),{outMode:'double',...task.configuration}) : []
-  const hitChoices = task.type==='bull'||target==='BULL' ? (task.configuration.ring==='double'||task.type==='jdc' ? [['bullseye','DOUBLE BULL']] : [['bull','OUTER BULL'],['bullseye','BULLSEYE']]) : task.type==='bobs27'||task.type==='jdc'&&jdcStage(taskState).part===1 ? [['double','DOUBLE']] : task.configuration.ring==='single' ? [['single','SINGLE']] : task.configuration.ring==='double' ? [['double','DOUBLE']] : task.configuration.ring==='triple' ? [['triple','TRIPLE']] : [['single','SINGLE'],['double','DOUBLE'],['triple','TRIPLE']]
-  const totalVisits = eventCount == null ? null : Math.ceil(eventCount / dartsPerRound)
-  const currentVisitNumber = Math.min(Math.floor(taskState.events.length / dartsPerRound) + 1, totalVisits ?? Infinity)
-  return <main className="training-game" style={{'--training-player-color':player.color || '#42e695'}}><header><div><span>TRAINING · {player.name}</span><strong>AUFGABE {progress.currentTaskIndex+1} / {tasks.length}</strong></div><div><button type="button" disabled={!history.length} onClick={()=>{const previous=history.at(-1);setProgresses(previous.progresses);setActiveIndex(previous.activeIndex);setHistory(h=>h.slice(0,-1));setTaskResult(null);setScoreInput('')}}>UNDO</button><button type="button" onClick={onExit}>BEENDEN</button></div></header><section className="training-game-main" data-progression={progressionTask || undefined} data-field-complete={progressionTask && taskState.targetIndex > 0 || undefined}><h1>{task.title}</h1><p aria-live={progressionTask ? "polite" : undefined}>{progressionTask ? `Ziel: ${target} / Fortschritt: ${taskState.hitsOnTarget}/${task.configuration.hitsPerTarget}` : target ? `ZIEL: ${target}` : describeTrainingTask(task)}</p>
-    {task.type==='nineDarts'&&<small>GESICHERTE BASIS: {taskState.currentBase}</small>}
-    {task.type==='jdc'&&<small>TEIL {jdcStage(taskState).part+1} / 3 ? {taskState.partScores.join(' / ')} PUNKTE</small>}
-    {boardTarget && <Dartboard key={progressionTask ? `${activeIndex}-${task.id}-${taskState.targetIndex}` : undefined} targets={[boardTarget]} hitCounters={{target:0}} activeTargetId="target" />}
-    <div className="training-status"><div><span>{isCheckout ? 'CHECKOUT' : 'AUFNAHME'}</span><strong>{currentVisitNumber}{totalVisits != null && ` / ${totalVisits}`}</strong></div><div><span>PUNKTE</span><strong>{taskState.score} / {getTrainingTaskMaxScore(task)}</strong></div></div>
-    {task.type !== 'highscore' && !isCheckout && <DartSlots values={slots} emptyText="Noch nicht" />}
-    {task.type === 'highscore' ? <ScoreKeypad value={scoreInput} onChange={setScoreInput} onConfirm={() => { apply({result:'score',value:Number(scoreInput)}); setScoreInput('') }} disabled={false} fill /> : isCheckout ? <div className="training-checkout-buttons">{checkoutChoices.map((darts) => <button type="button" key={darts} onClick={() => apply({result:'checkout',darts})}>{darts} {darts===1?'DART':'DARTS'}<small>{task.configuration.outMode?.toUpperCase() ?? 'DOUBLE'} OUT</small></button>)}<button type="button" onClick={() => apply({result:'miss'})}>NICHT GESCHAFFT<small>+0</small></button></div> : <div className="training-hit-buttons">
-      {hitChoices.map(([result,label]) => <button type="button" key={result} onClick={() => apply({result})}>{label}<small>{task.configuration.scoring?.[result]!=null?`+${task.configuration.scoring[result]}`:"TREFFER"}</small></button>)}
-      <TrainingMissButton onMiss={() => apply({result:'miss'})} onFill={() => apply({result:'miss'},true)} />
-    </div>}
-  </section>
-  {taskResult && <div className="training-task-result"><section><span>AUFGABE GESCHAFFT</span><h2>{taskResult.task.title}</h2><strong>{taskResult.state.score} / {getTrainingTaskMaxScore(taskResult.task)}</strong><b>{getTrainingTaskMaxScore(taskResult.task) ? percent(taskResult.state.score/getTrainingTaskMaxScore(taskResult.task)*100) : 'OHNE WERTUNG'}</b><button type="button" onClick={() => setTaskResult(null)}>NÄCHSTE AUFGABE</button></section></div>}
-  </main>
-}
-
-export default function Training({ activeProfile, players, onBack }) {
-  const normalizedPlayers = useMemo(() => players?.length ? players.map((player,index) => ({...player,id:player.id??index+1,name:player.name?.trim()||`Spieler ${index+1}`})) : [{id:1,name:activeProfile?.name||'Spieler 1',color:'#42e695'}], [activeProfile,players])
-  const [view,setView] = useState('home')
-  const [tasks,setTasks] = useState([])
-  if(view==='builder') return <TrainingBuilder onBack={() => setView('home')} onStart={(plan) => {setTasks(plan);setView('game')}} />
-  if(view==='game') return <TrainingGameplay tasks={tasks} players={normalizedPlayers} activeProfile={activeProfile} onExit={onBack} />
-  return <main className="training-home"><header className="training-page-header"><button type="button" onClick={onBack} aria-label="Zurück">‹</button><div><span>DARTQUEST</span><h1>Training</h1></div></header><section><div>🎯</div><h2>Stelle dein eigenes Darttraining zusammen.</h2><p>Wähle Übungen aus, passe sie an und erstelle deinen persönlichen Trainingsplan.</p></section><article><span>TRAININGS-BAUKASTEN</span><h2>Angepasstes Training</h2><p>Trainingsaufgaben auswählen, konfigurieren und in deiner Reihenfolge spielen.</p><button type="button" onClick={() => setView('builder')}>TRAINING ERSTELLEN</button></article></main>
+export default function Training({activeProfile,players,onBack}){
+  const normalized=useMemo(()=>players?.length?players.map((p,i)=>({...p,id:p.id??i+1,name:p.name?.trim()||`Spieler ${i+1}`})):[{id:1,name:activeProfile?.name||'Spieler 1',color:'#42e695'}],[activeProfile,players])
+  const [view,setView]=useState('builder'),[tasks,setTasks]=useState([])
+  if(view==='game')return <Game tasks={tasks} players={normalized} activeProfile={activeProfile} onExit={onBack}/>
+  return <Builder onBack={onBack} onStart={plan=>{setTasks(plan);setView('game')}}/>
 }

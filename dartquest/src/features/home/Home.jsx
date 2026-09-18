@@ -2,7 +2,7 @@ import { useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
 import PlayerAvatar from '../../shared/components/PlayerAvatar'
-import CardCollection from '../cards/CardCollection'
+import Statistics from '../statistics/Statistics'
 
 import './Home.css'
 
@@ -15,7 +15,6 @@ function Home({
   onOpenMultiplayer,
   onOpenProfile,
   onOpenSettings,
-  onSpendCoins,
 }) {
   const [homeView, setHomeView] = useState('home')
   const xp = Number(activeProfile?.xp) || 0
@@ -41,7 +40,7 @@ function Home({
     )
   }
 
-  if (homeView === 'cards') return <CardCollection activeProfile={activeProfile} onSpendCoins={onSpendCoins} onBack={() => setHomeView('home')} />
+  if (homeView === 'statistics') return <Statistics activeProfile={activeProfile} onBack={() => setHomeView('home')} />
 
   return (
     <section className="home-screen">
@@ -131,8 +130,8 @@ function Home({
             <strong>Einstellungen</strong>
             <small>Sound, Bedienung &amp; Geräte</small>
           </button>
-          <button className="home-settings-card" type="button" onClick={() => setHomeView('cards')}>
-            <span aria-hidden="true">🎴</span><strong>Sammelkarten</strong><small>Sammlung &amp; Kartenpakete</small>
+          <button className="home-settings-card" type="button" onClick={() => setHomeView('statistics')}>
+            <span aria-hidden="true">📊</span><strong>Statistik</strong><small>Kampagne &amp; Training</small>
           </button>
         </div>
       </main>

@@ -656,6 +656,7 @@ function App() {
           onLogout={logout}
           onProfileUpdated={refreshActiveProfile}
           onAccountDeleted={() => { setActiveProfile(null); setActivePage('home') }}
+          onSpendCoins={applyCoinPurchase}
         />
       )}
 
