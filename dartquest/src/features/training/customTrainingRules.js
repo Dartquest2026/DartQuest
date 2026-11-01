@@ -13,7 +13,7 @@ export const isSeriesGame = game => isComboGame(game) || game === 'favorite-doub
 export const pointsLabel = points => `${points} ${points === 1 ? 'Punkt' : 'Punkte'}`
 export const DURATIONS = [5, 10, 15]
 export const remainingSeconds = (endAt, now = Date.now()) => Math.max(0, Math.ceil((endAt - now) / 1000))
-export const hasOpenEntry = run => isSeriesGame(run.game) && ((run.score ?? '') !== '' || run.choosing)
+export const hasOpenEntry = run => isSeriesGame(run.game) && ((run.score ?? '') !== '' || run.choosing || (run.favoriteComboCount ?? 0) > 0)
 const tripleVisitScores = new Set()
 for (let a = 1; a <= 3; a++) for (let b = 1; b <= 3; b++) for (let c = 1; c <= 3; c++) {
   if ([a, b, c].includes(3)) tripleVisitScores.add(20 * a + 19 * b + 18 * c)
@@ -34,6 +34,26 @@ export function validCombo(points, count, game = 't20-combo') {
 export function favoriteDoubleEntry(points, target) {
   if (!Number.isInteger(target) || target < 1 || target > 20 || !Number.isInteger(points) || points <= 0 || points > 99999 || points % (2 * target) !== 0) return null
   return { points, count: points / (2 * target), double: target }
+}
+export function favoritePendingCount(run) {
+  if (run?.game !== 'favorite-double') return 0
+  return run.favoriteComboCount ?? favoriteDoubleEntry(Number(run.score), run.favoriteDouble ?? 16)?.count ?? 0
+}
+export function recordFavoriteSingle(run, now = Date.now()) {
+  if (run.phase !== 'playing' || favoritePendingCount(run) || remainingSeconds(run.endAt, now) === 0) return run
+  const target = run.favoriteDouble ?? 16
+  return { ...run, entries: [...run.entries, favoriteDoubleEntry(target * 2, target)], favoriteComboCount: 0, score: '', choosing: false }
+}
+export function changeFavoriteCombo(run, delta, now = Date.now()) {
+  if (run.phase !== 'playing' || (delta > 0 && remainingSeconds(run.endAt, now) === 0)) return run
+  const count = Math.max(0, Math.min(Math.floor(99999 / ((run.favoriteDouble ?? 16) * 2)), favoritePendingCount(run) + delta))
+  return { ...run, favoriteComboCount: count, score: '' }
+}
+export function saveFavoriteCombo(run) {
+  const target = run.favoriteDouble ?? 16
+  const entry = favoriteDoubleEntry(favoritePendingCount(run) * target * 2, target)
+  if (run.phase !== 'playing' || !entry) return run
+  return { ...run, entries: [...run.entries, entry], favoriteComboCount: 0, score: '', choosing: false }
 }
 export function seriesDistribution(entries) {
   const counts = new Map()

@@ -3,6 +3,9 @@ import { DEFAULT_ROUTE, DOUBLE_ROUTES, routeLabel, routeMetrics, seriesDistribut
 export function RouteSelector({ value = DEFAULT_ROUTE, onChange, disabled = false }) {
   return <label className="custom-select-label">DOPPELWEG<select aria-label="Doppelweg auswählen" value={value.join('-')} disabled={disabled} onChange={e => onChange(e.target.value.split('-').map(Number))}>{DOUBLE_ROUTES.map(route => <option key={route.join('-')} value={route.join('-')}>{routeLabel(route)}</option>)}</select></label>
 }
+export function FavoriteDoubleSelector({ value = 16, onChange, disabled = false }) {
+  return <label className="custom-select-label">DEIN FAVORITEN-DOPPEL<select aria-label="Favoriten-Doppel auswählen" value={value} disabled={disabled} onChange={e => onChange(Number(e.target.value))}>{Array.from({ length: 20 }, (_, i) => i + 1).map(n => <option key={n} value={n}>D{n} · {n * 2} Punkte je Treffer</option>)}</select></label>
+}
 export function RouteBreakdown({ run }) {
   return <div className="custom-route-metrics">{routeMetrics(run).map(row => <article key={row.target}><strong>D{row.target}</strong><span>{row.hits} Treffer / {row.attempts} {row.attempts === 1 ? 'Wurf' : 'Würfe'}</span><small>{row.attempts ? `${(row.hits / row.attempts * 100).toFixed(1)} %` : 'Noch keine Würfe'}</small></article>)}</div>
 }

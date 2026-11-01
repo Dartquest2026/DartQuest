@@ -22,7 +22,7 @@ export async function startCustomRun(userId, game, minutes, options = {}) {
     if (error) throw new Error('Training konnte nicht gestartet werden. Bitte prüfe deine Verbindung. ' + error.message)
     startedAt = Date.parse(data.started_at); endAt = Date.parse(data.end_at)
   }
-  const run = { id, game, minutes, startedAt, endAt, doubleBull: 0, singleBull: 0, entries: [], score: '', choosing: false, phase: 'playing', favoriteDouble: 16, route: options.route ?? [16, 8, 4], routeThrows: [] }
+  const run = { id, game, minutes, startedAt, endAt, doubleBull: 0, singleBull: 0, entries: [], score: '', choosing: false, phase: 'playing', favoriteDouble: options.favoriteDouble ?? 16, favoriteComboCount: 0, route: options.route ?? [16, 8, 4], routeThrows: [] }
   saveCustomRun(userId, run)
   return run
 }
