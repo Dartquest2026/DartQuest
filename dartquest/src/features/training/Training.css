@@ -43,6 +43,18 @@
   font-size: 25px;
 }
 
+.training-resume-button {
+  width: 100%;
+  min-height: 52px;
+  margin: 0 0 16px;
+  border: 1px solid #42e695;
+  border-radius: 12px;
+  background: #123b2e;
+  color: #70eeb5;
+  box-shadow: 0 0 18px #42e69520;
+  font-weight: 950;
+}
+
 .training-builder-copy {
   color: #a9bcb4;
   line-height: 1.45;
@@ -660,6 +672,7 @@
   justify-content: flex-start;
   gap: clamp(7px, 1.2dvh, 12px);
   padding: 6px 4px 2px;
+  overflow: hidden;
 }
 
 .random-checkout-hud {
@@ -712,8 +725,42 @@
 }
 
 .random-checkout-actions {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr;
+  gap: 6px;
   margin-top: auto;
   flex-shrink: 0;
+}
+
+.random-checkout-actions button {
+  min-height: clamp(48px, 6.2dvh, 58px);
+  border: 1px solid #42e69566;
+  border-radius: 12px;
+  background: #0b291f;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 950;
+  transition: transform 100ms ease, background 100ms ease, border-color 100ms ease, box-shadow 100ms ease;
+}
+
+.random-checkout-actions .random-checkout-fail {
+  border-color: #d64c5855;
+  background: #351218;
+  color: #fff;
+}
+
+.random-checkout-actions button.is-pressed {
+  transform: scale(.975);
+  border-color: #8affc7;
+  background: #176b4b;
+  box-shadow: 0 0 20px #42e69588;
+}
+
+.random-checkout-actions .random-checkout-fail.is-pressed {
+  border-color: #ff7d87;
+  background: #8a2530;
+  box-shadow: 0 0 20px #e94f5b77;
 }
 
 .random-checkout-actions button:disabled {
@@ -722,6 +769,54 @@
   color: #51645c;
   opacity: .48;
 }
+
+.random-checkout-history {
+  width: 100%;
+  min-height: 88px;
+  margin-top: 2px;
+}
+
+.random-checkout-history h2 {
+  margin: 0 0 5px;
+  color: #70eeb5;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.random-checkout-history > header,
+.random-checkout-history > div {
+  display: grid;
+  grid-template-columns: 64px minmax(120px,1fr) auto;
+  align-items: center;
+  min-height: 24px;
+  gap: 7px;
+  padding: 2px 7px;
+  border-bottom: 1px solid #29483d55;
+}
+
+.random-checkout-history > header { color: #829b91; font-size: 8px; font-weight: 900; }
+.random-checkout-history > div { font-size: 11px; }
+.random-checkout-history .is-success > span,.random-checkout-history .is-success > small { color: #70eeb5; }
+.random-checkout-history .is-failure > span,.random-checkout-history .is-failure > small { color: #ff858f; }
+.random-checkout-history small { text-align: right; font-weight: 900; }
+
+.random-action-feedback {
+  position: absolute;
+  z-index: 2;
+  right: 22px;
+  bottom: calc(244px + max(7px, env(safe-area-inset-bottom)));
+  left: 22px;
+  padding: 10px;
+  border-radius: 999px;
+  background: #123b2eee;
+  color: #70eeb5;
+  box-shadow: 0 0 22px #42e69555;
+  font-weight: 950;
+  text-align: center;
+  pointer-events: none;
+}
+
+.random-action-feedback.is-failure { background:#4b161bee; color:#ff9aa2; box-shadow:0 0 22px #e94f5b55; }
 
 .training-game-main:has(.score-keypad) {
   grid-template-rows: 44px auto 54px minmax(0, 1fr);
@@ -861,6 +956,8 @@
     grid-template-rows: 32px var(--training-board-size) 38px 40px 212px;
     gap: 3px;
   }
+
+  .training-game-main.is-random-checkout { height: calc(100% - 36px); }
 
   .training-game-main h1 { font-size: 17px; }
   .training-game-main > p { top: 47px; }
@@ -1112,6 +1209,41 @@
   min-height: 0;
   grid-template-rows: 43px repeat(2,minmax(36px,1fr)) repeat(5,minmax(38px,1fr));
   margin-top: auto;
+  margin-bottom: 10px;
+}
+
+.training-leave-backdrop {
+  position: fixed;
+  z-index: 10030;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  background: #000c;
+  backdrop-filter: blur(4px);
+}
+
+.training-leave-backdrop > section {
+  width: min(100%, 430px);
+  padding: 19px;
+  border: 1px solid #42e69555;
+  border-radius: 18px;
+  background: #071a14;
+}
+
+.training-leave-backdrop h2 { margin:0 0 7px; }
+.training-leave-backdrop p { margin:0 0 15px; color:#a9bcb4; line-height:1.4; }
+.training-leave-backdrop button { width:100%; min-height:48px; margin-top:7px; border:1px solid #42e69566; border-radius:11px; background:#123b2e; color:#fff; font-weight:950; }
+.training-leave-backdrop button.is-danger { border-color:#e94f5b; background:#4b161b; }
+
+@media (max-height: 760px) {
+  .training-game-main.is-random-checkout { gap: 4px; }
+  .random-checkout-hud { gap: 3px; }
+  .random-checkout-hud .training-target { font-size: 68px; }
+  .random-checkout-hud .training-metrics > div { min-height: 45px; }
+  .random-checkout-history { min-height: 78px; }
+  .random-checkout-actions { gap: 4px; }
+  .random-checkout-actions button { min-height: 44px; }
 }
 
 .training-game-main.is-201 .score-display { height:auto; }

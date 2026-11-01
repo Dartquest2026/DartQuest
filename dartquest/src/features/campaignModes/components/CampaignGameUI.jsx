@@ -10,7 +10,7 @@ export function DartSlots({ values, labels = ['Dart 1', 'Dart 2', 'Dart 3'], emp
   })}</div>
 }
 
-export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false, checkoutDartCounts = [], onCheckoutLongPress }) {
+export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26, 41, 45, 60, 81, 85, 100, 140], fill = false, checkoutDartCounts = [], onCheckoutLongPress, maxScore = 180, maxDigits = 3 }) {
   const [pressedKey, setPressedKey] = useState(null)
   const [holdingKey, setHoldingKey] = useState(null)
   const feedbackTimer = useRef(null)
@@ -18,7 +18,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
   const holdStart = useRef(null)
   const suppressClick = useRef(false)
   const suppressClickTimer = useRef(null)
-  const confirmDisabled = disabled || value === '' || Number(value) > 180
+  const confirmDisabled = disabled || value === '' || Number(value) > maxScore
 
   useEffect(() => () => {
     if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current)
@@ -85,8 +85,8 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
       if (suppressClickTimer.current) window.clearTimeout(suppressClickTimer.current)
       return
     }
-    const nextValue = (value + number).slice(0, 3)
-    press(`number-${number}`, () => onChange(nextValue), Number(nextValue) > 180 ? 'error' : 'light')
+    const nextValue = (value + number).slice(0, maxDigits)
+    press(`number-${number}`, () => onChange(nextValue), Number(nextValue) > maxScore ? 'error' : 'light')
   }
 
   const numberButton = (number) => {
@@ -110,7 +110,7 @@ export function ScoreKeypad({ value, onChange, onConfirm, disabled, quick = [26,
       {numberButton(8)}
       {numberButton(9)}
       <button type="button" className={keyClass('backspace')} disabled={disabled} onClick={() => press('backspace', () => onChange(value.slice(0, -1)))} aria-label="Letzte Ziffer löschen">⌫</button>
-      <button type="button" className={keyClass('number-0', 'score-zero')} disabled={disabled} onClick={() => { const nextValue = (value + '0').slice(0, 3); press('number-0', () => onChange(nextValue), Number(nextValue) > 180 ? 'error' : 'light') }}>0</button>
+      <button type="button" className={keyClass('number-0', 'score-zero')} disabled={disabled} onClick={() => { const nextValue = (value + '0').slice(0, maxDigits); press('number-0', () => onChange(nextValue), Number(nextValue) > maxScore ? 'error' : 'light') }}>0</button>
       <button className={keyClass('confirm', 'score-confirm')} type="button" disabled={confirmDisabled} onClick={() => press('confirm', onConfirm)} aria-label="Eingabe bestätigen">✓ <span>OK</span></button>
     </div>
   </section>

@@ -15,12 +15,12 @@ export function generateCheckoutTarget(config,previous=null,random=Math.random){
 
 export function createRandomCheckoutState(config={},random=Math.random){const c=normalizeRandomConfig(config);return{config:c,goalType:c.goalType,durationMinutes:c.goalType==='time'?c.minutes:null,targetCheckoutCount:c.goalType==='checkoutCount'?c.targetCheckoutCount:null,currentTarget:generateCheckoutTarget(c,null,random),currentVisit:1,attempts:[],totalTasks:0,successes:0,failures:0,perfectCheckouts:0,successRate:0,perfectRate:0,totalDartsOnSuccess:0,highestSuccessfulCheckout:0,complete:false}}
 
-function finishAttempt(state,success,dartsUsed,random){
+function finishAttempt(state,success,dartsUsed,random,durationMs=null){
   const allowedDarts=state.config.maxVisits*3
   const used=Math.max(1,Math.min(allowedDarts,Number(dartsUsed)||allowedDarts))
   const minimumDarts=getMinimumCheckoutDarts(state.currentTarget,allowedDarts)
   const perfect=Boolean(success&&used===minimumDarts)
-  const attempt={target:state.currentTarget,success:Boolean(success),dartsUsed:used,totalDartsUsed:used,allowedDarts,minimumDarts,perfect,timestamp:new Date().toISOString(),order:state.attempts.length+1,position:state.attempts.length+1}
+  const attempt={checkout:state.currentTarget,target:state.currentTarget,success:Boolean(success),dartsUsed:success?used:null,totalDartsUsed:success?used:null,allowedDarts,minimumDarts,perfect,durationMs:Number.isFinite(durationMs)?Math.max(0,Math.round(durationMs)):null,timestamp:new Date().toISOString(),order:state.attempts.length+1,position:state.attempts.length+1}
   const attempts=[...state.attempts,attempt]
   const complete=state.config.goalType==='checkoutCount'&&attempts.length>=state.config.targetCheckoutCount
   const successes=state.successes+Number(success),failures=state.failures+Number(!success),perfectCheckouts=state.perfectCheckouts+Number(perfect)
@@ -33,9 +33,9 @@ export function getRandomCheckoutDartOptions(state){
   return [1,2,3].filter(darts=>alreadyUsed+darts>=minimum&&alreadyUsed+darts<=state.config.maxVisits*3)
 }
 
-export function recordRandomCheckout(state,{success,dartsUsed},random=Math.random){if(state.complete||state.currentTarget==null)return state;const total=(state.currentVisit-1)*3+Math.max(1,Math.min(3,Number(dartsUsed)||3));return finishAttempt(state,Boolean(success),success?total:state.config.maxVisits*3,random)}
+export function recordRandomCheckout(state,{success,dartsUsed,durationMs},random=Math.random){if(state.complete||state.currentTarget==null)return state;const total=(state.currentVisit-1)*3+Math.max(1,Math.min(3,Number(dartsUsed)||3));return finishAttempt(state,Boolean(success),success?total:state.config.maxVisits*3,random,durationMs)}
 
-export function advanceRandomCheckoutVisit(state,random=Math.random){if(state.complete)return state;if(state.currentVisit<state.config.maxVisits)return{...state,currentVisit:state.currentVisit+1};return finishAttempt(state,false,state.config.maxVisits*3,random)}
+export function advanceRandomCheckoutVisit(state,random=Math.random,durationMs=null){if(state.complete)return state;if(state.currentVisit<state.config.maxVisits)return{...state,currentVisit:state.currentVisit+1};return finishAttempt(state,false,state.config.maxVisits*3,random,durationMs)}
 
 export function randomCheckoutSummary(state){const totalTasks=state.attempts.length;return{goalType:state.config.goalType,durationMinutes:state.config.goalType==='time'?state.config.minutes:null,targetCheckoutCount:state.config.goalType==='checkoutCount'?state.config.targetCheckoutCount:null,totalTasks,successes:state.successes,failures:state.failures,perfectCheckouts:state.perfectCheckouts,successRate:totalTasks?state.successes/totalTasks*100:0,perfectRate:totalTasks?state.perfectCheckouts/totalTasks*100:0}}
 
