@@ -1,4 +1,5 @@
 import { DEFAULT_ROUTE, DOUBLE_ROUTES, routeLabel, routeMetrics, seriesDistribution, summary } from './customTrainingRules'
+import { AroundClockDetails } from './AroundClockDetails'
 
 export function RouteSelector({ value = DEFAULT_ROUTE, onChange, disabled = false }) {
   return <label className="custom-select-label">DOPPELWEG<select aria-label="Doppelweg auswählen" value={value.join('-')} disabled={disabled} onChange={e => onChange(e.target.value.split('-').map(Number))}>{DOUBLE_ROUTES.map(route => <option key={route.join('-')} value={route.join('-')}>{routeLabel(route)}</option>)}</select></label>
@@ -11,6 +12,7 @@ export function RouteBreakdown({ run }) {
 }
 export default function CustomTrainingDetails({ run, showEntries = false }) {
   const stats = summary(run), entries = run.entries ?? []
+  if (run.game === 'around-the-clock') return <AroundClockDetails run={run}/>
   if (run.game === 'bulls-warm-up') return <p>{run.doubleBull} × Doppelbull · {run.singleBull} × Single Bull</p>
   if (run.game === 'double-route') return <><p>{routeLabel(run.route ?? DEFAULT_ROUTE)} · ein Punkt pro Treffer</p><RouteBreakdown run={run}/></>
   const favorite = run.game === 'favorite-double'

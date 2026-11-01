@@ -35,7 +35,7 @@
     "test:campaign-timer": "node --test scripts/campaign-timer.test.mjs",
     "test:time-challenge": "node --test scripts/time-challenge.test.mjs",
     "preview": "vite preview",
-    "test:custom-training": "node --test scripts/custom-training.test.mjs scripts/additional-training.test.mjs scripts/favorite-training.test.mjs"
+    "test:custom-training": "node --test scripts/custom-training.test.mjs scripts/additional-training.test.mjs scripts/favorite-training.test.mjs scripts/around-clock.test.mjs"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",

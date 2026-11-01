@@ -4,6 +4,7 @@ export const CUSTOM_GAMES = [
   { id: 'triple-20-19-18-combo', title: 'Combo Triple 20, Triple 19, Triple 18', description: '20, 19 und 18 in Reihenfolge treffen – mindestens ein Triple pro Aufnahme.' },
   { id: 'favorite-double', title: 'Favoriten Doppel', description: 'Dein Lieblingsdoppel mit dem ersten Dart treffen und die Serie fortsetzen.' },
   { id: 'double-route', title: 'Doppelweg', description: 'Drei Doppel in fester Reihenfolge – ein Punkt pro Treffer.' },
+  { id: 'around-the-clock', title: 'Around the Clock', description: '1 bis 20, optional mit Bull. Nur Fehlwürfe zählen und die Zeit vergleichen.' },
 ]
 export const DOUBLE_ROUTES = [[20, 10, 5], [16, 8, 4], [12, 6, 3], [4, 2, 1]]
 export const DEFAULT_ROUTE = DOUBLE_ROUTES[1]
@@ -12,6 +13,27 @@ export const isComboGame = game => ['t20-combo', 'triple-20-19-18-combo'].includ
 export const isSeriesGame = game => isComboGame(game) || game === 'favorite-double'
 export const pointsLabel = points => `${points} ${points === 1 ? 'Punkt' : 'Punkte'}`
 export const DURATIONS = [5, 10, 15]
+export const isAroundClock = game => game === 'around-the-clock'
+export const aroundVariant = includeBull => includeBull ? '1–20 + Bull' : '1–20 ohne Bull'
+export const formatElapsed = ms => { const seconds = Math.floor(Math.max(0, ms) / 1000); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}` }
+export const elapsedClockMs = (run, now = Date.now()) => run.elapsedMs ?? Math.max(0, now - run.startedAt)
+export function aroundClockStats(run) {
+  const hits = run.includeBull ? 21 : 20, misses = run.misses ?? 0
+  return { hits, misses, darts: hits + misses, accuracy: hits / (hits + misses) * 100, elapsedMs: elapsedClockMs(run) }
+}
+export function recordAroundMiss(run) {
+  if (!isAroundClock(run.game) || run.phase !== 'playing' || (run.misses ?? 0) >= 999999) return run
+  return { ...run, misses: (run.misses ?? 0) + 1 }
+}
+export function finishAroundClock(run, now = Date.now()) {
+  if (!isAroundClock(run.game) || run.phase !== 'playing') return run
+  return { ...run, elapsedMs: elapsedClockMs(run, now), finishedAt: now, phase: 'saving', completed: true }
+}
+export function aroundClockBest(rows, includeBull, excludeId) {
+  const matches = rows.filter(row => row.game === 'around-the-clock' && row.id !== excludeId && Boolean((row.payload ?? row).includeBull) === includeBull).sort((a,b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+  const values = matches.map(row => aroundClockStats(row.payload ?? row))
+  return { misses: values.length ? Math.min(...values.map(row => row.misses)) : null, elapsedMs: values.length ? Math.min(...values.map(row => row.elapsedMs)) : null, previous: values[0] ?? null }
+}
 export const remainingSeconds = (endAt, now = Date.now()) => Math.max(0, Math.ceil((endAt - now) / 1000))
 export const hasOpenEntry = run => isSeriesGame(run.game) && ((run.score ?? '') !== '' || run.choosing || (run.favoriteComboCount ?? 0) > 0)
 const tripleVisitScores = new Set()
