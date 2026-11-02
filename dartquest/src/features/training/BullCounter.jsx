@@ -10,6 +10,8 @@ export default function BullCounter({ value }) {
       const canvas = document.createElement('canvas')
       const context = canvas.getContext('2d')
       context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+      // Match SVG spacing: tabular numeral substitution changes the width of 11.
+      context.fontKerning = 'none'
       const ink = context.measureText(String(value))
       const width = ink.actualBoundingBoxLeft + ink.actualBoundingBoxRight
       const scale = Math.min(1, 96 / Math.max(1, width))

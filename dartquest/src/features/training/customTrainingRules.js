@@ -62,19 +62,19 @@ export function favoritePendingCount(run) {
   return run.favoriteComboCount ?? favoriteDoubleEntry(Number(run.score), run.favoriteDouble ?? 16)?.count ?? 0
 }
 export function recordFavoriteSingle(run, now = Date.now()) {
-  if (run.phase !== 'playing' || favoritePendingCount(run) || remainingSeconds(run.endAt, now) === 0) return run
+  if (favoritePendingCount(run) || (run.phase === 'final-entry' ? finalEntryUsed(run) >= 3 : run.phase !== 'playing' || remainingSeconds(run.endAt, now) === 0)) return run
   const target = run.favoriteDouble ?? 16
   return { ...run, entries: [...run.entries, favoriteDoubleEntry(target * 2, target)], favoriteComboCount: 0, score: '', choosing: false }
 }
 export function changeFavoriteCombo(run, delta, now = Date.now()) {
-  if (run.phase !== 'playing' || (delta > 0 && remainingSeconds(run.endAt, now) === 0)) return run
+  if (run.phase === 'final-entry' ? delta > 0 && finalEntryUsed(run) >= 3 : run.phase !== 'playing' || (delta > 0 && remainingSeconds(run.endAt, now) === 0)) return run
   const count = Math.max(0, Math.min(Math.floor(99999 / ((run.favoriteDouble ?? 16) * 2)), favoritePendingCount(run) + delta))
   return { ...run, favoriteComboCount: count, score: '' }
 }
 export function saveFavoriteCombo(run) {
   const target = run.favoriteDouble ?? 16
   const entry = favoriteDoubleEntry(favoritePendingCount(run) * target * 2, target)
-  if (run.phase !== 'playing' || !entry) return run
+  if (!['playing','final-entry'].includes(run.phase) || !entry) return run
   return { ...run, entries: [...run.entries, entry], favoriteComboCount: 0, score: '', choosing: false }
 }
 export function seriesDistribution(entries) {
@@ -89,7 +89,7 @@ export function routeMetrics(run) {
   })
 }
 export function recordRouteThrow(run, hit, now = Date.now()) {
-  if (run.phase !== 'playing' || remainingSeconds(run.endAt, now) === 0) return run
+  if (run.phase === 'final-entry' ? finalEntryUsed(run) >= 3 : run.phase !== 'playing' || remainingSeconds(run.endAt, now) === 0) return run
   const throws = run.routeThrows ?? [], route = run.route ?? DEFAULT_ROUTE
   return { ...run, routeThrows: [...throws, { target: route[throws.length % route.length], hit: Boolean(hit) }] }
 }
@@ -105,4 +105,53 @@ export function summary(run) {
 export function bestResults(rows, game, minutes, excludeId, route) {
   const values = rows.filter(r => r.game === game && r.minutes === minutes && r.id !== excludeId && (!route || JSON.stringify(r.payload?.route ?? r.route) === JSON.stringify(route))).map(r => summary(r.payload ?? r))
   return { points: Math.max(0, ...values.map(r => r.points)), longest: Math.max(0, ...values.map(r => r.longest)), bestSeries: Math.max(0, ...values.map(r => r.bestSeries)) }
+}
+
+export function beginBullsFinalEntry(run, now = Date.now()) {
+  if (run.game !== 'bulls-warm-up' || run.phase !== 'playing' || remainingSeconds(run.endAt,now) > 0) return run
+  return { ...run, phase: 'bulls-final', bullsFinalBase: { doubleBull: run.doubleBull, singleBull: run.singleBull } }
+}
+export function bullsFinalHits(run) {
+  if (!run?.bullsFinalBase) return 0
+  return (run.doubleBull - run.bullsFinalBase.doubleBull) + (run.singleBull - run.bullsFinalBase.singleBull)
+}
+export function changeBullCount(run, field, delta, now = Date.now()) {
+  if (run.game !== 'bulls-warm-up' || !['doubleBull','singleBull'].includes(field) || ![-1,1].includes(delta)) return run
+  const current = beginBullsFinalEntry(run,now)
+  if (current.phase === 'playing') return { ...current, [field]: Math.max(0, current[field]+delta) }
+  if (current.phase !== 'bulls-final' || !current.bullsFinalBase) return current
+  if ((delta > 0 && bullsFinalHits(current) >= 3) || (delta < 0 && current[field] <= current.bullsFinalBase[field])) return current
+  return { ...current, [field]: current[field]+delta }
+}
+export function finishBullsFinalEntry(run) {
+  if (run.game !== 'bulls-warm-up' || run.phase !== 'bulls-final' || !run.bullsFinalBase || bullsFinalHits(run) < 0 || bullsFinalHits(run) > 3) return run
+  return { ...run, phase: 'saving', completed: true }
+}
+
+export function beginTimedFinalEntry(run, now = Date.now()) {
+  if (run.game === 'bulls-warm-up') return beginBullsFinalEntry(run,now)
+  if (isAroundClock(run.game) || run.phase !== 'playing' || remainingSeconds(run.endAt,now)>0) return run
+  return { ...run, phase:'final-entry', finalEntryBase:{ entries:(run.entries??[]).length, routeThrows:(run.routeThrows??[]).length, favoriteHits:(run.entries??[]).reduce((n,e)=>n+e.count,0)+favoritePendingCount(run) } }
+}
+export function finalEntryUsed(run) {
+  if(run?.phase!=='final-entry'||!run.finalEntryBase)return 0
+  if(run.game==='double-route')return (run.routeThrows??[]).length-run.finalEntryBase.routeThrows
+  if(run.game==='favorite-double')return Math.max(0,(run.entries??[]).reduce((n,e)=>n+e.count,0)+favoritePendingCount(run)-run.finalEntryBase.favoriteHits)
+  return (run.entries??[]).length-run.finalEntryBase.entries
+}
+export function canEnterTrainingScore(run) {
+  return run.phase==='playing' || (run.phase==='final-entry' && finalEntryUsed(run)<1)
+}
+export function recordTrainingCombo(run,points,count) {
+  if(!canEnterTrainingScore(run)||!validCombo(points,count,run.game))return run
+  return {...run,entries:[...run.entries,{points,count}],score:'',choosing:false}
+}
+export function finishTimedFinalEntry(run) {
+  if(run.phase!=='final-entry'||hasOpenEntry(run))return run
+  return {...run,phase:'saving',completed:true}
+}
+
+export function favoriteSessionCounts(run) {
+  const entries = run?.entries ?? []
+  return { singles: entries.filter(entry => entry.count === 1).length, combos: entries.filter(entry => entry.count >= 2).length }
 }

@@ -460,7 +460,7 @@
 
 /* Center visible numeral outlines rather than the font's baseline box. */
 .custom-playing .custom-bulls strong .custom-bull-number { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 8px rgba(var(--bull-rgb),.16)); }
-.custom-bull-number text { fill: currentColor; font-family: inherit; font-size: 80px; font-weight: 450; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.custom-bull-number text { fill: currentColor; font-family: inherit; font-size: 80px; font-weight: 450; font-variant-numeric: normal; font-kerning: none; letter-spacing: 0; }
 /* Align the score's leading digit with the game title above it. */
 .custom-playing .custom-live { padding-left: 48px; }
 @media(max-height:500px) { .custom-playing .custom-live { padding-left: 40px; } }
@@ -615,3 +615,54 @@
 .training-friend-options button[aria-pressed='true'] i { border-color: #8be8b766; color: #8be8b7; }
 .custom-training .training-friend-close { width: 100%; min-height: 48px; margin-top: 15px; background: #253440; border-color: #b0cadc20; color: #c4d4df; font-size: 11px; letter-spacing: .5px; }
 .training-friend-options:focus-visible, .training-friend-dialog:focus-visible { outline: 2px solid #8be8b766; outline-offset: 3px; }
+
+.custom-bulls-layout { display: flex; flex-direction: column; gap: 10px; width: 100%; min-height: 0; }
+.custom-bulls-layout > .custom-bulls { flex: 1 1 0; min-height: 0; }
+.custom-bulls-final-note { display: flex; flex-direction: column; flex-shrink: 0; gap: 5px; padding: 10px 12px; border: 1px solid #ff85942b; border-radius: 14px; background: #ff859407; }
+.custom-bulls-final-note strong { color: #f0b0b9; font-size: 10px; font-weight: 600; letter-spacing: .5px; }
+.custom-bulls-final-note span { color: #a7bdcb; font-size: 11px; line-height: 1.5; }
+.custom-playing .custom-bulls-finish { flex-shrink: 0; width: 100%; min-height: 48px; padding: 12px 8px; border-color: #8be8b744; border-radius: 14px; background: #8be8b7; color: #102c20; font-size: 12px; font-weight: 650; }
+@media(max-height:650px) { .custom-bulls-layout { gap: 7px; } .custom-bulls-final-note { gap: 3px; padding: 8px 10px; } .custom-bulls-final-note span { font-size: 10px; } }
+
+.custom-final-entry .custom-score-layout { grid-template-areas: 'status' 'keypad' 'secondary'; grid-template-rows: 20px minmax(0,1fr) 30px; }
+.custom-final-entry .custom-score-layout > .custom-run-history { display: none; }
+.custom-final-entry .custom-favorite-play { grid-template-areas: 'status' 'counter' 'actions' 'confirm' 'secondary'; grid-template-rows: 20px minmax(38px,1fr) 76px 44px 30px; }
+.custom-final-entry .custom-favorite-play > .custom-run-history { display: none; }
+@media(max-height:650px) { .custom-final-entry .custom-score-layout { grid-template-rows: 15px minmax(0,1fr) 26px; } .custom-timed-final-note { padding: 6px 9px; } }
+@media(max-height:500px) { .custom-final-entry .custom-favorite-play { grid-template-rows: 14px minmax(28px,1fr) 44px 32px 24px; gap: 4px; } }
+
+/* Favorites show two session totals instead of a scrolling list of entries. */
+.custom-favorite-play { grid-template-areas:'totals' 'status' 'counter' 'actions' 'confirm' 'secondary'; grid-template-rows:70px 20px minmax(65px,1fr) 88px 50px 34px; }
+.favorite-session-counts { grid-area:totals; display:grid; grid-template-columns:1fr 1fr; gap:10px; min-height:0; }
+.favorite-session-counts > div { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:7px 4px; border:1px solid #8be8b721; border-radius:16px; background:linear-gradient(145deg,#8be8b709,#141d26); }
+.favorite-session-counts > div:last-child { border-color:#91bafa21; background:linear-gradient(145deg,#91bafa09,#141d26); }
+.favorite-session-counts strong { color:#a7ebc6; font-size:29px; font-weight:550; line-height:1; font-variant-numeric:tabular-nums; animation:favorite-count-bump .3s ease-out; }
+.favorite-session-counts > div:last-child strong { color:#b2cefa; }
+.favorite-session-counts span { color:#91a9b9; font-size:9px; font-weight:500; letter-spacing:.5px; text-align:center; }
+.custom-playing .favorite-single.is-recorded { border-color:#dcffec; }
+.custom-playing .favorite-single.is-recorded small { color:#174c32; font-weight:600; }
+@keyframes favorite-count-bump { 0% { text-shadow:0 0 15px #8be8b799; transform:scale(1.08); } 100% { text-shadow:0 0 0 transparent; transform:scale(1); } }
+@media(max-height:650px) {
+ .custom-favorite-play { grid-template-rows:58px 17px minmax(40px,1fr) 76px 44px 30px; gap:6px; }
+ .favorite-session-counts strong { font-size:25px; }
+ .favorite-session-counts span { font-size:8px; }
+ .custom-final-entry .custom-favorite-play { grid-template-areas:'totals' 'status' 'counter' 'actions' 'confirm' 'secondary'; grid-template-rows:50px 15px minmax(32px,1fr) 64px 40px 26px; }
+}
+@media(min-height:651px) { .custom-final-entry .custom-favorite-play { grid-template-areas:'totals' 'status' 'counter' 'actions' 'confirm' 'secondary'; grid-template-rows:64px 20px minmax(38px,1fr) 76px 44px 30px; } }
+@media(max-height:500px) {
+ .custom-favorite-play { grid-template-rows:44px 14px minmax(26px,1fr) 52px 32px 24px; gap:4px; }
+ .custom-final-entry .custom-favorite-play { grid-template-rows:40px 14px minmax(26px,1fr) 44px 32px 24px; }
+ .favorite-session-counts > div { gap:3px; padding:4px; border-radius:12px; }
+ .favorite-session-counts strong { font-size:21px; }
+ .favorite-session-counts span { font-size:7px; }
+}
+@media(max-height:650px) {
+ .custom-final-entry .custom-favorite-play { grid-template-areas:'totals' 'counter' 'actions' 'confirm' 'secondary'; grid-template-rows:44px minmax(34px,1fr) 56px 40px 24px; gap:5px; }
+ .custom-final-entry .custom-favorite-play > .custom-entry-status { display:none; }
+ .custom-final-entry .custom-favorite-counter strong { font-size:32px; }
+ .custom-final-entry .custom-favorite-counter span { display:none; }
+}
+@media(max-height:500px) {
+ .custom-final-entry .custom-favorite-play { grid-template-rows:36px minmax(28px,1fr) 44px 32px 24px; gap:4px; }
+ .custom-final-entry .custom-favorite-counter strong { font-size:26px; }
+}

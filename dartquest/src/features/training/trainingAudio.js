@@ -2,19 +2,24 @@ let context
 export function unlockTrainingAudio() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext
-    if (!AudioContext) return
-    context ??= new AudioContext()
-    context.resume().catch(() => {})
-    // A silent source unlocked by the Start gesture also supports mobile Safari.
+    if (!AudioContext) return Promise.resolve(false)
+    if (!context || context.state === 'closed') context = new AudioContext()
+    const resumed = context.state === 'running' ? Promise.resolve() : context.resume()
     const source = context.createBufferSource()
     source.buffer = context.createBuffer(1, 1, context.sampleRate)
     source.connect(context.destination)
+    source.onended = () => source.disconnect()
     source.start()
-  } catch { /* Training remains usable when audio is unavailable. */ }
+    return resumed.then(() => context.state === 'running').catch(() => false)
+  } catch { return Promise.resolve(false) }
 }
-export function playTrainingSignal(kind) {
-  if (!context || context.state !== 'running') return
+export async function playTrainingSignal(kind) {
+  if (!context) return false
   try {
+    // Mobile browsers can suspend audio between interactions or in the background.
+    // Resume before scheduling, rather than silently dropping the signal.
+    if (context.state !== 'running') await context.resume()
+    if (context.state !== 'running') return false
     const pulses = kind === 'end' ? 12 : 1
     for (let i = 0; i < pulses; i++) {
       const start = context.currentTime + i * .25
@@ -32,5 +37,6 @@ export function playTrainingSignal(kind) {
       oscillator.start(start)
       oscillator.stop(start + .23)
     }
-  } catch { /* A blocked sound must never interrupt the timer. */ }
+    return true
+  } catch { return false }
 }

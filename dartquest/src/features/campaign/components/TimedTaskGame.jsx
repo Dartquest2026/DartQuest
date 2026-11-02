@@ -1,3 +1,5 @@
+import useCountdownAudio from '../../training/useCountdownAudio'
+import { unlockTrainingAudio } from '../../training/trainingAudio'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatCountdown, getCountdownTone } from '../campaignTimer'
 import { createTimedTaskResult, pauseTimedAttempt, resumeTimedAttempt } from '../timedTaskAttempt'
@@ -15,11 +17,13 @@ function formatLimit(seconds) {
 function TimedTaskGame({ level, disabled, onComplete }) {
   const limitMs = level.timeLimitSeconds * 1000
   const [status, setStatus] = useState('idle')
+  const [audioAttempt,setAudioAttempt] = useState(0)
   const [remainingMs, setRemainingMs] = useState(limitMs)
   const endTimeRef = useRef(null)
   const startedAtRef = useRef(null)
   const warningRef = useRef(new Set())
   const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000))
+  useCountdownAudio(`campaign-${level.id}-${audioAttempt}`,remainingSeconds,['running','expired'].includes(status))
   const tone = getCountdownTone(remainingSeconds)
   const progress = Math.max(0, Math.min(1, remainingMs / limitMs))
   const clock = formatCountdown(remainingSeconds)
@@ -53,6 +57,7 @@ function TimedTaskGame({ level, disabled, onComplete }) {
 
   function start() {
     if (disabled || status !== 'idle') return
+    unlockTrainingAudio();setAudioAttempt(n=>n+1)
     endTimeRef.current = resumeTimedAttempt(limitMs)
     startedAtRef.current = Date.now()
     warningRef.current = new Set()
@@ -70,6 +75,7 @@ function TimedTaskGame({ level, disabled, onComplete }) {
 
   function resume() {
     if (!['paused', 'review'].includes(status) || remainingMs <= 0) return
+    unlockTrainingAudio()
     endTimeRef.current = resumeTimedAttempt(remainingMs)
     setStatus('running'); triggerHaptic('light')
   }

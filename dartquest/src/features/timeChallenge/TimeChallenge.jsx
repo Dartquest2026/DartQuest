@@ -1,3 +1,5 @@
+import useCountdownAudio from '../training/useCountdownAudio'
+import { unlockTrainingAudio } from '../training/trainingAudio'
 import { useEffect, useRef, useState } from 'react'
 import { triggerHaptic } from '../settings/haptics'
 import { clampTargetTime, formatTrainingTime, summarizeAttempts, timeChallenges } from './timeChallenges'
@@ -9,6 +11,7 @@ import './TimeChallengeWarnings.css'
 function TimeChallenge({ activeProfile, onBack }) {
   const userId = activeProfile?.id ?? null
   const [screen, setScreen] = useState('list')
+  const [audioAttempt,setAudioAttempt] = useState(0)
   const [challenge, setChallenge] = useState(null)
   const [stats, setStats] = useState({})
   const [targetSeconds, setTargetSeconds] = useState(420)
@@ -18,6 +21,7 @@ function TimeChallenge({ activeProfile, onBack }) {
   const [saveState, setSaveState] = useState('idle')
   const runningSinceRef = useRef(null)
   const warningsRef = useRef(new Set())
+  useCountdownAudio(`time-challenge-${audioAttempt}`,Math.max(0,Math.ceil((targetSeconds*1000-displayElapsedMs)/1000)),screen==='play'&&(status==='running'||(displayElapsedMs>=targetSeconds*1000&&['paused','finish_pending'].includes(status))))
 
   useEffect(() => { let active=true; loadTimeChallengeStats(userId).then((value)=>active&&setStats(value)); return()=>{active=false} }, [userId])
   useEffect(() => {
@@ -41,9 +45,9 @@ function TimeChallenge({ activeProfile, onBack }) {
     setStatus('ready'); setElapsedMs(0); setDisplayElapsedMs(0); setSaveState('idle'); setScreen('setup')
   }
   function changeTarget(delta) { if (status === 'ready') setTargetSeconds((value)=>clampTargetTime(value+delta)) }
-  function start() { runningSinceRef.current=Date.now(); warningsRef.current=new Set(); setStatus('running'); setScreen('play'); triggerHaptic('light') }
+  function start() { unlockTrainingAudio();setAudioAttempt(n=>n+1);runningSinceRef.current=Date.now(); warningsRef.current=new Set(); setStatus('running'); setScreen('play'); triggerHaptic('light') }
   function stop() { const next=runningElapsedMs(elapsedMs,runningSinceRef.current); setElapsedMs(next); setDisplayElapsedMs(next); runningSinceRef.current=null; setStatus('paused'); triggerHaptic('light') }
-  function resume() { runningSinceRef.current=Date.now(); setStatus('running'); setScreen('play'); triggerHaptic('light') }
+  function resume() { unlockTrainingAudio();runningSinceRef.current=Date.now(); setStatus('running'); setScreen('play'); triggerHaptic('light') }
   function finish() { const next=status==='running'?runningElapsedMs(elapsedMs,runningSinceRef.current):elapsedMs; setElapsedMs(next); setDisplayElapsedMs(next); runningSinceRef.current=null; setStatus('finish_pending'); triggerHaptic('success') }
   async function save() {
     if (saveState === 'saving') return

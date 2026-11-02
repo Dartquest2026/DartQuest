@@ -1276,3 +1276,11 @@
   .training-x01-history { flex-basis:58px; }
   .training-game-main.is-201 .score-keypad { height:clamp(225px,40dvh,255px); grid-template-rows:38px repeat(2,minmax(30px,1fr)) repeat(5,minmax(32px,1fr)); }
 }
+
+.standard-final-note { display:flex; flex-direction:column; gap:5px; padding:10px 12px; border:1px solid #ff859433; border-radius:13px; background:#ff859408; color:#f0b0b9; flex-shrink:0; }
+.standard-final-note strong { font-size:10px; letter-spacing:.5px; }
+.standard-final-note span { font-size:11px; color:#a7bdcb; }
+.training-game-main.is-timed-final .random-checkout-history { display:none; }
+.training-game-main.is-timed-final .training-target { font-size:clamp(48px,12vw,74px); }
+.standard-final-finish { flex-shrink:0; min-height:46px; width:100%; padding:10px; border:1px solid #8be8b744; border-radius:13px; background:#8be8b7; color:#102c20; font-size:12px; font-weight:650; }
+.standard-final-finish:disabled { opacity:.4; }

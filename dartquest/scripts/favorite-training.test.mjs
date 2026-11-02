@@ -55,3 +55,10 @@ test('plan-selected double and pending combo survive storage and guest completio
   await storage.completeCustomRun(null, saveFavoriteCombo(run))
   assert.deepEqual(JSON.parse(JSON.stringify(storage.localCustomHistory(null)[0].payload.entries)), [{ points: 48, count: 2, double: 12 }])
 })
+
+test('favorite live totals distinguish single hits and saved combos without counting a pending combo',async()=>{
+ const {favoriteSessionCounts}=await import('../src/features/training/customTrainingRules.js')
+ assert.deepEqual(favoriteSessionCounts({entries:[]}),{singles:0,combos:0})
+ assert.deepEqual(favoriteSessionCounts({entries:[...Array.from({length:5},()=>({count:1})),{count:3},{count:4}],favoriteComboCount:6}),{singles:5,combos:2})
+ assert.deepEqual(favoriteSessionCounts({entries:[{count:1},{count:3}].slice(0,-1)}),{singles:1,combos:0})
+})
