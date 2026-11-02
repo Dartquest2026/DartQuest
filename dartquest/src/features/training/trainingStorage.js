@@ -1,3 +1,4 @@
+import { applyTrainingResets } from './trainingStatControls'
 import { supabase } from '../../lib/supabase'
 
 const LOCAL_KEY = 'dartquest-training-sessions'
@@ -42,6 +43,9 @@ export async function loadTrainingSessions(userId) {
   if (!userId) return local
   const { data, error } = await supabase.from('training_sessions').select('*').eq('user_id', userId).eq('mode', 'solo').order('created_at', { ascending:false }).limit(500)
   if (error) return local
-  const merged = new Map([...local, ...(data ?? [])].map((row) => [row.id, row]))
-  return [...merged.values()].sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)))
+  try {
+    const rows = await applyTrainingResets(userId, 'standard', local, data ?? [])
+    localStorage.setItem(`${LOCAL_KEY}-${userId}`, JSON.stringify(rows))
+    return rows
+  } catch { return local }
 }

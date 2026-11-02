@@ -1,3 +1,4 @@
+import { applyTrainingResets } from './trainingStatControls'
 import { supabase } from '../../lib/supabase'
 
 const key = (userId, suffix) => `dartquest-custom-training-${userId ?? 'guest'}-${suffix}`
@@ -22,7 +23,12 @@ export async function startCustomRun(userId, game, minutes, options = {}) {
   if (userId) {
     const { data, error } = await supabase.rpc('start_custom_training', { p_id: id, p_game: game, p_minutes: minutes })
     if (error) throw new Error('Training konnte nicht gestartet werden. Bitte prüfe deine Verbindung. ' + error.message)
-    startedAt = Date.parse(data.started_at); endAt = Date.parse(data.end_at)
+    // Server timestamps and the device clock may differ. Anchor the confirmed
+    // duration to receipt of the response, so local zero cannot precede expiry
+    // on the server merely because the device clock is ahead.
+    const serverDuration = Date.parse(data.end_at) - Date.parse(data.started_at)
+    if (!Number.isFinite(serverDuration) || serverDuration !== minutes * 60000) throw new Error('Die Trainingszeit konnte nicht bestätigt werden. Bitte erneut starten.')
+    startedAt = Date.now(); endAt = startedAt + serverDuration
   }
   const run = { id, game, minutes, startedAt, endAt: around ? null : endAt, doubleBull: 0, singleBull: 0, entries: [], score: '', choosing: false, phase: 'playing', favoriteDouble: options.favoriteDouble ?? 16, favoriteComboCount: 0, route: options.route ?? [16, 8, 4], routeThrows: [], ...(around ? { includeBull: Boolean(options.includeBull), misses: 0 } : {}) }
   saveCustomRun(userId, run)
@@ -49,7 +55,8 @@ export async function loadCustomHistory(userId) {
     remote.push(...data)
     if (data.length < 500) break
   }
-  const rows = [...new Map([...local, ...remote].map(r => [r.id, r])).values()].sort((a, b) => b.created_at.localeCompare(a.created_at))
+  let rows
+  try { rows = await applyTrainingResets(userId, 'custom', local, remote) } catch { return { rows: local, offline: true } }
   localStorage.setItem(key(userId, 'history'), JSON.stringify(rows))
   return { rows, offline: false }
 }

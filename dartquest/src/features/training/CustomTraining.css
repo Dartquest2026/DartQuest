@@ -376,3 +376,242 @@
 .custom-start-dock>.training-start-button{margin:0}
 .custom-training .training-start-button:disabled{opacity:1;background:#17232c;color:#526b7a;border-color:#ffffff08;box-shadow:none}
 .training-game.training-game,.training-results.training-results{background:radial-gradient(ellipse at 100% 0%,#17252d 0,transparent 48%),#0b1118}
+
+/* Plan controls stay large enough for thumbs, including on narrow phones. */
+.custom-plan article { grid-template-columns: 28px minmax(0,1fr) auto; }
+.custom-plan article > strong { grid-column: 2 / -1; }
+.custom-plan article > button { grid-column: 2; justify-self: start; }
+.custom-plan-controls { display: flex; gap: 6px; grid-column: 3; }
+.custom-plan .custom-plan-controls button { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; margin: 0; background: #1b2631; border: 1px solid var(--ct-line); line-height: 1; border-radius: 12px; }
+.custom-plan .custom-plan-controls .custom-plan-remove { color: #a9d9c3; }
+.custom-game-add { display: grid; place-items: center; }
+.custom-game-add svg, .custom-plan-controls svg { display: block; width: 24px; height: 24px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.custom-plan-controls button:disabled { opacity: .25; }
+.custom-clock.is-urgent { color: #ff7f8d; }
+.custom-play-stage.is-final-minute { border-radius: 18px; }
+.custom-play-stage.is-final-minute .custom-clock { filter: drop-shadow(0 0 5px #ff647c66); }
+@keyframes training-minute-glow {
+  0%,100% { border-color: #ff86964d; box-shadow: 0 0 5px #ff73861a, inset 0 0 5px #ff73860d; }
+  50% { border-color: #ff869680; box-shadow: 0 0 8px #ff738633, inset 0 0 8px #ff73861a; }
+}
+.custom-combo-picker { grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-rows: repeat(7,60px); gap: 8px; max-height: min(248px,42dvh); }
+.custom-combo-picker button { min-height: 60px; font-size: 27px; border-radius: 14px; }
+
+
+/* The clock uses the upper-right space without shrinking the thumb controls. */
+.custom-training.training-builder.custom-playing { --training-clock-size: 126px; --training-clock-inset: 18px; }
+.custom-playing > .training-page-header { padding-right: calc(var(--training-clock-size) + 10px); }
+.custom-play-hud { grid-template-columns: minmax(0,1fr) var(--training-clock-size); }
+.custom-playing .custom-clock { position: absolute; top: var(--training-clock-inset); right: var(--training-clock-inset); width: var(--training-clock-size); height: var(--training-clock-size); z-index: 2; }
+.custom-clock strong { font-size: 34px; }
+.custom-clock small { font-size: 9px; }
+.custom-playing .custom-bulls button { display: grid; place-items: center; padding: 0; }
+.custom-bulls button svg { display: block; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.custom-bulls button:last-child svg { width: 38px; height: 38px; }
+.custom-playing .custom-bulls strong { align-self: center; justify-self: center; width: min(100%,116px); height: 116px; border: 1px solid #69e2a85c; border-radius: 22px; letter-spacing: -1px; }
+.custom-playing .custom-bulls [data-bull='doubleBull'] strong { border-color: #ef77826b; }
+@media(max-height:650px) {
+ .custom-training.training-builder.custom-playing { --training-clock-size: 75px; --training-clock-inset: 14px; }
+ .custom-play-hud { grid-template-columns: minmax(0,1fr) var(--training-clock-size); }
+ .custom-clock strong { font-size: 24px; }
+ .custom-clock small { font-size: 6px; }
+ .custom-playing .custom-bulls strong { width: min(100%,90px); height: 90px; border-radius: 18px; }
+}
+@media(max-height:500px) {
+ .custom-training.training-builder.custom-playing { --training-clock-size: 60px; --training-clock-inset: 10px; }
+ .custom-clock strong { font-size: 19px; }
+ .custom-playing .custom-bulls strong { width: min(100%,64px); height: 64px; font-size: 40px; border-radius: 14px; }
+}
+
+/* Symmetric bull columns and a softly lit, precisely centered counter. */
+.custom-playing[data-game='bulls-warm-up'] .custom-play-stage,
+.custom-playing[data-game='bulls-warm-up'] .custom-play-inputs { overflow: visible; }
+.custom-playing .custom-bulls { position: relative; gap: 24px; isolation: isolate; }
+.custom-playing .custom-bulls::before { content: ''; position: absolute; top: 8px; bottom: 0; left: 50%; width: 1px; background: linear-gradient(transparent, var(--ct-line) 12%, var(--ct-line) 88%, transparent); pointer-events: none; }
+.custom-playing .custom-bulls section,
+.custom-playing .custom-bulls section + section { padding: 12px 0 0; border: 0; }
+.custom-playing .custom-bulls strong {
+ --bull-rgb: 105,226,168;
+ display: flex; align-items: center; justify-content: center;
+ padding: 0; margin: 0; line-height: 1; letter-spacing: 0;
+ border: 1px solid rgba(var(--bull-rgb),.42);
+ background: radial-gradient(ellipse at 50% 0%,rgba(var(--bull-rgb),.09),transparent 75%),linear-gradient(145deg,#18232b99,#0e171e99);
+ box-shadow: 0 0 22px rgba(var(--bull-rgb),.09),inset 0 1px 0 #ffffff0a,inset 0 0 16px rgba(var(--bull-rgb),.035);
+ text-shadow: 0 0 18px rgba(var(--bull-rgb),.16);
+ font-weight: 450; font-variant-numeric: tabular-nums;
+}
+.custom-playing .custom-bulls [data-bull='doubleBull'] strong { --bull-rgb: 239,119,130; border-color: rgba(var(--bull-rgb),.42); }
+.custom-playing .custom-bulls section > div { overflow: visible; }
+.custom-playing .custom-bulls button { position: relative; z-index: 1; }
+.custom-playing .custom-bulls button:active { z-index: 3; }
+
+/* The warning frame surrounds the complete view, clear of the clock and keys.
+   Fixed symmetric insets keep it stable when the last minute begins. */
+.custom-training.custom-playing:has(.custom-play-stage.is-final-minute)::before {
+ content: ''; position: absolute; inset: 5px; z-index: 5;
+ border: 1px solid #ff86965c; border-radius: 22px;
+ pointer-events: none; animation: training-minute-glow 2.8s ease-in-out infinite;
+}
+@media(prefers-reduced-motion: reduce) {
+ .custom-training.custom-playing:has(.custom-play-stage.is-final-minute)::before {
+  animation: none; box-shadow: 0 0 6px #ff738626, inset 0 0 6px #ff738614;
+ }
+}
+
+/* Center visible numeral outlines rather than the font's baseline box. */
+.custom-playing .custom-bulls strong .custom-bull-number { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 8px rgba(var(--bull-rgb),.16)); }
+.custom-bull-number text { fill: currentColor; font-family: inherit; font-size: 80px; font-weight: 450; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+/* Align the score's leading digit with the game title above it. */
+.custom-playing .custom-live { padding-left: 48px; }
+@media(max-height:500px) { .custom-playing .custom-live { padding-left: 40px; } }
+
+/* Bulls progress: paired, independently scaled hit counts on a shared axis. */
+.bulls-progress { margin: 24px 0; }
+.bulls-chart-card { padding: 18px 12px 14px; border: 1px solid #d0e1ee14; border-radius: 22px; background: radial-gradient(ellipse at 85% 0%,#8be8b708,transparent 65%),linear-gradient(145deg,#16212b,#101820); box-shadow: 0 12px 28px #00000014; }
+.bulls-chart-heading { display: flex; justify-content: space-between; align-items: start; gap: 10px; padding: 0 4px; }
+.bulls-eyebrow { font-size: 9px; color: #91a6b5; font-weight: 600; letter-spacing: 1px; }
+.custom-training .bulls-chart-heading h2 { margin: 7px 0 0; font-size: 20px; letter-spacing: -.5px; }
+.bulls-chart-total { color: #8199aa; font-size: 10px; white-space: nowrap; padding-top: 3px; }
+.bulls-chart-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 22px 4px 20px; font-size: 10px; }
+.bulls-chart-legend > span::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 3px; background: currentColor; }
+.bulls-single { color: #8be8b7; }
+.bulls-double { color: #f18a96; }
+.bulls-chart-legend > small { color: #8094a4; font-size: 9px; margin-left: auto; }
+.bulls-chart-area { display: grid; grid-template-columns: 26px minmax(0,1fr); height: 210px; margin: 0 3px 0 0; padding-bottom: 24px; }
+.bulls-chart-axis { position: relative; color: #768d9f; font-size: 9px; font-variant-numeric: tabular-nums; }
+.bulls-chart-axis > span { position: absolute; right: 7px; transform: translateY(-50%); }
+.bulls-chart-plot { position: relative; min-width: 0; }
+.bulls-chart-grid { position: absolute; inset: 0; pointer-events: none; }
+.bulls-chart-grid i { position: absolute; left: 0; right: 0; border-top: 1px solid #c6e3f00c; }
+.bulls-chart-grid i:last-child { border-color: #c6e3f022; }
+.bulls-chart-columns { display: grid; position: absolute; inset: 0; gap: 2px; }
+.custom-training .bulls-chart-column { position: relative; display: block; min-width: 0; min-height: 0; height: 100%; padding: 0 1px; margin: 0; border: 0; border-radius: 5px; background: transparent; }
+.custom-training .bulls-chart-column:hover, .custom-training .bulls-chart-column:focus-visible { background: #ffffff07; }
+.bulls-chart-bars { display: flex; align-items: end; justify-content: center; height: 100%; gap: 2px; }
+.bulls-chart-bars > i { display: block; width: min(36%,13px); min-height: 2px; border-radius: 4px 4px 1px 1px; }
+.bulls-single-bar { background: linear-gradient(0deg,#42b77c,#8be8b7); box-shadow: 0 0 8px #8be8b712; }
+.bulls-double-bar { background: linear-gradient(0deg,#bb5264,#f18a96); box-shadow: 0 0 8px #f18a9612; }
+.bulls-chart-label { position: absolute; top: calc(100% + 8px); left: 0; right: 0; color: #879dac; font-size: 9px; font-variant-numeric: tabular-nums; }
+.custom-training .bulls-chart-hint { margin: 9px 4px 0; font-size: 10px; color: #8197a6; }
+.custom-training .bulls-record-title { margin: 22px 2px 12px; color: #8fa5b4; font-size: 10px; letter-spacing: 1px; line-height: 1.5; }
+.bulls-records { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+.custom-training .bulls-record { display: flex; flex-direction: column; align-items: start; padding: 15px 12px; min-width: 0; gap: 8px; text-align: left; border-radius: 17px; }
+.custom-training .bulls-record.bulls-single { border-color: #8be8b72b; background: linear-gradient(145deg,#8be8b70b,#141d26); color: #8be8b7; }
+.custom-training .bulls-record.bulls-double { border-color: #f18a962b; background: linear-gradient(145deg,#f18a960b,#141d26); color: #f18a96; }
+.bulls-record > span { font-size: 11px; }
+.bulls-record > strong { font-size: 31px; font-weight: 550; letter-spacing: -.7px; font-variant-numeric: tabular-nums; }
+.bulls-record strong small { margin-left: 6px; font-size: 10px; font-weight: 400; letter-spacing: 0; color: #98aebb; }
+.bulls-record > time, .bulls-record > small { font-size: 10px; color: #91a6b5; }
+.custom-training .bulls-record.bulls-score { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; }
+.bulls-record.bulls-score > strong { grid-column: 2; grid-row: 1 / 4; align-self: center; font-size: 26px; }
+.custom-training .bulls-record-hint { margin: 11px 3px 0; color: #8197a6; font-size: 10px; }
+.bulls-session-dialog { box-sizing: border-box; width: min(440px,calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 24px 20px; border: 1px solid #d0e1ee24; border-radius: 24px; background: linear-gradient(145deg,#1b2833,#101820); color: #edf3f7; font-family: Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; box-shadow: 0 24px 80px #0008; }
+.bulls-session-dialog::backdrop { background: #03070dce; backdrop-filter: blur(8px); }
+.bulls-session-dialog h2 { font-size: 23px; margin: 10px 0; letter-spacing: -.5px; }
+.bulls-session-dialog time { color: #91a6b5; font-size: 12px; }
+.bulls-detail-score { margin: 25px 0; font-size: 38px; font-weight: 550; }
+.bulls-detail-score small { font-size: 15px; color: #91a6b5; }
+.bulls-detail-counts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.bulls-detail-counts > div { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 19px 6px; border: 1px solid #8be8b733; border-radius: 17px; background: #8be8b708; }
+.bulls-detail-counts > .bulls-double { border-color: #f18a9633; background: #f18a9608; }
+.bulls-detail-counts strong { font-size: 34px; font-weight: 500; }
+.bulls-detail-counts span, .bulls-detail-counts small { font-size: 11px; }
+.bulls-detail-counts small { color: #91a6b5; }
+.bulls-session-dialog > button { width: 100%; min-height: 48px; margin-top: 24px; border: 1px solid #8be8b733; border-radius: 14px; background: #8be8b718; color: #b7efd0; font: inherit; font-size: 12px; cursor: pointer; }
+
+/* Paired metrics with explicit independent scales; three doubles share one. */
+.timeline-legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 20px 4px 10px; }
+.timeline-legend > span { color: var(--metric-color); font-size: 10px; }
+.timeline-legend > span::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 3px; background: currentColor; }
+.custom-training .timeline-scale-hint { margin: 0 4px 23px; font-size: 10px; line-height: 1.6; color: #96aaba; }
+.timeline-chart-area { display: grid; grid-template-columns: 39px minmax(0,1fr) 40px; height: 216px; padding-bottom: 24px; }
+.timeline-chart-area.is-shared { grid-template-columns: 29px minmax(0,1fr); }
+.timeline-axis { position: relative; font-size: 9px; font-variant-numeric: tabular-nums; }
+.timeline-axis > span { position: absolute; right: 7px; transform: translateY(-50%); white-space: nowrap; }
+.timeline-axis.is-right > span { left: 7px; right: auto; }
+.timeline-bars { gap: 2px; }
+.timeline-bars > i { flex: 0 1 12px; width: 30%; background: linear-gradient(0deg,color-mix(in srgb,var(--metric-color),#14232b 25%),var(--metric-color)); box-shadow: 0 0 8px color-mix(in srgb,var(--metric-color),transparent 94%); }
+.custom-training .timeline-record { color: var(--metric-color); border-color: color-mix(in srgb,var(--metric-color),transparent 80%); background: linear-gradient(145deg,color-mix(in srgb,var(--metric-color),transparent 95%),#141d26); }
+.timeline-records > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+.timeline-session-dialog > p { color: #a5b7c3; font-size: 13px; line-height: 1.7; }
+.timeline-session-dialog .bulls-detail-score { font-size: 30px; }
+.timeline-session-dialog .custom-route-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.timeline-session-dialog .custom-route-metrics article { display: flex; flex-direction: column; gap: 6px; padding: 12px 6px; border: 1px solid #ffffff15; border-radius: 14px; }
+.timeline-session-dialog .custom-route-metrics span, .timeline-session-dialog .custom-route-metrics small { font-size: 10px; color: #91a6b5; }
+.timeline-session-dialog details { margin-top: 16px; font-size: 12px; line-height: 1.8; }
+.timeline-session-dialog summary { cursor: pointer; padding: 12px 0; }
+.timeline-session-dialog li { margin-bottom: 7px; }
+
+/* Exact all-time hit records, including when the record session is off screen. */
+.bulls-chart-with-records { grid-template-columns: 44px minmax(0,1fr); }
+.bulls-record-guides { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.bulls-record-guide { position: absolute; left: 0; right: 0; height: 0; }
+.bulls-record-guide > i { position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed currentColor; opacity: .65; }
+.bulls-record-guide > i.is-shared { height: 1px; border: 0; opacity: .85; background: repeating-linear-gradient(90deg,#8be8b7 0 6px,transparent 6px 9px,#f18a96 9px 15px,transparent 15px 18px); }
+.bulls-record-axis-value { position: absolute; right: calc(100% + 12px); top: 0; transform: translateY(-50%); min-width: 25px; text-align: right; font-size: 11px; line-height: 18px; font-weight: 650; font-variant-numeric: tabular-nums; text-shadow: 0 0 8px currentColor; }
+.bulls-record-leader { position: absolute; right: 0; transform: translateX(-100%); left: -1px; overflow: visible; }
+.bulls-record-leader path { fill: none; stroke: currentColor; stroke-width: 1; opacity: .65; }
+
+/* Per-game controls remain separate from XP and campaign management. */
+.stat-reset-section { margin: 32px 0 12px; padding-top: 20px; border-top: 1px solid #ffffff12; }
+.statistics-screen .stat-reset-open { display: block; width: 100%; min-height: 48px; padding: 12px; border: 1px solid #ef8a9638; border-radius: 14px; background: #ef8a960a; color: #e9a6af; font: inherit; font-size: 12px; cursor: pointer; }
+.stat-reset-section > p { color: #91a6b5; font-size: 11px; line-height: 1.7; }
+.stat-reset-dialog > p { color: #adbecb; font-size: 13px; line-height: 1.7; }
+.bulls-session-dialog > .stat-reset-confirm { border-color: #ef8a9655; background: #ef8a961c; color: #ffb9c1; }
+.stat-reset-dialog button:disabled { opacity: .4; cursor: wait; }
+.training-friend-panel { margin: 22px 0; padding: 16px; border: 1px solid #91bafa20; border-radius: 18px; background: #91bafa05; }
+.custom-training .training-friend-panel h2 { margin: 0 0 15px; font-size: 11px; color: #a4b8c8; letter-spacing: .8px; }
+.training-friend-panel .custom-select-label { margin: 16px 0 8px; }
+.training-friend-panel p, .training-compare-guest { font-size: 11px; }
+.training-sharing-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 1.5; color: #afc0cd; min-height: 44px; cursor: pointer; }
+.training-sharing-toggle input { flex-shrink: 0; width: 24px; height: 24px; accent-color: #8be8b7; margin: 10px 0 10px 10px; }
+.timeline-friend-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 1; filter: drop-shadow(0 0 2px #091119); }
+.timeline-friend-summary { padding: 0 5px; color: #a6bac9; }
+.timeline-friend-summary p { font-size: 11px; line-height: 1.7; }
+.timeline-friend-summary details { font-size: 12px; border-bottom: 1px solid #ffffff12; }
+.timeline-friend-summary summary { min-height: 44px; padding: 12px 0; cursor: pointer; }
+.timeline-friend-summary article { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #ffffff0a; }
+.timeline-friend-summary time { font-size: 10px; color: #8ca3b4; }
+.timeline-friend-summary article span { font-size: 12px; line-height: 1.6; }
+
+/* Sharing belongs to the game title; comparison is a slim chart toolbar. */
+.statistics-screen.custom-training > .training-page-header > div { flex: 1; min-width: 0; }
+.statistics-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 14px; }
+.statistics-title-row > h1 { flex: 1 1 165px; min-width: 0; }
+.statistics-sharing { flex: 0 1 auto; min-width: 0; }
+.statistics-sharing-toggle { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 44px; color: #9cb5c4; font-size: 10px; line-height: 1.4; cursor: pointer; }
+.statistics-sharing-toggle input { width: 21px; height: 21px; flex-shrink: 0; margin: 0; accent-color: #8be8b7; cursor: pointer; }
+.statistics-sharing-toggle:has(input:checked) { color: #a9dfc2; }
+.statistics-sharing-error { display: block; max-width: 230px; font-size: 10px; color: #f1a7b1; line-height: 1.5; }
+.training-timeline-module { margin: 24px 0; }
+.training-timeline-module > .bulls-progress { margin-top: 0; }
+.training-timeline-module .training-friend-panel { margin: 0; padding: 12px 16px 0; border: 1px solid #d0e1ee14; border-bottom: 0; border-radius: 22px 22px 0 0; background: #15202a; }
+.training-timeline-module .training-friend-panel .custom-select-label { display: flex; align-items: center; gap: 12px; margin: 0; min-height: 44px; font-size: 9px; }
+.training-timeline-module .training-friend-panel select { flex: 1; min-width: 0; min-height: 42px; padding: 9px 30px 9px 12px; border-radius: 12px; background: #ffffff04; font-size: 12px; }
+.training-timeline-module .training-friend-panel p { margin: 8px 0 0; font-size: 10px; line-height: 1.5; }
+.training-timeline-module.has-friend-tools .bulls-chart-card { border-top: 0; border-radius: 0 0 22px 22px; padding-top: 16px; background: linear-gradient(145deg,#15202a,#101820); }
+.training-timeline-module.has-friend-tools > p[role='status'] { margin: 0; padding: 10px 16px; border-inline: 1px solid #d0e1ee14; background: #15202a; font-size: 11px; }
+@media(max-width:350px) { .statistics-sharing-toggle { font-size: 9px; } .training-timeline-module .training-friend-panel { padding-inline: 12px; } }
+.statistics-title-row > h1 { flex-basis: 170px; }
+.statistics-sharing-toggle > span { font-size: 10px; font-weight: 500; letter-spacing: 0; line-height: 1.4; color: inherit; }
+
+/* A native dialog shell keeps the friend list dark on every browser and phone. */
+.training-friend-toolbar { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.training-friend-toolbar > span { color: #8fa4b2; font-size: 9px; letter-spacing: 1px; }
+.training-friend-picker { flex: 1; min-width: 0; }
+.custom-training .training-friend-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #ffffff13; border-radius: 12px; background: #1a2833; color: #e6edf3; text-align: left; font-size: 12px; font-weight: 500; }
+.training-friend-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.training-friend-trigger svg { flex-shrink: 0; width: 18px; height: 18px; fill: none; stroke: #9db4c4; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.training-friend-dialog { position: fixed; inset: auto 0 12px; box-sizing: border-box; width: min(440px,calc(100vw - 24px)); max-height: min(80dvh,620px); margin: auto; padding: 22px 16px max(16px,env(safe-area-inset-bottom)); border: 1px solid #b0cadc26; border-radius: 24px; background: linear-gradient(150deg,#1b2a36,#111b24); color: #edf3f7; font-family: Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color-scheme: dark; box-shadow: 0 24px 80px #0009; overflow: auto; }
+.training-friend-dialog::backdrop { background: #03070dc9; backdrop-filter: blur(7px); }
+.training-friend-dialog header > span { color: #8fa9bb; font-size: 9px; font-weight: 600; letter-spacing: 1.2px; }
+.custom-training .training-friend-dialog h2 { margin: 9px 0; color: #edf3f7; font-size: 22px; }
+.custom-training .training-friend-dialog p { margin: 8px 0 16px; color: #95adbe; font-size: 12px; line-height: 1.6; }
+.training-friend-options { display: grid; gap: 6px; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #415968 transparent; }
+.custom-training .training-friend-options > button { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 12px 14px; border: 1px solid #ffffff09; border-radius: 13px; background: #192732; color: #e2edf5; text-align: left; font-size: 14px; font-weight: 500; }
+.training-friend-options button > span { min-width: 0; overflow-wrap: anywhere; }
+.training-friend-options i { display: grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; border: 1px solid #8fa9bb44; border-radius: 50%; font-size: 12px; font-style: normal; }
+.custom-training .training-friend-options button[aria-pressed='true'] { border-color: #8be8b744; background: #8be8b713; color: #b6efd0; }
+.training-friend-options button[aria-pressed='true'] i { border-color: #8be8b766; color: #8be8b7; }
+.custom-training .training-friend-close { width: 100%; min-height: 48px; margin-top: 15px; background: #253440; border-color: #b0cadc20; color: #c4d4df; font-size: 11px; letter-spacing: .5px; }
+.training-friend-options:focus-visible, .training-friend-dialog:focus-visible { outline: 2px solid #8be8b766; outline-offset: 3px; }
