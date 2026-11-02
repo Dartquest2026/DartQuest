@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { acceptsTrainingCode } from '../training/freeTrainingSession'
 import logo from '../../assets/dartquest-logo.png'
 import { loginProfile, registerProfile, requestPasswordRecovery } from './profileStorage'
 import { isValidEmail, normalizeEmail } from './passwordRecovery'
@@ -6,7 +7,7 @@ import './AuthScreen.css'
 
 const RECOVERY_SENT_MESSAGE = 'Wenn zu dieser E-Mail-Adresse ein Konto existiert, haben wir dir einen Link zum Zurücksetzen des Passworts gesendet.'
 
-function AuthScreen({ onAuthenticated, initialMessage = '' }) {
+function AuthScreen({ onAuthenticated, onTraining, initialMessage = '' }) {
   const [mode, setMode] = useState('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -59,6 +60,10 @@ function AuthScreen({ onAuthenticated, initialMessage = '' }) {
     setError('')
     setMessage('')
 
+    if (mode === 'training') {
+      if (!acceptsTrainingCode(password)) { setError('Der Trainingscode ist nicht richtig.'); return }
+      setPassword(''); onTraining(); return
+    }
     if (mode === 'forgot') {
       await requestReset()
       return
@@ -109,6 +114,8 @@ function AuthScreen({ onAuthenticated, initialMessage = '' }) {
   }
 
   function returnToLogin() {
+    setPassword('')
+    setRepeatPassword('')
     setMode('login')
     setError('')
     setMessage('')
@@ -118,13 +125,14 @@ function AuthScreen({ onAuthenticated, initialMessage = '' }) {
     <main className="auth-screen">
       <section className="auth-panel">
         <img className="auth-logo" src={logo} alt="DartQuest" />
-        <p className="auth-eyebrow">DARTQUEST ACCOUNT</p>
-        <h1>{mode === 'register' ? 'Profil erstellen' : mode === 'forgot' ? 'Passwort vergessen?' : 'Willkommen zurück'}</h1>
-        <p className="auth-intro">{mode === 'register' ? 'Erstelle deinen DartQuest-Account.' : mode === 'forgot' ? 'Gib deine E-Mail-Adresse ein. Wir senden dir einen sicheren Link.' : 'Melde dich mit deinem DartQuest-Account an.'}</p>
+        <div className="auth-access-tabs" aria-label="Zugang wählen"><button type="button" aria-pressed={mode !== 'training'} onClick={returnToLogin}>Anmelden</button><button type="button" aria-pressed={mode === 'training'} onClick={() => {setMode('training');setPassword('');setError('');setMessage('')}}>Training</button></div>
+        <p className="auth-eyebrow">{mode === 'training' ? 'FREIES TRAINING' : 'DARTQUEST ACCOUNT'}</p>
+        <h1>{mode === 'training' ? 'Training' : mode === 'register' ? 'Profil erstellen' : mode === 'forgot' ? 'Passwort vergessen?' : 'Willkommen zurück'}</h1>
+        <p className="auth-intro">{mode === 'training' ? 'Trainiere ohne Account. Ergebnisse bleiben mit Datum und Uhrzeit auf diesem Gerät.' : mode === 'register' ? 'Erstelle deinen DartQuest-Account.' : mode === 'forgot' ? 'Gib deine E-Mail-Adresse ein. Wir senden dir einen sicheren Link.' : 'Melde dich mit deinem DartQuest-Account an.'}</p>
 
         <form onSubmit={submit}>
           {mode === 'register' && <label>Profilname<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="nickname" required /></label>}
-          <label>
+          {mode !== 'training' && <label>
             E-Mail
             <span className="auth-email-input">
               <input
@@ -142,8 +150,8 @@ function AuthScreen({ onAuthenticated, initialMessage = '' }) {
               />
               <button type="button" onClick={insertAtSign} aria-label="@-Zeichen einfügen">@</button>
             </span>
-          </label>
-          {mode !== 'forgot' && <label>Passwort<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /></label>}
+          </label>}
+          {mode !== 'forgot' && <label>{mode === 'training' ? 'Trainingscode' : 'Passwort'}<input inputMode={mode === 'training' ? 'numeric' : undefined} maxLength={mode === 'training' ? 4 : undefined} type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /></label>}
           {mode === 'login' && (
             <button className="auth-forgot" type="button" onClick={openForgotPassword} disabled={busy}>
               Passwort vergessen?
@@ -152,17 +160,17 @@ function AuthScreen({ onAuthenticated, initialMessage = '' }) {
           {mode === 'register' && <label>Passwort wiederholen<input type="password" value={repeatPassword} onChange={(event) => setRepeatPassword(event.target.value)} autoComplete="new-password" required /></label>}
           {error && <p className="auth-error" role="alert" aria-live="assertive">{error}</p>}
           {message && <p className="auth-success" role="status" aria-live="polite">{message}</p>}
-          <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'BITTE WARTEN …' : mode === 'register' ? 'PROFIL ERSTELLEN' : mode === 'forgot' ? 'RESET-LINK SENDEN' : 'ANMELDEN'}</button>
+          <button className="auth-primary" type="submit" disabled={busy}>{busy ? 'BITTE WARTEN …' : mode === 'training' ? 'TRAINING ÖFFNEN' : mode === 'register' ? 'PROFIL ERSTELLEN' : mode === 'forgot' ? 'RESET-LINK SENDEN' : 'ANMELDEN'}</button>
         </form>
 
-        {mode === 'forgot' ? (
+        {mode === 'training' ? null : mode === 'forgot' ? (
           <button className="auth-secondary" type="button" onClick={returnToLogin}>ZURÜCK ZUR ANMELDUNG</button>
         ) : (
           <button className="auth-secondary" type="button" onClick={switchMode}>
             {mode === 'login' ? 'NEUES PROFIL ANLEGEN' : 'BESTEHENDES PROFIL ANMELDEN'}
           </button>
         )}
-        <small className="auth-note">Online-Account über Supabase Auth.</small>
+        <small className="auth-note">{mode === 'training' ? 'Keine Cloud-Speicherung · Kein Freundesvergleich' : 'Online-Account über Supabase Auth.'}</small>
       </section>
     </main>
   )

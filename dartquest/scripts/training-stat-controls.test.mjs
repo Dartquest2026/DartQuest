@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import { friendMetricRecords } from '../src/features/training/timelineComparison.js'
-const source=readFileSync(new URL('../src/features/training/trainingStatControls.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','')
+const source=readFileSync(new URL('../src/features/training/trainingStatControls.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','').replaceAll('trainingStorage()', 'localStorage')
 function fixture({error=null,markers=[]}={}){
  const values=new Map(),calls=[]
  const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)}

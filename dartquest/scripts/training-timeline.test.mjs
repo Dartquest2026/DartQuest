@@ -2,14 +2,14 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { trainingTimeline } from '../src/features/training/trainingTimelineData.js'
 const row=(id,game,payload)=>({id:String(id),game,minutes:15,created_at:new Date(Date.UTC(2026,0,id+1)).toISOString(),payload:{game,...payload}})
-test('five single visits score higher but have a shorter combo than a three-visit series',()=>{
+test('T20 chart sums successful first darts independently of points and longest combo',()=>{
  const game='t20-combo'
  const rows=[row(0,game,{entries:Array.from({length:5},()=>({points:100,count:1}))}),row(1,game,{entries:[{points:240,count:3}]})]
  const {series}=trainingTimeline(rows,game)
- assert.deepEqual(series.map(s=>s.value(rows[0])),[500,1])
- assert.deepEqual(series.map(s=>s.value(rows[1])),[240,3])
+ assert.deepEqual(series.map(s=>s.value(rows[0])),[5,1])
+ assert.deepEqual(series.map(s=>s.value(rows[1])),[3,3])
  assert.deepEqual(series.map(s=>s.record.id),['0','1'])
- assert.deepEqual(series.map(s=>s.maximum),[500,3])
+ assert.deepEqual(series.map(s=>s.maximum),[5,3])
 })
 test('both triple games and favorite double use their actual stored series',()=>{
  for(const game of ['triple-20-19-18-combo','favorite-double']){
@@ -37,7 +37,7 @@ test('ten chronological units retain older records and scale anchors without mut
  const game='t20-combo',rows=Array.from({length:15},(_,i)=>row(i,game,{entries:[{points:i===0?1000:100,count:i===0?10:1}]})).reverse()
  const {recent,series}=trainingTimeline(rows,game)
  assert.deepEqual(recent.map(r=>r.id),Array.from({length:10},(_,i)=>String(i+5)))
- assert.equal(series[0].record.id,'0');assert.equal(series[0].maximum,1000);assert.equal(rows[0].id,'14')
+ assert.equal(series[0].record.id,'0');assert.equal(series[0].maximum,10);assert.equal(rows[0].id,'14')
 })
 test('empty and zero histories have finite positive scales and zero remains a valid clock record',()=>{
  const game='around-the-clock'
@@ -64,4 +64,14 @@ test('favorite and route chart records expose readable target and streak or accu
  const series=trainingTimeline([route],'double-route',[16,8,4]).series
  assert.equal(series[0].detail(route),'D16 → D8 → D4 · 1 Treffer / 2 Würfe · 50,0 %')
  assert.equal(series[1].detail(route),'D16 → D8 → D4 · 0 Treffer / 1 Wurf · 0,0 %')
+})
+
+test('T20 counts ten singles as ten, a three-combo as three and mixed combos by their sum',()=>{
+ const game='t20-combo'
+ const rows=[row(0,game,{entries:Array.from({length:10},()=>({points:100,count:1}))}),row(1,game,{entries:[{points:180,count:3}]}),row(2,game,{entries:[{points:180,count:2},{points:240,count:3},{points:60,count:1}]}),row(3,game,{entries:[]})]
+ const {series}=trainingTimeline(rows,game)
+ assert.equal(series[0].label,'T20 beim ersten Wurf')
+ assert.deepEqual(rows.map(r=>series[0].value(r)),[10,3,6,0])
+ assert.deepEqual(rows.map(r=>series[1].value(r)),[1,3,3,0])
+ assert.equal(series[0].record.id,'0')
 })

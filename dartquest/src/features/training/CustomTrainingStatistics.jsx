@@ -12,7 +12,7 @@ import { loadCustomHistory, localCustomHistory } from './customTrainingStorage'
 import CustomTrainingDetails, { RouteBreakdown, RouteSelector } from './CustomTrainingDetails'
 import './CustomTraining.css'
 
-export default function CustomTrainingStatistics({ activeProfile, initialGame, initialMinutes = 15, initialRoute = DEFAULT_ROUTE, initialIncludeBull = false, onBack }) {
+export default function CustomTrainingStatistics({ activeProfile, freeTraining = false, initialGame, initialMinutes = 15, initialRoute = DEFAULT_ROUTE, initialIncludeBull = false, onBack }) {
   const [game, setGame] = useState(initialGame ?? null)
   const [minutes, setMinutes] = useState(initialMinutes)
   const [route, setRoute] = useState(initialRoute)
@@ -39,7 +39,7 @@ export default function CustomTrainingStatistics({ activeProfile, initialGame, i
       {game === 'double-route' && <RouteSelector value={route} onChange={setRoute}/>}
       {isAroundClock(game) ? <><h2>BESTLEISTUNGEN · {aroundVariant(includeBull)}</h2><div className="statistics-grid"><div><span>WENIGSTE FEHLWÜRFE</span><strong>{clockBest.misses ?? '–'}</strong></div><div><span>SCHNELLSTE ZEIT</span><strong>{clockBest.elapsedMs === null ? '–' : formatElapsed(clockBest.elapsedMs)}</strong></div><div><span>DURCHLÄUFE</span><strong>{rows.length}</strong></div></div></> : game === 'favorite-double' ? <><h2>BESTLEISTUNGEN · {minutes} MINUTEN</h2><div className="statistics-grid">{favoriteBest.map(metric=><div key={metric.id}><span>{metric.label.toUpperCase()}</span><strong>{metric.record ? metric.format(metric.value(metric.record)) : 0}</strong>{metric.record && metric.detail && <small className="record-double-context">{metric.detail(metric.record)}</small>}</div>)}</div></> : <><h2>BESTLEISTUNGEN · {minutes} MINUTEN</h2><div className="statistics-grid"><div><span>{game === 'double-route' ? 'MEISTE TREFFER' : 'GESAMTPUNKTE'}</span><strong>{best.points}</strong></div>{isSeriesGame(game) && <><div><span>LÄNGSTE SERIE</span><strong>{best.longest}{game === 'favorite-double' ? ' Treffer' : ''}</strong></div><div><span>BESTE SERIENPUNKTE</span><strong>{best.bestSeries}</strong></div></>}</div></>}
 
-      <div className={`training-timeline-module${activeProfile?.id ? ' has-friend-tools' : ''}`}><TrainingFriendComparison key={`${activeProfile?.id}-${game}`} userId={activeProfile?.id} game={game} onComparison={setComparison}/>
+      <div className={`training-timeline-module${activeProfile?.id ? ' has-friend-tools' : ''}`}>{!freeTraining && <TrainingFriendComparison key={`${activeProfile?.id}-${game}`} userId={activeProfile?.id} game={game} onComparison={setComparison}/>}
       {compareName && !compareRows.length && <p role="status">{compareName}: Keine Ergebnisse für diese Spieldauer oder Variante.</p>}
       {game === 'bulls-warm-up' && <BullsHistoryChart key={minutes} rows={rows} minutes={minutes} compareRows={compareRows} compareName={compareName}/>}
       {game !== 'bulls-warm-up' && <TrainingTimeline key={`${game}-${minutes}-${route.join('-')}-${includeBull}`} rows={rows} game={game} minutes={minutes} route={route} includeBull={includeBull} compareRows={compareRows} compareName={compareName}/>}</div>

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 
-const source = readFileSync(new URL('../src/features/training/customTrainingStorage.js', import.meta.url), 'utf8').replace(/^import .*\r?\n/gm, '').replaceAll('export ', '')
+const source = readFileSync(new URL('../src/features/training/customTrainingStorage.js', import.meta.url), 'utf8').replace(/^import .*\r?\n/gm, '').replaceAll('export ', '').replaceAll('trainingStorage()', 'localStorage')
 function fixture(offset, minutes) {
   let serverNow = 1800000000000
   const values = new Map()

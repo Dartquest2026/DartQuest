@@ -1,3 +1,4 @@
+import { normalizeTrainingName } from './freeTrainingSession'
 import useCountdownAudio from './useCountdownAudio'
 import BullCounter from './BullCounter'
 import { unlockTrainingAudio } from './trainingAudio'
@@ -21,8 +22,9 @@ function Clock({ run, seconds }) {
   </div>
 }
 
-export default function CustomTraining({ activeProfile, onBack }) {
+export default function CustomTraining({ activeProfile, onBack, freeTraining = false }) {
   const userId = activeProfile?.id
+  const [trainingName, setTrainingName] = useState('')
   const [plan, setPlan] = useState([]), [editing, setEditing] = useState(null), [duration, setDuration] = useState(15)
   const [prepared, setPrepared] = useState(null)
   const [selectedRoute, setSelectedRoute] = useState(DEFAULT_ROUTE)
@@ -67,14 +69,14 @@ export default function CustomTraining({ activeProfile, onBack }) {
     }
   }, [seconds, run])
   useEffect(() => {
-    if (run?.phase !== 'saving' || finishing.current) return
+    if (run?.phase !== 'saving' || finishing.current || (freeTraining && !run.nameConfirmed)) return
     finishing.current = true
     setError('')
     completeCustomRun(userId, run).then(result => {
       setHistory(rows => [result, ...rows.filter(r => r.id !== result.id)])
       setRun(r => ({ ...r, ...(isAroundClock(r.game) ? result.payload : {}), phase: 'result' }))
     }).catch(e => setError(e.message)).finally(() => { finishing.current = false })
-  }, [run?.phase, run?.id, retry, userId])
+  }, [run?.phase, run?.id, run?.nameConfirmed, retry, userId, freeTraining])
 
   async function start(queue, index = 0) {
     if (busy) return
@@ -156,7 +158,8 @@ export default function CustomTraining({ activeProfile, onBack }) {
     event.currentTarget.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1)' }], { duration: 220 })
     triggerHaptic(hit ? 'success' : 'light'); setRun(next)
   }
-  if (statsGame) return <CustomTrainingStatistics activeProfile={activeProfile} initialGame={statsGame} initialMinutes={15} initialRoute={prepared?.queue[prepared.index]?.route ?? run?.route ?? DEFAULT_ROUTE} initialIncludeBull={prepared?.queue[prepared.index]?.includeBull ?? run?.includeBull ?? false} onBack={() => setStatsGame(null)}/>
+  if (freeTraining && run?.phase === 'saving' && !run.nameConfirmed) return <main className="custom-training training-builder"><section className="free-training-name"><span className="bulls-eyebrow">TRAINING ABGESCHLOSSEN</span><h1>Wer hat trainiert?</h1><p>Dein Name ist freiwillig. Das Ergebnis bleibt mit Datum und Uhrzeit auf diesem Gerät sichtbar.</p><form onSubmit={event => {event.preventDefault();setRun(r=>({...r,trainingName:normalizeTrainingName(trainingName),nameConfirmed:true}))}}><label htmlFor="training-player-name">Name (optional)</label><input id="training-player-name" autoComplete="nickname" maxLength={40} value={trainingName} onChange={event=>setTrainingName(event.target.value)} placeholder="Dein Name"/><button className="training-start-button" type="submit">ERGEBNIS SPEICHERN</button><button type="button" onClick={()=>setRun(r=>({...r,trainingName:'',nameConfirmed:true}))}>ÜBERSPRINGEN</button></form></section></main>
+  if (statsGame) return <CustomTrainingStatistics freeTraining={freeTraining} activeProfile={activeProfile} initialGame={statsGame} initialMinutes={15} initialRoute={prepared?.queue[prepared.index]?.route ?? run?.route ?? DEFAULT_ROUTE} initialIncludeBull={prepared?.queue[prepared.index]?.includeBull ?? run?.includeBull ?? false} onBack={() => setStatsGame(null)}/>
   if (prepared) {
     const next = prepared.queue[prepared.index]
     const nextGame = CUSTOM_GAMES.find(g => g.id === next.id)
@@ -169,7 +172,7 @@ export default function CustomTraining({ activeProfile, onBack }) {
       {savedRun && <button className="training-resume-button" onClick={() => { unlockTrainingAudio(); setRun(savedRun); setNow(Date.now()) }}>TRAINING FORTSETZEN</button>}
       <section className="training-category"><h2>SPIELE HINZUFÜGEN</h2>{CUSTOM_GAMES.map(g => <article key={g.id}><button className="training-template-toggle" onClick={() => { setEditing({ game: g, index: null }); setDuration(15); setSelectedRoute(DEFAULT_ROUTE); setSelectedFavoriteDouble(16); setIncludeBull(false) }}><i className="custom-game-icon"><TrainingIcon game={g.id}/></i><span><strong>{g.title}</strong><small>{g.description}</small></span><b className="custom-game-add" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 12h14M12 5v14"/></svg></b></button><button className="custom-game-statistics" title={`Statistik: ${g.title}`} aria-label={`Statistik: ${g.title}`} onClick={() => setStatsGame(g.id)}><TrainingIcon chart/></button></article>)}</section>
       {plan.length > 0 && <section className="custom-plan"><h2>DEIN TRAININGSPLAN</h2>{plan.map((p, i) => <article key={i}><span className="custom-plan-number" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span><strong>{CUSTOM_GAMES.find(g => g.id === p.id)?.title} · {isAroundClock(p.id) ? aroundVariant(p.includeBull) : `${p.minutes} Min.`}{p.id === 'double-route' && <small> · {routeLabel(p.route ?? DEFAULT_ROUTE)}</small>}{p.id === 'favorite-double' && <small> · D{p.favoriteDouble ?? 16}</small>}</strong><button onClick={() => { setEditing({ game: CUSTOM_GAMES.find(g => g.id === p.id), index: i }); setDuration(p.minutes); setSelectedRoute(p.route ?? DEFAULT_ROUTE); setSelectedFavoriteDouble(FAVORITE_DOUBLES.includes(p.favoriteDouble) ? p.favoriteDouble : 16); setIncludeBull(Boolean(p.includeBull)) }}>Bearbeiten</button><div className="custom-plan-controls"><button aria-label="Übung nach oben verschieben" disabled={i === 0} onClick={() => movePlan(i, -1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button><button aria-label="Übung nach unten verschieben" disabled={i === plan.length - 1} onClick={() => movePlan(i, 1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6"/></svg></button><button className="custom-plan-remove" aria-label="Übung entfernen" onClick={() => setPlan(list => list.filter((_, j) => i !== j))}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button></div></article>)}</section>}
-      {!userId && <p>Gasttraining: Ergebnisse werden auf diesem Gerät gespeichert.</p>}
+      {!userId && <p>{freeTraining ? 'Freies Training: Abgeschlossene Ergebnisse bleiben mit Datum und Uhrzeit auf diesem Gerät.' : 'Gasttraining: Ergebnisse werden auf diesem Gerät gespeichert.'}</p>}
       <div className="custom-start-dock"><button className="training-start-button" disabled={!plan.length || busy || Boolean(savedRun)} onClick={() => { setPrepared({ queue: [...plan], index: 0 }); setError('') }}>TRAINING STARTEN</button></div>
       {savedRun && <p>Setze dein gespeichertes Training fort oder beende es dort, bevor du ein neues startest.</p>}
     </> : <>
@@ -182,7 +185,7 @@ export default function CustomTraining({ activeProfile, onBack }) {
       </section> : <section className={`custom-play-stage${!isAroundClock(run.game) && seconds <= 60 ? ' is-final-minute' : ''}`}>
         <div className="custom-play-hud"><Clock run={run} seconds={seconds}/><div className="custom-live"><strong>{isAroundClock(run.game) ? `${run.misses} Fehlwürfe` : pointsLabel(current.points)}</strong>{isAroundClock(run.game) && <b>{aroundVariant(run.includeBull)}</b>}{isSeriesGame(run.game) && <span>Längste Serie: {current.longest}{run.game === 'favorite-double' ? ' Treffer' : ' Anwürfe'}</span>}{run.game === 'favorite-double' && <b>D{run.favoriteDouble ?? 16} · {(run.favoriteDouble ?? 16) * 2} Punkte je Treffer</b>}{isSeriesGame(run.game) && run.game !== 'favorite-double' && <small>{run.entries.length} gespeicherte Serien</small>}</div></div>
         {timedFinal && <div className="custom-bulls-final-note custom-timed-final-note" role="status"><strong>ZEIT ABGELAUFEN · LETZTE EINGABE</strong><span>{run.game === 'double-route' ? `${finalUsed} / 3 letzte Pfeile erfasst.` : run.game === 'favorite-double' ? `${finalUsed} / 3 zusätzliche Treffer erfasst. Begonnene Combo noch bestätigen.` : finalUsed ? 'Letzte Combo gespeichert. Du kannst sie noch korrigieren oder fertigstellen.' : 'Trage noch deine letzte Combo mit Punkten und Anzahl ein.'}</span></div>}
-        {run.phase === 'saving' ? <div className="custom-saving"><h2>{error ? 'Ergebnis noch nicht synchronisiert' : 'ERGEBNIS WIRD GESPEICHERT …'}</h2><p>Dein Ergebnis bleibt auf diesem Gerät erhalten.</p>{error && <button onClick={() => setRetry(n => n + 1)}>ERNEUT VERSUCHEN</button>}</div> : <div className="custom-play-inputs">
+        {run.phase === 'saving' ? <div className="custom-saving"><h2>{error ? 'Ergebnis noch nicht synchronisiert' : 'ERGEBNIS WIRD GESPEICHERT …'}</h2><p>{freeTraining ? 'Dein Ergebnis wird im Geräteverlauf gespeichert.' : 'Dein Ergebnis bleibt auf diesem Gerät erhalten.'}</p>{error && <button onClick={() => setRetry(n => n + 1)}>ERNEUT VERSUCHEN</button>}</div> : <div className="custom-play-inputs">
           {isAroundClock(run.game) ? <div className="custom-around-play"><div className="custom-around-count" aria-live="polite"><strong>{run.misses}</strong><span>FEHLWÜRFE</span></div><button className="custom-around-miss" onClick={event => { event.currentTarget.animate?.([{transform:'scale(1)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220}); triggerHaptic('light'); setRun(r => recordAroundMiss(r)) }}><strong>DANEBEN GEWORFEN</strong><span>+1 Fehlwurf</span></button><button className="custom-around-finish" onClick={() => { triggerHaptic('success'); setRun(r => finishAroundClock(r)) }}>SPIEL BEENDET</button><p>Erfolgreiche Treffer nicht eingeben. Beende das Spiel erst nach allen {run.includeBull ? '21' : '20'} Zielen.</p></div> : run.game === 'bulls-warm-up' ? <div className="custom-bulls-layout">{bullFinal && <div className="custom-bulls-final-note" role="status"><strong>ZEIT ABGELAUFEN · LETZTE EINGABE</strong><span>Nur noch die vor Ablauf geworfenen Pfeile: {finalHits} / 3 Treffer nachgetragen.</span></div>}<div className="custom-bulls">{[['doubleBull', 'DOPPELBULL', 50], ['singleBull', 'SINGLE BULL', 25]].map(([field, label, points]) => <section key={field} data-bull={field}><span>{label} · {points}</span><BullCounter value={run[field]}/><div><button disabled={bullFinal ? run[field] <= run.bullsFinalBase[field] : run[field] === 0} aria-label={label + ' minus'} onClick={e => hit(field, -1, e)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><button disabled={bullFinal && finalHits >= 3} aria-label={label + ' plus'} onClick={e => hit(field, 1, e)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button></div></section>)}</div>{bullFinal && <button className="custom-bulls-finish" onClick={() => setRun(r => finishBullsFinalEntry(r))}>FERTIG · ERGEBNIS SPEICHERN</button>}</div> : run.game === 'double-route' ? <div className="custom-route-play">
             <div className="custom-route-order">{(run.route ?? DEFAULT_ROUTE).map((target, index) => <span key={target} className={index === (run.routeThrows ?? []).length % 3 ? 'is-current' : ''}>D{target}</span>)}</div>
             <h2 className="custom-route-target"><span>Dein nächstes Ziel</span><strong>D{(run.route ?? DEFAULT_ROUTE)[(run.routeThrows ?? []).length % 3]}</strong></h2>

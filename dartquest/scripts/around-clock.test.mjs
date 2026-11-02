@@ -47,7 +47,7 @@ test('elapsed time renders zero, five minutes, ten minutes and long runs',()=>{
 })
 test('guest storage starts without a duration, rejects unfinished runs and saves one stable result',async()=>{
  const values=new Map()
- const source=readFileSync(new URL('../src/features/training/customTrainingStorage.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','')
+ const source=readFileSync(new URL('../src/features/training/customTrainingStorage.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','').replaceAll('trainingStorage()', 'localStorage')
  const storage=runInNewContext(source+'\n;({startCustomRun,saveCustomRun,loadCustomRun,completeCustomRun,localCustomHistory})',{crypto:{randomUUID:()=> 'clock-test-id'},Date,localStorage:{getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)}})
  let run=JSON.parse(JSON.stringify(await storage.startCustomRun(null,'around-the-clock',undefined,{includeBull:true})))
  assert.equal(run.minutes,0);assert.equal(run.endAt,null);assert.equal(run.includeBull,true)

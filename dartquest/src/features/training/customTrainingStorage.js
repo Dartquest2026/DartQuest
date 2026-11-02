@@ -1,18 +1,19 @@
+import { trainingStorage } from './freeTrainingSession'
 import { applyTrainingResets } from './trainingStatControls'
 import { supabase } from '../../lib/supabase'
 
 const key = (userId, suffix) => `dartquest-custom-training-${userId ?? 'guest'}-${suffix}`
 function read(userId, suffix, fallback) {
-  try { return JSON.parse(localStorage.getItem(key(userId, suffix))) ?? fallback } catch { return fallback }
+  try { return JSON.parse(trainingStorage().getItem(key(userId, suffix))) ?? fallback } catch { return fallback }
 }
 export const loadCustomRun = userId => read(userId, 'active', null)
-export const saveCustomRun = (userId, run) => localStorage.setItem(key(userId, 'active'), JSON.stringify(run))
-export const clearCustomRun = userId => localStorage.removeItem(key(userId, 'active'))
+export const saveCustomRun = (userId, run) => trainingStorage().setItem(key(userId, 'active'), JSON.stringify(run))
+export const clearCustomRun = userId => trainingStorage().removeItem(key(userId, 'active'))
 export const localCustomHistory = userId => read(userId, 'history', [])
 function storeRecord(userId, record) {
   const rows = [record, ...localCustomHistory(userId).filter(r => r.id !== record.id)]
   rows.sort((a, b) => b.created_at.localeCompare(a.created_at))
-  localStorage.setItem(key(userId, 'history'), JSON.stringify(rows))
+  trainingStorage().setItem(key(userId, 'history'), JSON.stringify(rows))
   return record
 }
 export async function startCustomRun(userId, game, minutes, options = {}) {
@@ -57,6 +58,6 @@ export async function loadCustomHistory(userId) {
   }
   let rows
   try { rows = await applyTrainingResets(userId, 'custom', local, remote) } catch { return { rows: local, offline: true } }
-  localStorage.setItem(key(userId, 'history'), JSON.stringify(rows))
+  trainingStorage().setItem(key(userId, 'history'), JSON.stringify(rows))
   return { rows, offline: false }
 }

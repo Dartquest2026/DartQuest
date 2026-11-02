@@ -12,6 +12,10 @@ export function timelineSeries(game, route = DEFAULT_ROUTE) {
     { id:'combo-points', label:'Größte Combo · Punkte', color:'#91bafa', value:row=>Math.max(0,...(row.payload.entries??[]).filter(entry=>entry.count>=2).map(entry=>number(entry.points))), format:count, detail:row=>favoriteComboContext(run(row)) },
   ]
   if (game === 'double-route') return route.map((target,index) => ({ id: `double-${target}`, label: `D${target}`, color: ['#8be8b7','#91bafa','#edc389'][index], value: row => routeMetrics(run(row)).find(r => r.target === target)?.hits ?? 0, format: count, detail:row=>{const metric=routeMetrics(run(row)).find(r=>r.target===target);return `${routeLabel(row.payload.route??route)} · ${metric?.hits??0} Treffer / ${metric?.attempts??0} ${metric?.attempts===1?'Wurf':'Würfe'} · ${metric?.attempts ? (metric.hits/metric.attempts*100).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}) : '0'} %`} }))
+  if (game === 't20-combo') return [
+    { id: 't20-hits', label: 'T20 beim ersten Wurf', color: '#8be8b7', value: row => (row.payload.entries ?? []).reduce((total, entry) => total + number(entry.count), 0), format: count },
+    { id: 'longest', label: 'Längste Combo', color: '#91bafa', value: row => summary(run(row)).longest, format: count },
+  ]
   return [
     { id: 'points', label: 'Gesamtpunkte', color: '#8be8b7', value: row => summary(run(row)).points, format: count },
     { id: 'longest', label:'Längste Combo', color: '#91bafa', value: row => summary(run(row)).longest, format: count },

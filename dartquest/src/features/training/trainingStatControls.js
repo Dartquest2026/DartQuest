@@ -1,8 +1,9 @@
+import { trainingStorage } from './freeTrainingSession'
 import { supabase } from '../../lib/supabase'
 const markerKey = userId => `dartquest-training-reset-markers-${userId ?? 'guest'}`
 const customKey = userId => `dartquest-custom-training-${userId ?? 'guest'}-history`
 const standardKey = userId => `dartquest-training-sessions-${userId ?? 'guest'}`
-function read(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback } }
+function read(key, fallback) { try { return JSON.parse(trainingStorage().getItem(key)) ?? fallback } catch { return fallback } }
 const gameOf = (row, category) => category === 'custom' ? row.game : row.plan?.[0]?.id
 export async function applyTrainingResets(userId, category, local, remote) {
   const { data, error } = await supabase.from('training_stat_resets').select('game,reset_at').eq('user_id',userId).eq('category',category)
@@ -15,7 +16,7 @@ export async function applyTrainingResets(userId, category, local, remote) {
   })
   const safeRemote = remote.filter(row => !resets.get(gameOf(row,category)) || Date.parse(row.created_at) > resets.get(gameOf(row,category)))
   resets.forEach((time,game) => { seen[`${category}:${game}`] = time })
-  localStorage.setItem(markerKey(userId), JSON.stringify(seen))
+  trainingStorage().setItem(markerKey(userId), JSON.stringify(seen))
   return [...new Map([...safeLocal,...safeRemote].map(row => [row.id,row])).values()].sort((a,b) => b.created_at.localeCompare(a.created_at))
 }
 export async function resetTrainingStatistics(userId, category, game) {
@@ -26,10 +27,10 @@ export async function resetTrainingStatistics(userId, category, game) {
     resetAt = data
   }
   const key = category === 'custom' ? customKey(userId) : standardKey(userId)
-  localStorage.setItem(key,JSON.stringify(read(key,[]).filter(row => gameOf(row,category) !== game)))
+  trainingStorage().setItem(key,JSON.stringify(read(key,[]).filter(row => gameOf(row,category) !== game)))
   const seen = read(markerKey(userId),{})
   seen[`${category}:${game}`] = Date.parse(resetAt)
-  localStorage.setItem(markerKey(userId),JSON.stringify(seen))
+  trainingStorage().setItem(markerKey(userId),JSON.stringify(seen))
   window.dispatchEvent(new Event('dartquest-training-statistics-reset'))
 }
 export async function loadTrainingSharing(userId, game) {

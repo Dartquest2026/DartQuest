@@ -39,7 +39,7 @@ test('older pending points input is preserved as a combo on resume', () => {
 })
 test('plan-selected double and pending combo survive storage and guest completion', async () => {
   const values = new Map()
-  const source = readFileSync(new URL('../src/features/training/customTrainingStorage.js', import.meta.url), 'utf8').replace(/^import .*\r?\n/gm, '').replaceAll('export ', '')
+  const source = readFileSync(new URL('../src/features/training/customTrainingStorage.js', import.meta.url), 'utf8').replace(/^import .*\r?\n/gm, '').replaceAll('export ', '').replaceAll('trainingStorage()', 'localStorage')
   const storage = runInNewContext(source + '\n;({startCustomRun,saveCustomRun,loadCustomRun,completeCustomRun,localCustomHistory})', {
     crypto: { randomUUID: () => 'test-favorite-session' }, Date,
     localStorage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) },

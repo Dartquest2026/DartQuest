@@ -1,3 +1,5 @@
+import CustomTraining from '../features/training/CustomTraining'
+import { beginFreeTraining, endFreeTraining } from '../features/training/freeTrainingSession'
 import { useCallback, useEffect, useState } from 'react'
 
 import Home from '../features/home/Home'
@@ -75,6 +77,13 @@ const soloDifficulties = [
 ]
 
 function App() {
+  const [freeTraining, setFreeTraining] = useState(false)
+  function leaveFreeTraining() { endFreeTraining(); setFreeTraining(false) }
+  useEffect(() => {
+    const leave = () => { endFreeTraining(); setFreeTraining(false) }
+    window.addEventListener('pagehide', leave)
+    return () => window.removeEventListener('pagehide', leave)
+  }, [])
   const [recoveryRoute, setRecoveryRoute] = useState(
     () => window.location.pathname === PASSWORD_RESET_PATH,
   )
@@ -251,7 +260,7 @@ function App() {
 
     initialProfile
       .then((profile) => {
-        if (mounted) setActiveProfile(profile)
+        if (mounted) { if (profile) { endFreeTraining(); setFreeTraining(false) } setActiveProfile(profile) }
       })
       .catch((error) => {
         if (mounted) setAuthError(error.message)
@@ -273,6 +282,7 @@ function App() {
         setAuthLoading(false)
         return
       }
+      if (profile) { endFreeTraining(); setFreeTraining(false) }
       setActiveProfile(profile)
       setAuthError(error?.message ?? '')
       setAuthLoading(false)
@@ -401,10 +411,13 @@ function App() {
     return <main className="auth-screen"><p>Profil wird geladen …</p></main>
   }
 
+  if (!activeProfile && freeTraining) {
+    return <div className="app-shell free-training-shell"><CustomTraining freeTraining onBack={leaveFreeTraining}/></div>
+  }
   if (!activeProfile) {
     return (
       <>
-        <AuthScreen initialMessage={loginMessage} onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError(''); setLoginMessage('') }} />
+        <AuthScreen onTraining={() => {beginFreeTraining();setFreeTraining(true)}} initialMessage={loginMessage} onAuthenticated={(profile) => { setPendingRequests([]); setActiveProfile(profile); setAuthError(''); setLoginMessage('') }} />
         {authError && <p className="app-auth-error">{authError}</p>}
       </>
     )
