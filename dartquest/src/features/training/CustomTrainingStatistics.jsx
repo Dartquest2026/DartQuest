@@ -1,3 +1,4 @@
+import {trainingTimeline} from './trainingTimelineData'
 import TrainingSharingToggle from './TrainingSharingToggle'
 import StatisticResetButton from './StatisticResetButton'
 import TrainingFriendComparison from './TrainingFriendComparison'
@@ -11,7 +12,7 @@ import { loadCustomHistory, localCustomHistory } from './customTrainingStorage'
 import CustomTrainingDetails, { RouteBreakdown, RouteSelector } from './CustomTrainingDetails'
 import './CustomTraining.css'
 
-export default function CustomTrainingStatistics({ activeProfile, initialGame, initialMinutes = 5, initialRoute = DEFAULT_ROUTE, initialIncludeBull = false, onBack }) {
+export default function CustomTrainingStatistics({ activeProfile, initialGame, initialMinutes = 15, initialRoute = DEFAULT_ROUTE, initialIncludeBull = false, onBack }) {
   const [game, setGame] = useState(initialGame ?? null)
   const [minutes, setMinutes] = useState(initialMinutes)
   const [route, setRoute] = useState(initialRoute)
@@ -26,16 +27,17 @@ export default function CustomTrainingStatistics({ activeProfile, initialGame, i
   const compareName = comparison?.game === game ? comparison.name : ''
   const best = bestResults(rows, game, minutes)
   const clockBest = aroundClockBest(rows, includeBull)
+  const favoriteBest = game === 'favorite-double' ? trainingTimeline(rows,game).series : []
   const favoriteDoubles = game === 'favorite-double' ? Array.from({ length: 20 }, (_, i) => i + 1).map(target => {
     const entries = rows.flatMap(row => row.payload.entries ?? []).filter(entry => entry.double === target)
     return { target, starts: entries.length, hits: entries.reduce((n, entry) => n + entry.count, 0), longest: Math.max(0, ...entries.map(entry => entry.count)) }
   }).filter(row => row.starts) : []
   return <main className="statistics-screen custom-training"><header className="training-page-header"><button onClick={game && !initialGame ? () => setGame(null) : onBack} aria-label="Zurück">‹</button><div><span>ANGEPASSTES TRAINING</span><div className="statistics-title-row"><h1>{CUSTOM_GAMES.find(g => g.id === game)?.title ?? 'Statistik'}</h1>{game && activeProfile?.id && <TrainingSharingToggle key={`${activeProfile.id}-${game}`} userId={activeProfile.id} game={game}/>}</div></div></header>
     {offline && <p role="status">Offline: Gespeicherter Verlauf auf diesem Gerät.</p>}
-    {!game ? <div className="statistics-games">{CUSTOM_GAMES.map(g => <button key={g.id} onClick={() => setGame(g.id)}><strong>{g.title}</strong><small>{history.filter(r => r.game === g.id).length} Durchläufe</small></button>)}</div> : <>
+    {!game ? <div className="statistics-games">{CUSTOM_GAMES.map(g => <button key={g.id} onClick={() => {setGame(g.id);setMinutes(15)}}><strong>{g.title}</strong><small>{history.filter(r => r.game === g.id).length} Durchläufe</small></button>)}</div> : <>
       <>{isAroundClock(game) ? <AroundClockOptions value={includeBull} onChange={setIncludeBull}/> : <div className="training-chips">{DURATIONS.map(m => <button key={m} aria-pressed={m === minutes} onClick={() => setMinutes(m)}>{m} Min.</button>)}</div>}</>
       {game === 'double-route' && <RouteSelector value={route} onChange={setRoute}/>}
-      {isAroundClock(game) ? <><h2>BESTLEISTUNGEN · {aroundVariant(includeBull)}</h2><div className="statistics-grid"><div><span>WENIGSTE FEHLWÜRFE</span><strong>{clockBest.misses ?? '–'}</strong></div><div><span>SCHNELLSTE ZEIT</span><strong>{clockBest.elapsedMs === null ? '–' : formatElapsed(clockBest.elapsedMs)}</strong></div><div><span>DURCHLÄUFE</span><strong>{rows.length}</strong></div></div></> : <><h2>BESTLEISTUNGEN · {minutes} MINUTEN</h2><div className="statistics-grid"><div><span>{game === 'double-route' ? 'MEISTE TREFFER' : 'GESAMTPUNKTE'}</span><strong>{best.points}</strong></div>{isSeriesGame(game) && <><div><span>LÄNGSTE SERIE</span><strong>{best.longest}{game === 'favorite-double' ? ' Treffer' : ''}</strong></div><div><span>BESTE SERIENPUNKTE</span><strong>{best.bestSeries}</strong></div></>}</div></>}
+      {isAroundClock(game) ? <><h2>BESTLEISTUNGEN · {aroundVariant(includeBull)}</h2><div className="statistics-grid"><div><span>WENIGSTE FEHLWÜRFE</span><strong>{clockBest.misses ?? '–'}</strong></div><div><span>SCHNELLSTE ZEIT</span><strong>{clockBest.elapsedMs === null ? '–' : formatElapsed(clockBest.elapsedMs)}</strong></div><div><span>DURCHLÄUFE</span><strong>{rows.length}</strong></div></div></> : game === 'favorite-double' ? <><h2>BESTLEISTUNGEN · {minutes} MINUTEN</h2><div className="statistics-grid">{favoriteBest.map(metric=><div key={metric.id}><span>{metric.label.toUpperCase()}</span><strong>{metric.record ? metric.format(metric.value(metric.record)) : 0}</strong>{metric.record && metric.detail && <small className="record-double-context">{metric.detail(metric.record)}</small>}</div>)}</div></> : <><h2>BESTLEISTUNGEN · {minutes} MINUTEN</h2><div className="statistics-grid"><div><span>{game === 'double-route' ? 'MEISTE TREFFER' : 'GESAMTPUNKTE'}</span><strong>{best.points}</strong></div>{isSeriesGame(game) && <><div><span>LÄNGSTE SERIE</span><strong>{best.longest}{game === 'favorite-double' ? ' Treffer' : ''}</strong></div><div><span>BESTE SERIENPUNKTE</span><strong>{best.bestSeries}</strong></div></>}</div></>}
 
       <div className={`training-timeline-module${activeProfile?.id ? ' has-friend-tools' : ''}`}><TrainingFriendComparison key={`${activeProfile?.id}-${game}`} userId={activeProfile?.id} game={game} onComparison={setComparison}/>
       {compareName && !compareRows.length && <p role="status">{compareName}: Keine Ergebnisse für diese Spieldauer oder Variante.</p>}

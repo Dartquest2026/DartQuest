@@ -1,4 +1,6 @@
-export function recentComparisonRows(rows) {
-  return [...rows].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)||a.id.localeCompare(b.id)).slice(-10)
+export function friendMetricRecords(rows, metrics) {
+  return metrics.map(metric => {
+    const record = rows.reduce((best,row) => !best || (metric.lower ? metric.value(row)<metric.value(best) : metric.value(row)>metric.value(best)) ? row : best, null)
+    return {...metric,record,best:record?metric.value(record):0}
+  })
 }
-export function comparisonColumns(own, friend) { return Math.max(1, Math.min(10,Math.max(own.length,friend.length))) }

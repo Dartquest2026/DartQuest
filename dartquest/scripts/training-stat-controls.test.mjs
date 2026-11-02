@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
-import { comparisonColumns, recentComparisonRows } from '../src/features/training/timelineComparison.js'
+import { friendMetricRecords } from '../src/features/training/timelineComparison.js'
 const source=readFileSync(new URL('../src/features/training/trainingStatControls.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','')
 function fixture({error=null,markers=[]}={}){
  const values=new Map(),calls=[]
@@ -46,14 +46,15 @@ test('comparison filters do not mix durations, Bull variants or double routes',(
  const routes=[{...row('match','double-route'),minutes:15},{...row('other','double-route'),minutes:15,payload:{route:[20,10,5]}}]
  assert.deepEqual(Array.from(f.filterComparisonRows(routes,'double-route',15,[16,8,4],false),r=>r.id),['match'])
 })
-test('friend and own recent histories align at the latest slot without changing their chronological order',()=>{
- const rows=Array.from({length:15},(_,i)=>row(String(i),'t20-combo',new Date(Date.UTC(2026,0,i+1)).toISOString())).reverse()
- assert.deepEqual(recentComparisonRows(rows).map(r=>r.id),Array.from({length:10},(_,i)=>String(i+5)))
- assert.equal(comparisonColumns([1,2],[1,2,3,4]),4);assert.equal(comparisonColumns([],[]),1);assert.equal(comparisonColumns([],rows),10)
-})
 test('profile reset never clears training history or per-game reset markers',async()=>{
  const code=readFileSync(new URL('../src/features/profile/progressReset.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','')
  const localStorage={'dartquest-campaign-progress-singleplayer-a':'campaign','dartquest-custom-training-u-history':'training','dartquest-training-reset-markers-u':'markers',removeItem(key){delete this[key]}}
  const api=runInNewContext(code+'\n;({resetCurrentProfileProgress})',{localStorage,resetProfileProgressFields:async()=>{}})
  await api.resetCurrentProfileProgress('u');assert.equal(localStorage['dartquest-custom-training-u-history'],'training');assert.equal(localStorage['dartquest-training-reset-markers-u'],'markers');assert.equal(localStorage['dartquest-campaign-progress-singleplayer-a'],undefined)
+})
+
+test('friend record bars use all units and keep separate best results per metric',()=>{
+ const metrics=[{id:'single',value:r=>r.single},{id:'double',value:r=>r.double},{id:'misses',value:r=>r.misses,lower:true}]
+ const rows=[{id:'old',single:33,double:5,misses:8},{id:'new',single:10,double:15,misses:2}]
+ assert.deepEqual(friendMetricRecords(rows,metrics).map(m=>[m.record.id,m.best]),[['old',33],['new',15],['new',2]])
 })

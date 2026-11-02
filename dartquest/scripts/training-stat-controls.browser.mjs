@@ -8,7 +8,7 @@ import { chromium } from '@playwright/test'
 const mock = `
 window.qa={resets:[],markers:[],ownSharing:false,friendSharing:true};
 const custom=['bulls-warm-up','t20-combo','triple-20-19-18-combo','favorite-double','double-route','around-the-clock'];
-window.qa.rows=custom.flatMap(game=>Array.from({length:12},(_,i)=>({id:game+i,user_id:'me',game,minutes:game==='around-the-clock'?0:15,status:'completed',created_at:new Date(Date.UTC(2026,9,i+1,19)).toISOString(),payload:{game,entries:[{points:100,count:1,double:16}],route:[16,8,4],routeThrows:[{target:16,hit:true},{target:8,hit:false},{target:4,hit:true}],includeBull:false,misses:i,elapsedMs:(i+1)*60000,singleBull:10+i,doubleBull:5+i}})));
+window.qa.rows=custom.flatMap(game=>Array.from({length:12},(_,i)=>({id:game+i,user_id:'me',game,minutes:game==='around-the-clock'?0:15,status:'completed',created_at:new Date(Date.UTC(2026,9,i+1,19)).toISOString(),payload:{game,entries:game==='favorite-double'?[{points:64,count:2,double:16},{points:64,count:2,double:16}]:[{points:100,count:1,double:16}],route:[16,8,4],routeThrows:[{target:16,hit:true},{target:8,hit:false},{target:4,hit:true}],includeBull:false,misses:i,elapsedMs:(i+1)*60000,singleBull:10+i,doubleBull:5+i}})));
 window.qa.friendRows=window.qa.rows.map(r=>({...r,id:'friend'+r.id,payload:{...r.payload,singleBull:40,doubleBull:20}}));
 window.qa.standard=['201','bull-finisher','random-checkouts'].map(game=>({id:game,user_id:'me',mode:'solo',created_at:'2026-11-01T19:00:00Z',plan:[{id:game}],player_results:[{rawData:{attempts:[]}}]}));
 export const supabase={async rpc(name,args){
@@ -18,7 +18,7 @@ export const supabase={async rpc(name,args){
  return {error:{message:'Unexpected RPC: '+name}};
 },from(table){const filters=[];return {select(){return this},eq(key,value){filters.push([key,value]);return this},order(){return this},range(){return this},limit(){return this},async maybeSingle(){return {data:{enabled:window.qa.ownSharing}}},async upsert(row){window.qa.ownSharing=row.enabled;return {error:null}},then(resolve){let data=table==='training_stat_resets'?window.qa.markers:table==='training_sessions'?window.qa.standard:window.qa.rows;resolve({data:data.filter(row=>filters.every(([key,value])=>row[key]===value)),error:null})}}}};
 `
-const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import Custom from './CustomTrainingStatistics.jsx';import Stats from '../statistics/Statistics.jsx';const root=createRoot(document.getElementById('root'));window.openStats=(game,standard=false)=>root.render(standard?React.createElement(Stats,{key:'standard',activeProfile:{id:'me'},onBack(){}}):React.createElement(Custom,{key:game,activeProfile:{id:'me'},initialGame:game,initialMinutes:15,onBack(){}}));`
+const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import Custom from './CustomTrainingStatistics.jsx';import Stats from '../statistics/Statistics.jsx';import{FavoriteDoubleSelector}from'./CustomTrainingDetails.jsx';const root=createRoot(document.getElementById('root'));window.openFavoriteSetup=()=>root.render(React.createElement('main',{className:'custom-training'},React.createElement(FavoriteDoubleSelector,{value:16,onChange:id=>{window.qa.chosenDouble=id}})));window.openStats=(game,standard=false)=>root.render(standard?React.createElement(Stats,{key:'standard',activeProfile:{id:'me'},onBack(){}}):React.createElement(Custom,{key:game,activeProfile:{id:'me'},initialGame:game,onBack(){}}));`
 const built=await build({configFile:false,logLevel:'silent',define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'statistics-qa',enforce:'pre',resolveId(id){if(id.endsWith('__statistics_qa__.jsx'))return id;if(/(^|\/)lib\/supabase(?:\.js)?$/.test(id))return '\0qa-supabase'},load(id){if(id.endsWith('__statistics_qa__.jsx'))return entry;if(id==='\0qa-supabase')return mock}},react()],build:{write:false,minify:false,lib:{entry:path.resolve('src/features/training/__statistics_qa__.jsx'),name:'QA',formats:['iife']}}})
 const output=(Array.isArray(built)?built[0]:built).output
 const js=output.find(item=>item.type==='chunk').code
@@ -33,6 +33,7 @@ try{
   await page.addScriptTag({content:js})
   for(const game of ['bulls-warm-up','t20-combo','triple-20-19-18-combo','favorite-double','double-route','around-the-clock']){
    await page.evaluate(game=>window.openStats(game),game)
+   if(game!=='around-the-clock')assert.equal(await page.getByRole('button',{name:'15 Min.',exact:true}).getAttribute('aria-pressed'),'true')
    const select=page.getByLabel('FREUND EINBLENDEN')
    await select.waitFor();await page.waitForFunction(()=>!document.querySelector('.training-friend-trigger').disabled)
    assert.equal(await page.getByRole('checkbox').isChecked(),false)
@@ -50,12 +51,26 @@ try{
    await select.click()
    if(process.argv.includes('--picker-preview')&&width===390&&game==='bulls-warm-up')console.log('QA_IMAGE:'+(await page.screenshot({type:'jpeg',quality:40})).toString('base64'))
    await picker.getByRole('button',{name:'Alex',exact:true}).click()
-   await page.locator('.timeline-friend-overlay').waitFor()
+   await page.locator('.friend-record-column').waitFor()
    await select.click()
    assert.equal(await picker.getByRole('button',{name:'Alex',exact:true}).getAttribute('aria-pressed'),'true')
    await picker.getByRole('button',{name:'SCHLIESSEN',exact:true}).click()
-   assert.equal(await page.locator('.timeline-friend-overlay polyline').count(),game==='double-route'?3:2)
+   assert.equal(await page.locator('.friend-record-bars > button').count(),game==='double-route'?3:2)
+   assert.equal(await page.locator('.timeline-friend-overlay').count(),0)
+   if(game==='favorite-double'){
+    await page.locator('.friend-double-balance').getByText('Gespielt: D16',{exact:true}).waitFor()
+    await page.locator('.friend-double-balance').getByText('D16 · 2 Treffer hintereinander',{exact:true}).waitFor()
+    assert.equal(await page.locator('.timeline-record').last().locator('.record-double-context').innerText(),'D16 · 2 Treffer hintereinander')
+   }
+   if(game==='double-route'){
+    await page.locator('.timeline-double-route').getByText('D16 → D8 → D4',{exact:true}).waitFor()
+    assert.ok((await page.locator('.friend-double-balance').innerText()).includes('Treffer /'))
+   }
+   await page.locator('.friend-record-bars > button').first().click()
+   await page.getByRole('dialog').filter({hasText:'Alex · persönliche Bestleistung'}).waitFor()
+   await page.getByRole('button',{name:'SCHLIESSEN',exact:true}).click()
    if(process.argv.includes('--preview')&&width===390&&game==='bulls-warm-up'){await page.evaluate(()=>window.scrollTo(0,0));console.log('QA_IMAGE:'+(await page.screenshot({type:'jpeg',quality:40})).toString('base64'))}
+   if(process.argv.includes('--favorite-chart-preview')&&width===390&&game==='favorite-double')console.log('QA_IMAGE:'+(await page.locator('.bulls-chart-card').screenshot({type:'jpeg',quality:45})).toString('base64'))
    await page.getByRole('checkbox').check();await page.waitForFunction(()=>window.qa.ownSharing===true)
    await page.getByRole('checkbox').uncheck();await page.waitForFunction(()=>window.qa.ownSharing===false)
    const before=await page.evaluate(()=>window.qa.resets.length)
@@ -68,7 +83,7 @@ try{
    await page.waitForFunction(game=>!window.qa.rows.some(r=>r.game===game),game)
    await page.getByRole('status').filter({hasText:'wurde zurückgesetzt'}).waitFor()
    assert.equal(await page.locator('.bulls-chart-column').count(),0)
-   await page.locator('.timeline-friend-overlay').waitFor() // friend's statistics remain
+   await page.locator('.friend-record-column').waitFor() // friend's statistics remain
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
   }
   await page.evaluate(()=>window.openStats(null,true))
@@ -81,8 +96,12 @@ try{
    await page.locator('.training-page-header > button').click()
   }
   assert.equal(await page.evaluate(()=>window.qa.standard.length),0)
+  await page.evaluate(()=>window.openFavoriteSetup())
+  const doubles=page.getByLabel('Favoriten-Doppel auswählen');await doubles.waitFor()
+  assert.deepEqual(await doubles.locator('option').evaluateAll(options=>options.map(o=>Number(o.value))),[20,18,16,12,10,8,6,4,2,1])
+  await doubles.selectOption('20');assert.equal(await page.evaluate(()=>window.qa.chosenDouble),20)
   assert.deepEqual(errors,[])
-  console.log(width+'px: all nine reset controls, cancellation, friend overlays and sharing verified.')
+  console.log(width+'px: all nine reset controls, cancellation, friend record bars and sharing verified.')
   await page.close()
  }
 } finally { await browser.close() }

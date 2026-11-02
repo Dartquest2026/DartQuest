@@ -15,7 +15,7 @@ test('both triple games and favorite double use their actual stored series',()=>
  for(const game of ['triple-20-19-18-combo','favorite-double']){
  const record=row(0,game,{entries:[{points:128,count:4,double:16}]})
  const {series}=trainingTimeline([record],game)
- assert.deepEqual(series.map(s=>s.value(record)),[128,4])
+ assert.deepEqual(series.map(s=>s.value(record)),game==='favorite-double'?[4,128]:[128,4])
  }
 })
 test('clock records minimize misses and time separately while bar height follows magnitude',()=>{
@@ -45,4 +45,23 @@ test('empty and zero histories have finite positive scales and zero remains a va
  const record=row(0,game,{misses:0,elapsedMs:0})
  const {series}=trainingTimeline([record],game)
  assert.ok(series.every(s=>s.maximum===1&&s.value(s.record)===0))
+})
+
+test('favorite double compares total hits with the highest multi-hit combo points, never sums separate combos',()=>{
+ const game='favorite-double',record=row(0,game,{entries:[{count:2,points:64,double:16},{count:2,points:64,double:16}]})
+ const {series}=trainingTimeline([record],game)
+ assert.deepEqual(series.map(s=>s.value(record)),[4,64])
+ const singles=row(1,game,{entries:[{count:1,points:32,double:16},{count:1,points:32,double:16}]})
+ assert.deepEqual(series.map(s=>s.value(singles)),[2,0])
+})
+
+test('favorite and route chart records expose readable target and streak or accuracy context',()=>{
+ const favorite=row(0,'favorite-double',{entries:[{double:16,count:2,points:64},{double:16,count:2,points:64}]})
+ const favoriteSeries=trainingTimeline([favorite],'favorite-double').series
+ assert.equal(favoriteSeries[0].detail(favorite),'Gespielt: D16')
+ assert.equal(favoriteSeries[1].detail(favorite),'D16 · 2 Treffer hintereinander')
+ const route=row(1,'double-route',{route:[16,8,4],routeThrows:[{target:16,hit:true},{target:8,hit:false},{target:4,hit:true},{target:16,hit:false}]})
+ const series=trainingTimeline([route],'double-route',[16,8,4]).series
+ assert.equal(series[0].detail(route),'D16 → D8 → D4 · 1 Treffer / 2 Würfe · 50,0 %')
+ assert.equal(series[1].detail(route),'D16 → D8 → D4 · 0 Treffer / 1 Wurf · 0,0 %')
 })

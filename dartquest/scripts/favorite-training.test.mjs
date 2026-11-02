@@ -62,3 +62,19 @@ test('favorite live totals distinguish single hits and saved combos without coun
  assert.deepEqual(favoriteSessionCounts({entries:[...Array.from({length:5},()=>({count:1})),{count:3},{count:4}],favoriteComboCount:6}),{singles:5,combos:2})
  assert.deepEqual(favoriteSessionCounts({entries:[{count:1},{count:3}].slice(0,-1)}),{singles:1,combos:0})
 })
+
+test('favorite choices are exactly the ten requested doubles without duplicates',async()=>{
+ const {FAVORITE_DOUBLES}=await import('../src/features/training/customTrainingRules.js')
+ assert.deepEqual([...FAVORITE_DOUBLES],[20,18,16,12,10,8,6,4,2,1])
+ assert.equal(new Set(FAVORITE_DOUBLES).size,10)
+})
+test('favorite record context uses the stored double and streak, including mixed historical targets',async()=>{
+ const {favoriteDoubleContext,favoriteComboContext,favoriteBestCombo}=await import('../src/features/training/customTrainingRules.js')
+ const run={entries:[{double:16,count:2,points:64},{double:8,count:4,points:64},{double:20,count:2,points:80}]}
+ assert.equal(favoriteDoubleContext(run),'Gespielt: D16 · D8 · D20')
+ assert.equal(favoriteComboContext(run),'D20 · 2 Treffer hintereinander')
+ assert.equal(favoriteBestCombo(run).points,80)
+ assert.equal(favoriteDoubleContext({entries:[{double:3,count:2,points:12}]}),'Gespielt: D3')
+ assert.equal(favoriteDoubleContext({entries:[]}),'Gespieltes Doppel nicht erfasst')
+ assert.equal(favoriteComboContext({entries:[{double:16,count:1,points:32}]}),'Noch keine Combo ab 2 Treffern')
+})

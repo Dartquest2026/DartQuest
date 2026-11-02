@@ -565,14 +565,6 @@
 .training-friend-panel p, .training-compare-guest { font-size: 11px; }
 .training-sharing-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; line-height: 1.5; color: #afc0cd; min-height: 44px; cursor: pointer; }
 .training-sharing-toggle input { flex-shrink: 0; width: 24px; height: 24px; accent-color: #8be8b7; margin: 10px 0 10px 10px; }
-.timeline-friend-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 1; filter: drop-shadow(0 0 2px #091119); }
-.timeline-friend-summary { padding: 0 5px; color: #a6bac9; }
-.timeline-friend-summary p { font-size: 11px; line-height: 1.7; }
-.timeline-friend-summary details { font-size: 12px; border-bottom: 1px solid #ffffff12; }
-.timeline-friend-summary summary { min-height: 44px; padding: 12px 0; cursor: pointer; }
-.timeline-friend-summary article { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-top: 1px solid #ffffff0a; }
-.timeline-friend-summary time { font-size: 10px; color: #8ca3b4; }
-.timeline-friend-summary article span { font-size: 12px; line-height: 1.6; }
 
 /* Sharing belongs to the game title; comparison is a slim chart toolbar. */
 .statistics-screen.custom-training > .training-page-header > div { flex: 1; min-width: 0; }
@@ -666,3 +658,43 @@
  .custom-final-entry .custom-favorite-play { grid-template-rows:36px minmax(28px,1fr) 44px 32px 24px; gap:4px; }
  .custom-final-entry .custom-favorite-counter strong { font-size:26px; }
 }
+
+/* A friend's records are a separate, labeled bar group at the right edge. */
+.bulls-chart-area.has-friend-records, .timeline-chart-area.has-friend-records { margin-top: 55px; }
+.bulls-chart-plot.has-friend-records { --friend-record-width: 74px; }
+.bulls-chart-plot.has-friend-records > .bulls-chart-columns,
+.bulls-chart-plot.has-friend-records > .bulls-record-guides { right: calc(var(--friend-record-width) + 8px); }
+.friend-record-column { position:absolute; top:0; bottom:0; right:0; width:var(--friend-record-width); background:#91bafa05; }
+.friend-record-column::before { content:''; position:absolute; left:0; top:-48px; bottom:-24px; border-left:1px solid #a8c4d74d; }
+.friend-record-heading { position:absolute; top:-48px; left:8px; right:0; display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; }
+.friend-record-heading strong { display:block; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#d7e8f4; font-size:11px; font-weight:600; }
+.friend-record-heading small { color:#8ca6b9; font-size:8px; letter-spacing:.6px; }
+.friend-record-bars { position:absolute; inset:0 0 0 9px; display:flex; gap:4px; }
+.custom-training .friend-record-bars > button { position:relative; display:flex; align-items:end; justify-content:center; flex:1; min-width:0; min-height:0; height:100%; margin:0; padding:0; border:0; border-radius:4px; background:transparent; color:var(--metric-color); }
+.custom-training .friend-record-bars > button:hover { background:#ffffff08; }
+.friend-record-bars i { display:block; width:70%; max-width:16px; min-height:2px; border-radius:4px 4px 1px 1px; background:linear-gradient(0deg,color-mix(in srgb,var(--metric-color),#14232b 25%),var(--metric-color)); box-shadow:0 0 9px color-mix(in srgb,var(--metric-color),transparent 90%); }
+.friend-record-value { position:absolute; left:50%; transform:translateX(-50%); color:var(--metric-color); font-size:9px; line-height:1.2; font-weight:650; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.friend-record-axis-label { position:absolute; top:calc(100% + 8px); left:9px; right:0; text-align:center; color:#8da4b6; font-size:8px; letter-spacing:.3px; }
+.friend-record-summary { padding:0 4px; color:#a6bac9; }
+.custom-training .friend-record-summary p { font-size:11px; line-height:1.7; }
+.friend-record-summary details { font-size:12px; border-bottom:1px solid #ffffff12; }
+.friend-record-summary summary { min-height:44px; padding:12px 0; cursor:pointer; }
+.custom-training .friend-record-summary details > button { display:flex; flex-direction:column; align-items:start; width:100%; gap:7px; margin-bottom:6px; padding:12px; border:1px solid #ffffff0b; border-radius:12px; background:#ffffff03; color:#c2d5e3; font-size:12px; text-align:left; }
+.friend-record-summary time { font-size:10px; color:#8da4b6; }
+@media(max-width:350px) { .bulls-chart-plot.has-friend-records { --friend-record-width:65px; } .friend-record-value { font-size:8px; } }
+
+/* Readable target and streak context accompanies scores rather than hiding in history. */
+.record-double-context { display:block; margin:3px 0; color:#c1d8e8; font-size:12px; line-height:1.65; font-weight:550; letter-spacing:0; overflow-wrap:anywhere; }
+.bulls-record > .record-double-context { font-size:12px; color:#bbcfde; }
+.custom-training .statistics-grid .record-double-context { margin-top:8px; font-size:11px; text-align:center; }
+.double-stat-context { display:flex; flex-direction:column; gap:9px; margin:18px 0; padding:16px; border:1px solid #91bafa29; border-radius:17px; background:linear-gradient(145deg,#91bafa0a,#141d26); }
+.double-stat-context > span { color:#8ca8bb; font-size:9px; letter-spacing:1px; }
+.double-stat-context > strong { color:#d1e4f2; font-size:18px; font-weight:550; line-height:1.5; }
+.double-stat-context div { display:flex; flex-direction:column; gap:6px; }
+.double-stat-context b { font-size:15px; color:#add8c1; font-weight:550; line-height:1.5; }
+.double-stat-context small { color:#98adbd; font-size:12px; line-height:1.5; }
+.custom-training .timeline-double-route { margin:15px 4px 0; font-size:12px; color:#96adbe; }
+.timeline-double-route strong { color:#d3e4ef; font-weight:550; }
+.friend-double-balance { display:grid; gap:8px; margin:12px 0 18px; }
+.custom-training .friend-double-balance > button { display:flex; flex-direction:column; align-items:start; width:100%; gap:7px; padding:15px; border:1px solid #91bafa24; border-radius:15px; background:#91bafa07; color:#c6dce9; font-size:12px; text-align:left; }
+.friend-double-balance .record-double-context { color:#c7e4d7; font-size:13px; line-height:1.6; }

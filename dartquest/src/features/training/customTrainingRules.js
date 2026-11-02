@@ -155,3 +155,21 @@ export function favoriteSessionCounts(run) {
   const entries = run?.entries ?? []
   return { singles: entries.filter(entry => entry.count === 1).length, combos: entries.filter(entry => entry.count >= 2).length }
 }
+
+export const FAVORITE_DOUBLES = Object.freeze([20,18,16,12,10,8,6,4,2,1])
+export function favoritePlayedDoubles(run) {
+  const doubles = [...new Set((run.entries??[]).map(entry=>entry.double).filter(target=>Number.isInteger(target)&&target>=1&&target<=20))]
+  if(!doubles.length && Number.isInteger(run.favoriteDouble)) doubles.push(run.favoriteDouble)
+  return doubles
+}
+export function favoriteBestCombo(run) {
+  return (run.entries??[]).filter(entry=>entry.count>=2).reduce((best,entry)=>!best||entry.points>best.points?entry:best,null)
+}
+export function favoriteDoubleContext(run) {
+  const doubles=favoritePlayedDoubles(run)
+  return doubles.length ? `Gespielt: ${doubles.map(target=>`D${target}`).join(' · ')}` : 'Gespieltes Doppel nicht erfasst'
+}
+export function favoriteComboContext(run) {
+  const combo=favoriteBestCombo(run)
+  return combo ? `D${combo.double} · ${combo.count} Treffer hintereinander` : 'Noch keine Combo ab 2 Treffern'
+}
