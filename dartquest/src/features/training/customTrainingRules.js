@@ -16,7 +16,7 @@ export const DURATIONS = [5, 10, 15]
 export const isAroundClock = game => game === 'around-the-clock'
 export const aroundVariant = includeBull => includeBull ? '1–20 + Bull' : '1–20 ohne Bull'
 export const formatElapsed = ms => { const seconds = Math.floor(Math.max(0, ms) / 1000); return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}` }
-export const elapsedClockMs = (run, now = Date.now()) => run.elapsedMs ?? Math.max(0, now - run.startedAt)
+export const elapsedClockMs = (run, now = Date.now()) => run.elapsedMs ?? Math.max(0, (run.pausedAt ?? now) - run.startedAt - (run.pausedMs ?? 0))
 export function aroundClockStats(run) {
   const hits = run.includeBull ? 21 : 20, misses = run.misses ?? 0
   return { hits, misses, darts: hits + misses, accuracy: hits / (hits + misses) * 100, elapsedMs: elapsedClockMs(run) }
@@ -172,4 +172,8 @@ export function favoriteDoubleContext(run) {
 export function favoriteComboContext(run) {
   const combo=favoriteBestCombo(run)
   return combo ? `D${combo.double} · ${combo.count} Treffer hintereinander` : 'Noch keine Combo ab 2 Treffern'
+}
+
+export function possibleComboCounts(points,game='t20-combo') {
+ return Array.from({length:20},(_,index)=>index+1).filter(count=>validCombo(points,count,game))
 }

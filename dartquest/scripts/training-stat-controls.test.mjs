@@ -45,6 +45,7 @@ test('comparison filters do not mix durations, Bull variants or double routes',(
  assert.deepEqual(Array.from(f.filterComparisonRows(clocks,'around-the-clock',0,[16,8,4],false),r=>r.id),['no'])
  const routes=[{...row('match','double-route'),minutes:15},{...row('other','double-route'),minutes:15,payload:{route:[20,10,5]}}]
  assert.deepEqual(Array.from(f.filterComparisonRows(routes,'double-route',15,[16,8,4],false),r=>r.id),['match'])
+ assert.deepEqual(Array.from(f.filterComparisonRows(routes,'double-route',15,null,false),r=>r.id),['match','other'])
 })
 test('profile reset never clears training history or per-game reset markers',async()=>{
  const code=readFileSync(new URL('../src/features/profile/progressReset.js',import.meta.url),'utf8').replace(/^import .*\r?\n/gm,'').replaceAll('export ','')

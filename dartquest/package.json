@@ -38,7 +38,8 @@
     "test:timed-final-entry-browser": "node scripts/timed-final-entry.browser.mjs",
     "test:bulls-final-entry-browser": "node scripts/bulls-final-entry.browser.mjs",
     "test:training-stat-controls-browser": "node scripts/training-stat-controls.browser.mjs",
-    "test:custom-training": "node --test scripts/custom-training.test.mjs scripts/additional-training.test.mjs scripts/favorite-training.test.mjs scripts/around-clock.test.mjs scripts/custom-training-clock.test.mjs scripts/bulls-history.test.mjs scripts/training-timeline.test.mjs scripts/training-stat-controls.test.mjs scripts/bulls-final-entry.test.mjs scripts/timed-final-entry.test.mjs"
+    "test:custom-training": "node --test scripts/custom-training.test.mjs scripts/additional-training.test.mjs scripts/favorite-training.test.mjs scripts/around-clock.test.mjs scripts/custom-training-clock.test.mjs scripts/bulls-history.test.mjs scripts/training-timeline.test.mjs scripts/training-stat-controls.test.mjs scripts/bulls-final-entry.test.mjs scripts/timed-final-entry.test.mjs scripts/training-visits.test.mjs",
+    "test:training-visits-browser": "node scripts/training-visits.browser.mjs"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",

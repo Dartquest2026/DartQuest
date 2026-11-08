@@ -31,20 +31,24 @@ export async function startCustomRun(userId, game, minutes, options = {}) {
     if (!Number.isFinite(serverDuration) || serverDuration !== minutes * 60000) throw new Error('Die Trainingszeit konnte nicht bestätigt werden. Bitte erneut starten.')
     startedAt = Date.now(); endAt = startedAt + serverDuration
   }
-  const run = { id, game, minutes, startedAt, endAt: around ? null : endAt, doubleBull: 0, singleBull: 0, entries: [], score: '', choosing: false, phase: 'playing', favoriteDouble: options.favoriteDouble ?? 16, favoriteComboCount: 0, route: options.route ?? [16, 8, 4], routeThrows: [], ...(around ? { includeBull: Boolean(options.includeBull), misses: 0 } : {}) }
+  const run = { visitVersion: 1, visits: [], pausedMs: 0, id, game, minutes, startedAt, endAt: around ? null : endAt, doubleBull: 0, singleBull: 0, entries: [], score: '', choosing: false, phase: 'playing', favoriteDouble: options.favoriteDouble ?? 16, favoriteComboCount: 0, route: options.route ?? [16, 8, 4], routeThrows: [], ...(around ? { includeBull: Boolean(options.includeBull), misses: 0 } : {}) }
   saveCustomRun(userId, run)
   return run
 }
 export async function completeCustomRun(userId, run) {
   if (run.game === 'around-the-clock' && !run.completed) throw new Error('Beende Around the Clock zuerst über „Spiel beendet“.')
+  // Undo snapshots belong only to the active run, never to permanent history.
+  const payload = { ...run }
+  delete payload.visitUndo
+  delete payload.queue
   // A stable session ID prevents duplicate results when a request is retried.
   if (userId) {
-    const { data, error } = await supabase.rpc('complete_custom_training', { p_id: run.id, p_payload: run })
+    const { data, error } = await supabase.rpc('complete_custom_training', { p_id: run.id, p_payload: payload })
     if (error) throw new Error('Ergebnis bleibt gespeichert. Synchronisierung erneut versuchen. ' + error.message)
     storeRecord(userId, data)
     return data
   }
-  return storeRecord(userId, { id: run.id, game: run.game, minutes: run.minutes, created_at: new Date(run.finishedAt ?? run.endAt).toISOString(), payload: run, status: 'completed' })
+  return storeRecord(userId, { id: run.id, game: run.game, minutes: run.minutes, created_at: new Date(run.finishedAt ?? run.endAt).toISOString(), payload, status: 'completed' })
 }
 export async function loadCustomHistory(userId) {
   const local = localCustomHistory(userId)

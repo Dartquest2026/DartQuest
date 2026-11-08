@@ -37,3 +37,9 @@ test('record guides use exact values and separate equal or neighboring labels',a
   assert.equal(pair[1].top,(1-double/40)*100)
  }
 })
+
+test('bull chart scale includes recorded visits without inventing totals for legacy results',()=>{
+ const legacy={id:'old',created_at:'2026-11-01',game:'bulls-warm-up',payload:{singleBull:10,doubleBull:0}}
+ const current={...legacy,id:'new',created_at:'2026-11-08',payload:{singleBull:10,doubleBull:0,visitVersion:1,visits:Array.from({length:30},(_,i)=>({singleBull:i<10?1:0,doubleBull:0}))}}
+ assert.ok(bullsHistory([legacy,current]).ceiling>=30);assert.ok(bullsHistory([legacy]).ceiling<30)
+})

@@ -53,5 +53,5 @@ export async function loadFriendTraining(friendId, game) {
   }
 }
 export function filterComparisonRows(rows, game, minutes, route, includeBull) {
-  return rows.filter(row => row.game === game && (game === 'around-the-clock' ? Boolean(row.payload.includeBull) === includeBull : row.minutes === minutes) && (game !== 'double-route' || JSON.stringify(row.payload.route) === JSON.stringify(route)))
+  return rows.filter(row => row.game === game && (game === 'around-the-clock' ? Boolean(row.payload.includeBull) === includeBull : row.minutes === minutes) && (game !== 'double-route' || !route || JSON.stringify(row.payload.route) === JSON.stringify(route)))
 }

@@ -1,3 +1,4 @@
+import VisitSummary from './VisitSummary'
 import { FAVORITE_DOUBLES, favoriteDoubleContext, favoriteComboContext, favoriteBestCombo, DEFAULT_ROUTE, DOUBLE_ROUTES, routeLabel, routeMetrics, seriesDistribution, summary } from './customTrainingRules'
 import { AroundClockDetails } from './AroundClockDetails'
 
@@ -23,5 +24,5 @@ function TrainingDetails({ run, showEntries = false }) {
 }
 
 export default function CustomTrainingDetails(props) {
-  return <>{props.run.trainingName && <p className="training-player-name">{props.run.trainingName}</p>}<TrainingDetails {...props}/></>
+  return <>{props.run.trainingName && <p className="training-player-name">{props.run.trainingName}</p>}<TrainingDetails {...props}/><VisitSummary run={props.run}/></>
 }

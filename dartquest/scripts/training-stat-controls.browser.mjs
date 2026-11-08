@@ -63,7 +63,9 @@ try{
     assert.equal(await page.locator('.timeline-record').last().locator('.record-double-context').innerText(),'D16 · 2 Treffer hintereinander')
    }
    if(game==='double-route'){
-    await page.locator('.timeline-double-route').getByText('D16 → D8 → D4',{exact:true}).waitFor()
+    assert.equal(await page.getByLabel('Doppelweg auswählen').count(),0)
+    assert.ok((await page.locator('.timeline-double-route').innerText()).includes('Alle Doppelwege'))
+    assert.ok((await page.locator('.timeline-variant-label').first().innerText()).includes('D16'))
     assert.ok((await page.locator('.friend-double-balance').innerText()).includes('Treffer /'))
    }
    await page.locator('.friend-record-bars > button').first().click()

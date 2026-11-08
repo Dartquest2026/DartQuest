@@ -1,3 +1,4 @@
+import { visitStatistics } from './trainingVisits.js'
 export function bullsHistory(rows) {
   const ordered = [...rows].sort((a,b) => new Date(a.created_at) - new Date(b.created_at) || a.id.localeCompare(b.id))
   const value = (row, field) => Number(row.payload?.[field] ?? 0)
@@ -5,7 +6,7 @@ export function bullsHistory(rows) {
   const points = row => value(row,'singleBull') * 25 + value(row,'doubleBull') * 50
   const scoreRecord = ordered.reduce((best,row) => !best || points(row) > points(best) ? row : best, null)
   const singleRecord = record('singleBull'), doubleRecord = record('doubleBull')
-  const maximum = Math.max(1, ...ordered.flatMap(row => [value(row,'singleBull'),value(row,'doubleBull')]))
+  const maximum = Math.max(1, ...ordered.flatMap(row => [value(row,'singleBull'),value(row,'doubleBull'),visitStatistics({...row.payload,game:row.game})?.total??0]))
   const step = Math.max(1, 5 * Math.ceil(maximum / 25))
   return { recent: ordered.slice(-10), singleRecord, doubleRecord, scoreRecord, points, ceiling: step * Math.ceil(maximum / step) }
 }

@@ -1,0 +1,7 @@
+import { visitStatistics } from './trainingVisits'
+export default function VisitSummary({run}) {
+ const stats=visitStatistics(run)
+ if(!stats)return <p className="visit-history-note">Aufnahmen wurden bei diesem Training noch nicht erfasst.</p>
+ const percent=stats.accuracy==null?'–':stats.accuracy.toLocaleString('de-DE',{minimumFractionDigits:run.game==='bulls-warm-up'?2:0,maximumFractionDigits:run.game==='bulls-warm-up'?2:1})+' %'
+ return <section className="visit-summary" aria-label="Aufnahmebilanz"><h3>AUFNAHMEBILANZ</h3><div className="statistics-grid"><div><span>AUFNAHMEN</span><strong>{stats.total}</strong></div>{stats.kind==='darts'?<><div><span>TREFFER / PFEILE</span><strong>{stats.hits} / {stats.darts}</strong></div><div><span>FEHLWÜRFE</span><strong>{stats.misses}</strong></div></>:<><div><span>ERFOLGREICH</span><strong>{stats.successful}</strong></div><div><span>OHNE ERGEBNIS</span><strong>{stats.failed}</strong></div></>}<div><span>{stats.kind==='darts'?'TREFFERQUOTE':'ERFOLGSQUOTE'}</span><strong>{percent}</strong></div></div><p>{stats.partial?'Je drei Pfeile eine Aufnahme; die letzte Teilaufnahme zählt mit.':stats.kind==='darts'?'Drei Pfeile pro Aufnahme. Trefferquote = Treffer / alle Pfeile.':'Erfolgsquote = erfolgreiche / alle Aufnahmen. Ein gescheiterter erster Pfeil zählt als Aufnahme.'}</p></section>
+}

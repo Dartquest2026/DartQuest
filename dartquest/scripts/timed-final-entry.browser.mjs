@@ -1,3 +1,4 @@
+import {possibleComboCounts} from '../src/features/training/customTrainingRules.js'
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import {build} from 'vite'
@@ -25,7 +26,7 @@ try {for(const [width,height]of[[390,844],[375,600],[320,568]]){
    if(process.argv.includes('--favorite-preview')&&width===390)console.log('QA_IMAGE:'+(await page.screenshot({type:'jpeg',quality:40})).toString('base64'))
    for(let i=0;i<3;i++)await page.getByRole('button',{name:/COMBO \+1/}).click()
    assert.equal(await page.locator('.favorite-session-counts > div').last().locator('strong').innerText(),'0')
-   await page.getByRole('button',{name:'OK · COMBO SPEICHERN'}).click()
+   await page.clock.runFor(5000)
    assert.equal(await page.locator('.favorite-session-counts > div').last().locator('strong').innerText(),'1')
    assert.equal(await page.locator('.custom-live > strong').innerText(),'256 Punkte')
   }
@@ -38,11 +39,11 @@ try {for(const [width,height]of[[390,844],[375,600],[320,568]]){
   if(game.includes('combo')){
    const points=game==='t20-combo'?'180':'171'
    for(const digit of points)await page.locator('.score-numbers button').filter({hasText:new RegExp('^'+digit+'$')}).click()
-   await page.locator('.score-confirm').click();const picker=page.getByRole('dialog',{name:'Wie viele Combos?'});await picker.getByRole('button',{name:'1',exact:true}).click()
+   await page.locator('.score-confirm').click();if(possibleComboCounts(Number(points),game).length>1){const picker=page.getByRole('dialog',{name:'Wie viele Combos?'});await picker.getByRole('button',{name:'1',exact:true}).click()}
    assert.equal(await page.locator('.score-numbers button').first().isDisabled(),true)
   }else if(game==='favorite-double'){
    for(let i=0;i<3;i++)await page.getByRole('button',{name:/COMBO \+1/}).click()
-   await page.getByRole('button',{name:'OK · COMBO SPEICHERN'}).click()
+   await page.clock.runFor(5000)
    assert.equal(await page.getByRole('button',{name:/EINMAL GETROFFEN/}).isDisabled(),true)
    assert.equal(await page.locator('.favorite-session-counts > div').last().locator('strong').innerText(),'2')
   }else if(game==='double-route'){
