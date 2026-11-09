@@ -84,3 +84,30 @@
 .custom-training .metronome-game-option { display:grid; gap:7px; text-align:left; padding:14px; }
 .training-metronome-error { position:absolute; z-index:8; bottom:68px; left:16px; right:16px; padding:12px 40px 12px 12px; font-size:12px; background:#332228; color:#f4bbc5; border:1px solid #ef6b7a44; border-radius:12px; }
 .custom-playing .training-metronome-error button { position:absolute; right:0; top:0; width:36px; height:36px; min-height:36px; padding:0; }
+.custom-training.metronome-screen .metronome-quick-launch { display:grid; gap:6px; min-height:64px; padding:13px; text-align:left; border-color:#8be8b766; background:linear-gradient(125deg,#1c3b32,#14262c); }
+.metronome-quick-launch strong { color:#c3f9db; font-size:13px; }
+.metronome-quick-launch span { color:#9ab9ac; font-size:11px; }
+.custom-training.metronome-quick { display:flex !important; flex-direction:column; overflow:hidden; }
+.metronome-quick-ready { display:flex; flex:1; flex-direction:column; justify-content:center; gap:16px; min-height:0; }
+.metronome-quick-symbol { font-size:50px; color:#9fe8bb; text-align:center; }
+.custom-training .metronome-quick-ready h2 { font-size:25px; margin:0; color:#d8f3e3; }
+.metronome-quick-ready p { margin:0; color:#9bb5c3; font-size:13px; line-height:1.6; }
+.metronome-quick-ready p strong { color:#c1e6d3; }
+.metronome-quick-countdown { display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
+.metronome-quick-countdown > span { color:#9eb6c5; font-size:12px; letter-spacing:1px; }
+.metronome-quick-countdown > strong { font-size:120px; color:#adf0c8; line-height:1; font-variant-numeric:tabular-nums; }
+.metronome-quick-countdown > p { color:#8fa9b8; text-align:center; font-size:12px; }
+.metronome-quick-status { display:grid; gap:7px; text-align:center; padding:12px 0 18px; }
+.metronome-quick-status > span { font-size:11px; letter-spacing:1px; color:#a6edc3; }
+.metronome-quick-status > strong { font-size:23px; color:#d9efe4; }
+.metronome-quick-status > small { font-size:12px; color:#91adbb; font-variant-numeric:tabular-nums; }
+.custom-training .metronome-capture-tap { flex:1; min-height:130px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; width:100%; border-radius:28px; color:#c0f8d7; background:radial-gradient(ellipse at center,#8be8b72b,#153127); border:1px solid #8be8b780; box-shadow:inset 0 0 40px #8be8b706; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+.metronome-capture-tap > span { font-size:72px; line-height:1; font-weight:300; }
+.metronome-capture-tap > strong { font-size:clamp(13px,3.5vw,17px); }
+.metronome-capture-tap > small { font-size:12px; font-weight:400; color:#9bc8af; }
+.metronome-capture-tap:active { background:#2d5a43; box-shadow:0 0 20px #8be8b72b; }
+.metronome-quick-controls { flex-shrink:0; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-top:16px; }
+.custom-training .metronome-quick-controls button { min-height:44px; font-size:10px; padding:10px 6px; }
+.metronome-quick-controls .metronome-primary { grid-column:1/-1; }
+@media(max-height:650px) { .metronome-quick-ready { gap:10px; } .metronome-quick-symbol { font-size:32px; } .metronome-quick-ready p { font-size:12px; line-height:1.5; } .custom-training .metronome-quick-ready h2 { font-size:21px; } .metronome-quick-status { padding:4px 0 12px; gap:5px; } .metronome-capture-tap > span { font-size:56px; } .metronome-quick-controls { padding-top:10px; } }
+.custom-training.metronome-quick .training-page-header > button { width:44px; height:44px; min-height:44px; }

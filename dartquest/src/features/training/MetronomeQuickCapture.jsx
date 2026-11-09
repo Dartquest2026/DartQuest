@@ -1,0 +1,26 @@
+import {useEffect,useRef,useState} from 'react'
+import {compileMetronome,metronomeFromTaps,MAX_METRONOME_STEPS} from './metronomeModel'
+import {createMetronomePlayer} from './metronomePlayer'
+const countdownSequence=compileMetronome({loop:false,loopGap:1,steps:[0,1,2].map(index=>({label:String(3-index),unit:'seconds',value:1,beats:1,tone:'click',volume:75}))})
+const format=value=>value.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:2})
+export default function MetronomeQuickCapture({onCancel,onComplete}) {
+ const [phase,setPhase]=useState('ready'),[count,setCount]=useState(3),[taps,setTaps]=useState([]),[now,setNow]=useState(0),[error,setError]=useState('')
+ const player=useRef(null),marks=useRef([]),active=useRef('ready'),request=useRef(0)
+ useEffect(()=>()=>{request.current++;active.current='closed';player.current?.dispose()},[])
+ useEffect(()=>{if(phase!=='recording')return;const interval=setInterval(()=>setNow(performance.now()),100);return()=>clearInterval(interval)},[phase])
+ function setStage(value){active.current=value;setPhase(value)}
+ async function start(){if(active.current!=='ready')return;const ticket=++request.current;setError('');marks.current=[];setTaps([]);setCount(3);setStage('countdown')
+  const next=createMetronomePlayer(countdownSequence,{onPosition:position=>setCount(3-position.event.step),onDone:()=>{if(ticket!==request.current)return;next.dispose();player.current=null;setNow(performance.now());setStage('recording')},onError:message=>{if(ticket!==request.current)return;request.current++;player.current?.dispose();player.current=null;setError(message);setStage('ready')}});player.current=next
+  const started=await next.start();if(!started&&ticket===request.current){next.dispose();player.current=null;setStage('ready')}
+ }
+ function tap(){if(active.current!=='recording'||marks.current.length>=MAX_METRONOME_STEPS)return;const at=performance.now(),last=marks.current.at(-1)
+  if(last!=null&&at-last<100)return
+  if(last!=null&&at-last>600000){setError('Mehr als zehn Minuten Abstand. Bitte die Aufnahme neu starten.');return}
+  const next=[...marks.current,at];marks.current=next;setTaps(next);setNow(at);setError('')
+ }
+ function undo(){marks.current=marks.current.slice(0,-1);setTaps([...marks.current]);setNow(performance.now());setError('')}
+ function finish(){if(active.current!=='recording'||!marks.current.length)return;try{const config=metronomeFromTaps(marks.current,performance.now());setStage('finished');player.current?.dispose();onComplete(config)}catch(e){setError(e.message)}}
+ function cancel(){request.current++;active.current='closed';player.current?.dispose();onCancel()}
+ const elapsed=taps.length?Math.max(0,(now-taps[0])/1000):0,lastGap=taps.length>1?(taps.at(-1)-taps.at(-2))/1000:null
+ return <main className="custom-training training-builder metronome-screen metronome-quick"><header className="training-page-header"><button aria-label="Schnellanalyse abbrechen" onClick={cancel}>‹</button><div><span>DEIN RHYTHMUS · LIVE ERFASSEN</span><h1>Schnellanalyse</h1></div></header>{error&&<p role="alert" className="metronome-error">{error}</p>}{phase==='ready'?<section className="metronome-quick-ready"><span className="metronome-quick-symbol" aria-hidden="true">◉</span><h2>Deine Bewegung. Dein Takt.</h2><p>Nach drei Pieptönen kannst du deinen Rhythmus eintippen. Jeder Tipp markiert eine Aktion und wird zu einem Abschnitt.</p><p><strong>Der erste Tipp setzt 0:00.</strong> Danach werden die Abstände zwischen deinen Tipps erfasst. Die Zeit vom letzten Tipp bis „Fertig“ wird die Pause zur nächsten Runde.</p><p>Du kannst anschließend Namen, Töne und Lautstärken ändern und den Ablauf auf einem deiner drei Plätze speichern.</p><button className="metronome-primary" onClick={()=>void start()}>START · 3 SEKUNDEN COUNTDOWN</button></section>:phase==='countdown'?<section className="metronome-quick-countdown" aria-label="Startcountdown"><span>GLEICH GEHT ES LOS</span><strong role="timer">{count}</strong><p>Drei Pieptöne · dann deinen Rhythmus tippen</p><button onClick={cancel}>ABBRECHEN</button></section>:<><div className="metronome-quick-status"><span>JETZT AUFNEHMEN</span><strong aria-live="polite">{taps.length} / 100 Abschnitte</strong><small>{format(elapsed)} Sekunden seit dem ersten Tipp</small></div><button className="metronome-capture-tap" aria-label="Aktion markieren" disabled={taps.length>=100} onPointerDown={event=>{if(event.button===0&&event.isPrimary!==false){event.preventDefault();tap()}}} onKeyDown={event=>{if((event.key===' '||event.key==='Enter')&&!event.repeat){event.preventDefault();tap()}}} onClick={event=>{if(event.detail===0)tap()}}><span aria-hidden="true">＋</span><strong>{taps.length>=100?'100 ABSCHNITTE ERFASST':taps.length?'NÄCHSTE AKTION TIPPEN':'ERSTE AKTION TIPPEN'}</strong><small>{lastGap==null?'Dein erster Tipp startet den Ablauf.':`Letzter Abstand: ${format(lastGap)} Sekunden`}</small></button><div className="metronome-quick-controls"><button disabled={!taps.length} onClick={undo}>LETZTEN TIPP ZURÜCK</button><button onClick={cancel}>ABBRECHEN</button><button className="metronome-primary" disabled={!taps.length} onClick={finish}>FERTIG · ABLAUF ÜBERNEHMEN</button></div></>}</main>
+}

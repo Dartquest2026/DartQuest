@@ -61,3 +61,10 @@ Die Bewegungsreihenfolge orientiert sich an Winmaus Analyse https://winmau.com/b
 - Drei benannte Speicherplätze pro Konto/Gast bzw. freiem Board auf dem jeweiligen Gerät. Der automatisch gesicherte Editorentwurf bleibt separat. Laden und bewusstes Speichern/Überschreiben erfolgen über die drei Karten. Ein bisheriger Einzelablauf wird einmalig in Platz 1 übernommen.
 - Bulls Warm-Up, Around the Clock, Fokuswechsel und Doppelweg haben einen mindestens 44 px hohen Metronom-Button unten im Spiel. Auswahl eines gespeicherten Ablaufs startet ihn sofort; erneutes Antippen stoppt und gibt sämtliche Tonquellen frei. Im Spiel läuft der gewählte Ablauf immer als Schleife bis zum Stopp.
 - Spielpause, Verlassen-Dialog, Wechsel zur Statistik und Zeitablauf stoppen das Metronom. Nach Fortsetzen muss es bewusst erneut ausgewählt werden. Metronom verändert weder die Aufnahmezählung noch den Spieltimer.
+
+### Schnellanalyse: Metronom durch Tippen erfassen
+
+- Eigener Button im Metronom-Editor. Start zählt drei Sekunden mit genau drei Tönen herunter, erst danach wird der große Aufnahme-Button freigegeben. Es werden Tippzeitpunkte erfasst, keine Mikrofonaufnahme.
+- Der erste Tipp setzt den Start bei 0:00. Weitere Tipps ergeben Abschnitte mit den gemessenen Zeitabständen (Millisekundenauflösung, mindestens 0,1 Sekunden, maximal 600 Sekunden Abstand). Maximal 100 Abschnitte, „Letzten Tipp zurück“ korrigiert versehentliche Eingaben.
+- „Fertig“ übernimmt einen Entwurf namens Schnellanalyse in den Editor. Die Zeit vom letzten Tipp bis Fertig wird die Rundenpause. Namen, Töne, Lautstärke und Zeiten bleiben bearbeitbar; Speicherung auf einem der drei Plätze erfolgt bewusst im Editor.
+- Abbrechen verwirft nur die neue Aufnahme und hält den bisherigen Entwurf und gespeicherte Metronome unverändert. Countdown-Töne werden beim Abbrechen/Verlassen beendet.

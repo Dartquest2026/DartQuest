@@ -43,7 +43,8 @@
     "test:focus-switch-browser": "node scripts/focus-switch.browser.mjs",
     "test:metronome": "node --test scripts/metronome.test.mjs",
     "test:metronome-browser": "node scripts/metronome.browser.mjs",
-    "test:training-metronome-browser": "node scripts/training-metronome.browser.mjs"
+    "test:training-metronome-browser": "node scripts/training-metronome.browser.mjs",
+    "test:metronome-quick-browser": "node scripts/metronome-quick.browser.mjs"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",

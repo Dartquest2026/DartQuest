@@ -78,3 +78,11 @@ export function saveMetronomeSlot(userId,free,index,config) {
 }
 
 export const METRONOME_TRAINING_GAMES=['bulls-warm-up','around-the-clock','focus-switch','double-route']
+
+export function metronomeFromTaps(timestamps,finishedAt) {
+ if(!Array.isArray(timestamps)||timestamps.length<1||timestamps.length>MAX_METRONOME_STEPS)throw new Error('Erfasse zwischen 1 und 100 Abschnitten.')
+ if(timestamps.some((at,i)=>!Number.isFinite(at)||(i>0&&(at-timestamps[i-1]<100||at-timestamps[i-1]>600000))))throw new Error('Tippabstände müssen zwischen 0,1 und 600 Sekunden liegen.')
+ if(!Number.isFinite(finishedAt)||finishedAt<timestamps.at(-1)||finishedAt-timestamps.at(-1)>600000)throw new Error('Die Pause nach dem letzten Tipp ist zu lang. Bitte neu aufnehmen.')
+ const steps=timestamps.map((at,index)=>({...newMetronomeStep(index),label:index===0?'Start':`Abschnitt ${index+1}`,unit:'seconds',value:index===0?1:Math.round(at-timestamps[index-1])/1000,beats:1,tone:'click',volume:75}))
+ return normalizeMetronome({name:'Schnellanalyse',steps,loop:true,loopGap:Math.max(.1,Math.round(finishedAt-timestamps.at(-1))/1000)})
+}
