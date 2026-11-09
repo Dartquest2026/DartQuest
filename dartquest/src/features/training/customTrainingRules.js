@@ -5,6 +5,7 @@ export const CUSTOM_GAMES = [
   { id: 'favorite-double', title: 'Favoriten Doppel', description: 'Dein Lieblingsdoppel mit dem ersten Dart treffen und die Serie fortsetzen.' },
   { id: 'double-route', title: 'Doppelweg', description: 'Drei Doppel in fester Reihenfolge – ein Punkt pro Treffer.' },
   { id: 'around-the-clock', title: 'Around the Clock', description: '1 bis 20, optional mit Bull. Nur Fehlwürfe zählen und die Zeit vergleichen.' },
+  { id:'focus-switch', title:'Fokuswechsel', description:'Zufällige Zweier- oder Dreier-Folgen in Reihenfolge treffen.' },
 ]
 export const DOUBLE_ROUTES = [[20, 10, 5], [16, 8, 4], [12, 6, 3], [4, 2, 1]]
 export const DEFAULT_ROUTE = DOUBLE_ROUTES[1]
@@ -96,7 +97,7 @@ export function recordRouteThrow(run, hit, now = Date.now()) {
 export function summary(run) {
   const entries = run.entries ?? []
   return {
-    points: run.game === 'bulls-warm-up' ? run.doubleBull * 50 + run.singleBull * 25 : run.game === 'double-route' ? (run.routeThrows ?? []).filter(dart => dart.hit).length : entries.reduce((n, e) => n + e.points, 0),
+    points: run.game === 'focus-switch' ? (run.focusAttempts??[]).filter(a=>a.hits===(run.focusSize??2)).length : run.game === 'bulls-warm-up' ? run.doubleBull * 50 + run.singleBull * 25 : run.game === 'double-route' ? (run.routeThrows ?? []).filter(dart => dart.hit).length : entries.reduce((n, e) => n + e.points, 0),
     longest: Math.max(0, ...entries.map(e => e.count)),
     bestSeries: Math.max(0, ...entries.map(e => e.points)),
     seriesCount: entries.length,

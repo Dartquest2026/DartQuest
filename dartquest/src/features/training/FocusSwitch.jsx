@@ -1,0 +1,13 @@
+import { focusStats, focusVariant } from './focusSwitchRules'
+export function FocusOptions({value=2,onChange,disabled=false}) {
+ return <div className="focus-options"><span className="bulls-eyebrow">ZIELFELDER PRO AUFGABE</span><div className="training-chips">{[2,3].map(size=><button key={size} disabled={disabled} aria-pressed={size===value} onClick={()=>onChange(size)}>{focusVariant(size)}</button>)}</div></div>
+}
+export function FocusDetails({run,showEntries=false}) {
+ const stats=focusStats(run)
+ return <><p>{focusVariant(stats.size)} · Maximal drei Pfeile pro Aufgabe</p><div className="statistics-grid">{stats.counts.map((count,hits)=><div key={hits}><span>{hits===stats.size?'COMBO GESCHAFFT':`${hits} GETROFFEN`}</span><strong>{count}</strong></div>)}<div><span>ERFOLGSQUOTE</span><strong>{stats.accuracy.toLocaleString('de-DE',{maximumFractionDigits:1})} %</strong></div></div>{showEntries&&<details><summary>Alle Aufgaben anzeigen</summary><ol>{(run.focusAttempts??[]).map((attempt,i)=><li key={i}>{attempt.kind==='single'?'Single-Runde · ':''}{attempt.fields.join(' → ')}{attempt.kind==='single'?'':` · Rest ${attempt.rest}`} · {attempt.hits===stats.size?'Combo geschafft':`${attempt.hits} getroffen`}</li>)}</ol></details>}</>
+}
+export default function FocusSwitchPlay({run,onResult}) {
+ const single=run.focusTask.kind==='single'
+ const stats=focusStats(run),done=run.phase==='final-entry'&&run.visits.length>run.finalVisitBase
+ return <div className="focus-play"><div className={`focus-task${single?' is-single-round':''}`}><div className="focus-task-caption"><span>{single?'Single-Runde':focusVariant(stats.size)}</span>{single?<span className="focus-single-note">Alle Ziele als Single treffen</span>:<span>Rest <strong>{run.focusTask.rest}</strong></span>}</div><div className="focus-targets" aria-label="Aktuelle Zielfolge">{run.focusTask.fields.map((field,i)=><span key={i}><small>{i+1}.</small><strong>{field}</strong>{i<stats.size-1&&<b aria-hidden="true">→</b>}</span>)}</div><p>In Reihenfolge treffen · maximal drei Pfeile</p></div><div className="focus-progress"><strong>{stats.complete}</strong><span>{stats.complete===1?'Combo':'Combos'} geschafft · {stats.accuracy.toLocaleString('de-DE',{maximumFractionDigits:0})} %</span></div><div className="focus-result-buttons">{Array.from({length:stats.size+1},(_,hits)=><button key={hits} disabled={done} className={hits===stats.size?'is-complete':hits===0?'is-miss':''} onClick={()=>onResult(hits)}>{hits===stats.size?'COMBO GESCHAFFT':`${hits} GETROFFEN`}</button>)}</div><p className="focus-help" role="status">{done?'Letzte Aufnahme erfasst. Du kannst sie noch rückgängig machen.':'Ergebnis antippen: nächste Aufgabe erscheint automatisch.'}</p></div>
+}

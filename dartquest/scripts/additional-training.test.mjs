@@ -2,8 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { DOUBLE_ROUTES, CUSTOM_GAMES, favoriteDoubleEntry, validCombo, recordRouteThrow, routeMetrics, seriesDistribution, summary, hasOpenEntry, bestResults } from '../src/features/training/customTrainingRules.js'
 
-test('six custom games and exactly four proposed double routes are available',()=>{
- assert.equal(CUSTOM_GAMES.length,6)
+test('seven custom games and exactly four proposed double routes are available',()=>{
+ assert.equal(CUSTOM_GAMES.length,7)
  assert.deepEqual(DOUBLE_ROUTES,[[20,10,5],[16,8,4],[12,6,3],[4,2,1]])
 })
 test('20/19/18 combo accepts the 97 example and sums several successful visits',()=>{

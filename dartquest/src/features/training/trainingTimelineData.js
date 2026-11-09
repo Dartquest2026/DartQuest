@@ -1,3 +1,4 @@
+import {focusStats} from './focusSwitchRules.js'
 import {TRAINING_VISITS_COLOR,DOUBLE_ROUTE_COLORS} from './trainingChartColors.js'
 import { visitStatistics } from './trainingVisits.js'
 import { formatElapsed, routeLabel, favoriteDoubleContext, favoriteComboContext, favoritePlayedDoubles, routeMetrics, summary, DEFAULT_ROUTE } from './customTrainingRules.js'
@@ -8,6 +9,11 @@ function visitCountMetric() {
  return {id:'visits',label:'Aufnahmen insgesamt',color:TRAINING_VISITS_COLOR,available:row=>visitStatistics(run(row))!==null,value:row=>visitStatistics(run(row))?.total??0,format:count,detail:row=>{const stats=visitStatistics(run(row));return stats?`${stats.total} Aufnahmen · ${stats.successful} erfolgreich · ${stats.failed} ohne Ergebnis${row.game==='favorite-double'?' · '+favoriteDoubleContext(run(row)):''}`:'Aufnahmen nicht erfasst'}}
 }
 export function timelineSeries(game, route = null) {
+  if(game==='focus-switch')return [
+    {id:'complete',label:'Combos geschafft',color:'#8be8b7',value:row=>focusStats(run(row)).complete,format:count},
+    {id:'accuracy',label:'Erfolgsquote',color:'#91bafa',value:row=>focusStats(run(row)).accuracy,format:value=>count(value)+' %'},
+    visitCountMetric(),
+  ]
   if (game === 'around-the-clock') return [
     { id: 'misses', label: 'Fehlwürfe', color: '#f18a96', lower: true, value: row => number(row.payload.misses), format: count },
     { id: 'time', label: 'Spielzeit', color: '#91bafa', lower: true, value: row => number(row.payload.elapsedMs), format: formatElapsed },

@@ -1,3 +1,4 @@
+import CustomTraining from '../training/CustomTraining'
 import { useState } from 'react'
 import logo from '../../assets/dartquest-logo.png'
 import { XP_PER_PLAYER_LEVEL } from '../auth/profileStorage'
@@ -24,21 +25,7 @@ function Home({
   const nextLevelXP = playerLevel * XP_PER_PLAYER_LEVEL
   const xpPercent = Math.min((levelXP / XP_PER_PLAYER_LEVEL) * 100, 100)
 
-  if (homeView === 'season') {
-    return (
-      <section className="home-screen home-season-screen">
-        <header className="home-season-header">
-          <button type="button" onClick={() => setHomeView('home')} aria-label="Zurück zur Home-Seite">‹</button>
-          <div><span>DARTQUEST</span><h1>SAISONALE AUFGABEN</h1></div>
-        </header>
-        <section className="home-season-placeholder">
-          <span aria-hidden="true">🎯</span>
-          <h2>Saisonale Herausforderungen kommen bald.</h2>
-          <p>Spiele DartQuest und erfülle zusätzliche Herausforderungen, um besondere Belohnungen freizuschalten.</p>
-        </section>
-      </section>
-    )
-  }
+  if (homeView === 'training') return <CustomTraining activeProfile={activeProfile} onBack={() => setHomeView('home')} />
 
   if (homeView === 'statistics') return <Statistics activeProfile={activeProfile} onBack={() => setHomeView('home')} />
 
@@ -118,9 +105,9 @@ function Home({
           </button>
         </div>
 
-        <button className="home-season-card" type="button" onClick={() => setHomeView('season')}>
+        <button className="home-season-card" type="button" onClick={() => setHomeView('training')}>
           <span className="home-season-icon" aria-hidden="true">🎯</span>
-          <span className="home-season-copy"><small>SAISONALE AUFGABEN</small><strong>Aktuelle Saison</strong><em>Schließe Aufgaben ab und sichere dir Belohnungen.</em></span>
+          <span className="home-season-copy"><small>ANGEPASSTES TRAINING</small><strong>Training</strong><em>Stelle deinen Trainingsplan zusammen und leg los.</em></span>
           <span className="home-season-arrow" aria-hidden="true">›</span>
         </button>
 

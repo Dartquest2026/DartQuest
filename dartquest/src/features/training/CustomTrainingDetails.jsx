@@ -1,3 +1,4 @@
+import {FocusDetails} from './FocusSwitch'
 import VisitSummary from './VisitSummary'
 import { FAVORITE_DOUBLES, favoriteDoubleContext, favoriteComboContext, favoriteBestCombo, DEFAULT_ROUTE, DOUBLE_ROUTES, routeLabel, routeMetrics, seriesDistribution, summary } from './customTrainingRules'
 import { AroundClockDetails } from './AroundClockDetails'
@@ -13,6 +14,7 @@ export function RouteBreakdown({ run }) {
 }
 function TrainingDetails({ run, showEntries = false }) {
   const stats = summary(run), entries = run.entries ?? []
+  if (run.game === 'focus-switch') return <FocusDetails run={run} showEntries={showEntries}/>
   if (run.game === 'around-the-clock') return <AroundClockDetails run={run}/>
   if (run.game === 'bulls-warm-up') return <p>{run.doubleBull} × Doppelbull · {run.singleBull} × Single Bull</p>
   if (run.game === 'double-route') return <><section className="double-stat-context"><span>GESPIELTER DOPPELWEG</span><strong>{routeLabel(run.route ?? DEFAULT_ROUTE)}</strong><small>Treffer und Wurfzahl je Doppel</small></section><RouteBreakdown run={run}/></>

@@ -4,10 +4,10 @@ export const VISIT_IDLE_MS = 5000
 export const hasVisits = run => run?.visitVersion === 1 && Array.isArray(run.visits)
 export const isPaused = run => run?.pausedAt != null
 export const clockNow = (run, now = Date.now()) => run?.pausedAt ?? now
-export const isVisitLocked = (run, now = Date.now()) => (run?.visitBlockedUntil ?? 0) > clockNow(run,now)
+export const isVisitLocked = (run, now = Date.now()) => run?.game!=='focus-switch' && (run?.visitBlockedUntil ?? 0) > clockNow(run,now)
 function expire(run,now) { return run?.phase==='playing'&&!isPaused(run)&&run.endAt!=null&&remainingSeconds(run.endAt,now)===0 ? {...beginTimedFinalEntry(run,now),finalVisitBase:run.visits?.length} : run }
 const editable = run => run && !isPaused(run) && ['playing','bulls-final','final-entry'].includes(run.phase)
-const fields = ['doubleBull','singleBull','entries','routeThrows','visits','pendingVisit','visitBlockedUntil','favoriteComboCount','favoriteComboAt','score','choosing','misses']
+const fields = ['focusTask','focusAttempts','doubleBull','singleBull','entries','routeThrows','visits','pendingVisit','visitBlockedUntil','favoriteComboCount','favoriteComboAt','score','choosing','misses']
 function snapshot(run) { return Object.fromEntries(fields.map(key=>[key,run[key] ?? (['entries','routeThrows','visits'].includes(key)?[]:['pendingVisit','visitBlockedUntil','favoriteComboAt'].includes(key)?null:run[key])])) }
 export function rememberVisit(run, next) { return next === run ? run : {...next,visitUndo:[...(run.visitUndo??[]),snapshot(run)].slice(-30)} }
 export function undoVisit(run, now = Date.now()) {

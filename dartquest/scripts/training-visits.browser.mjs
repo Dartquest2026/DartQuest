@@ -51,7 +51,11 @@ try {for(const [width,height]of[[390,844],[375,600],[320,568]]){
  for(const game of['bulls-warm-up','double-route','t20-combo','triple-20-19-18-combo','favorite-double']){
   await page.evaluate(game=>{window.qaAudio.pulses=[];window.openCustom(game,game)},game);await page.getByRole('button',{name:'TRAINING FORTSETZEN',exact:true}).click()
   if(game==='bulls-warm-up')await page.getByRole('button',{name:'SINGLE BULL plus',exact:true}).click()
-  if(game==='double-route')await page.getByRole('button',{name:'D16 plus',exact:true}).click()
+  if(game==='double-route'){
+   const boxes=await page.locator('.visit-route-targets section').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),p=n.querySelector('button:last-child').getBoundingClientRect();return {top:r.top,bottom:r.bottom,width:p.width,height:p.height}}))
+   assert.equal(boxes.length,3);assert.ok(boxes[0].bottom<boxes[1].top&&boxes[1].bottom<boxes[2].top,'Route targets must be stacked');assert.ok(boxes.every(b=>b.width>=80&&b.height>=52),'Route plus buttons must be comfortably sized')
+   await page.getByRole('button',{name:'D16 plus',exact:true}).click()
+  }
   await page.clock.runFor(2000)
   await page.getByRole('button',{name:'Training pausieren',exact:true}).click();const pausedClock=await page.getByRole('timer').innerText()
   await page.clock.fastForward(20000);await page.clock.runFor(30)
@@ -88,6 +92,10 @@ try {for(const [width,height]of[[390,844],[375,600],[320,568]]){
   if(game==='t20-combo')assert.deepEqual(row.payload.visits,[{successful:3,failed:1},{successful:1,failed:0}])
   assert.equal(await page.evaluate(()=>window.qaAudio.pulses.length),13,game+' countdown signals')
  }
+ await page.evaluate(()=>{window.qaAudio.pulses=[];window.openCustom('double-route','route-audio-recovery')});await page.getByRole('button',{name:'TRAINING FORTSETZEN',exact:true}).click()
+ await page.evaluate(()=>{window.qaAudio.context.state='interrupted';window.qaAudio.blocked=true});await page.clock.runFor(1000);assert.equal(await page.evaluate(()=>window.qaAudio.pulses.length),0)
+ await page.evaluate(()=>{window.qaAudio.blocked=false});await page.clock.runFor(1000);assert.equal(await page.evaluate(()=>window.qaAudio.pulses.length),1,'Minute warning retries without a tap')
+ await page.evaluate(()=>{window.qaAudio.context.state='closed'});await page.clock.runFor(59000);await page.clock.runFor(50);assert.equal(await page.evaluate(()=>window.qaAudio.pulses.length),13,'Route end alarm recovers a closed audio context')
  await page.evaluate(()=>window.openVisitStats());await page.getByRole('heading',{name:'AUFNAHMEN & FEHLVERSUCHE',exact:true}).waitFor();assert.equal(await page.getByRole('region',{name:'Aufnahmenverlauf'}).count(),1)
  const visitsChart=page.locator('[aria-label="Aufnahmenverlauf"]');await visitsChart.waitFor();assert.ok((await visitsChart.locator('.timeline-legend').innerText()).includes('Aufnahmen insgesamt'));assert.equal(await visitsChart.locator('.bulls-chart-column').count(),1);assert.equal(await page.locator('.custom-history article').count(),2)
  await visitsChart.locator('.bulls-chart-column').click();await page.getByRole('dialog').getByRole('heading',{name:'AUFNAHMEBILANZ'}).waitFor();await page.getByRole('button',{name:'SCHLIESSEN',exact:true}).click()

@@ -17,9 +17,11 @@ export default function useCountdownAudio(id, seconds, enabled) {
     const interact = () => { void unlockTrainingAudio().then(check) }
     const wake = () => { if (!document.hidden) interact() }
     void check()
+    // Retry a temporarily interrupted mobile audio session even without another tap.
+    const retry = setInterval(() => { if (!document.hidden) void check() }, 1000)
     document.addEventListener('pointerdown',interact,{capture:true})
     document.addEventListener('visibilitychange',wake)
     window.addEventListener('focus',wake)
-    return () => { document.removeEventListener('pointerdown',interact,{capture:true});document.removeEventListener('visibilitychange',wake);window.removeEventListener('focus',wake) }
+    return () => { clearInterval(retry); document.removeEventListener('pointerdown',interact,{capture:true});document.removeEventListener('visibilitychange',wake);window.removeEventListener('focus',wake) }
   },[id,seconds,enabled])
 }

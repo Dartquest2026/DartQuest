@@ -15,6 +15,7 @@ export function unlockTrainingAudio() {
 }
 export async function playTrainingSignal(kind) {
   if (!context) return false
+  if (context.state === 'closed' && !await unlockTrainingAudio()) return false
   try {
     // Mobile browsers can suspend audio between interactions or in the background.
     // Resume before scheduling, rather than silently dropping the signal.
