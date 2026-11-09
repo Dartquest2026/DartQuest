@@ -33,3 +33,18 @@ Statistikfarben: „Aufnahmen insgesamt“ ist in jedem Hauptdiagramm, Zusatzdia
 - Zufällig etwa 20 % der Aufgaben: Zweier- bzw. Dreier-Folgen mit unterschiedlichen Single-Feldern von 10 bis 20. Keine zwei Single-Runden direkt hintereinander.
 - Deutlich als „Single-Runde“ gekennzeichnet; statt „Rest“ steht „Alle Ziele als Single treffen“. Bei normalen Aufgaben ist die Restzahl größer (28 px, auf kleinen Displays 26 px).
 - Gleiche Ergebnistasten, sofortiger Wechsel, Undo und Aufnahmezählung. Aufgabenart bleibt in lokaler und Online-Historie gespeichert und in den Aufgabendetails sichtbar; bestehende Ergebnisse bleiben unverändert.
+
+## Eigenständiges Metronom
+
+- Eigener Button im angepassten Trainingsplan, außerhalb der Spiele und ihrer Statistik. Eine gespeicherte Konfiguration pro Konto/Gast bzw. freiem Board, lokal auf dem Gerät.
+- 1–100 frei beschriftbare Abschnitte; Plus, Entfernen, Duplizieren und Sortieren. Pro Abschnitt Abstand in Sekunden (0,1–600) oder BPM (1–300), 1–100 Töne und Klick/Holz/Glocke mit Hörprobe.
+- Erster Ton bei null; jeder weitere Abstand zählt vom vorherigen Ton. BPM bedeutet 60/BPM Sekunden. Eine Schleife enthält einen einstellbaren Abstand vom letzten Ton zum nächsten Rundenbeginn.
+- Automatische Speicherung, bearbeitbare Drei-Pfeile-Vorlage mit Rückholen der Pfeile. Start, Pause/Fortsetzen, Stopp/Anfang. Bearbeiten oder Verlassen stoppt den Ton vollständig.
+- Web-Audio-Uhr mit kurzem Planungsvorlauf; Pause verwirft vorgeplante Töne, Fortsetzen erhält den verbleibenden Abstand. Nach einer Hintergrund-Unterbrechung werden überfällige Töne übersprungen, nicht als Tonserie nachgeholt.
+- Eigenständige Ablaufdaten und Wiedergabe sind für die spätere Einbindung in Trainings vorbereitet. Noch kein paralleles Abspielen innerhalb eines Trainingsspiels.
+
+### Lautstärke je Metronom-Abschnitt
+
+- Jeder Abschnitt hat einen Regler von 0 bis 100 Prozent und eine Hörprobe mit der eingestellten Lautstärke. 0 Prozent bleibt als stiller Zeitabschnitt im Ablauf erhalten.
+- Die Lautstärke gilt für alle Töne dieses Abschnitts. Für lauter/leiser wechselnde Einzeltöne mehrere Abschnitte mit jeweils einem Ton anlegen.
+- Bestehende Abläufe übernehmen 75 Prozent; das entspricht der vorherigen Tonlautstärke. Lautstärke wird beim Speichern, Duplizieren, Sortieren und Abspielen übernommen.

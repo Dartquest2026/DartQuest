@@ -1,0 +1,66 @@
+.metronome-screen { color:#deedf3; }
+.metronome-intro { display:grid; gap:14px; }
+.metronome-intro p,.metronome-loop p { font-size:13px; line-height:1.6; color:#9fb5c2; margin:0; }
+.metronome-screen label { display:grid; gap:7px; color:#9fb5c2; font-size:12px; line-height:1.5; }
+.metronome-screen input:not([type='checkbox']),.metronome-screen select { width:100%; min-height:46px; padding:10px; border:1px solid #9abaca30; border-radius:11px; background:#101d26; color:#e1edf3; font:inherit; font-size:15px; box-sizing:border-box; }
+.metronome-screen select option { background:#101d26; }
+.metronome-screen button { touch-action:manipulation; }
+.metronome-preset-actions { display:grid; grid-template-columns:1.5fr 1fr; gap:8px; }
+.custom-training.metronome-screen .metronome-preset-actions button { font-size:10px; min-height:44px; padding:8px; }
+.metronome-steps { display:grid; gap:14px; margin-top:20px; }
+.metronome-step { padding:14px; border:1px solid #8be8b72b; border-radius:18px; background:linear-gradient(125deg,#17272c,#101b24); }
+.metronome-step-heading { display:grid; grid-template-columns:24px minmax(0,1fr) 44px; gap:8px; align-items:center; }
+.metronome-step-heading b { color:#99e7bb; font-size:18px; }
+.custom-training.metronome-screen .metronome-step-heading button { font-size:25px; min-height:44px; padding:0; }
+.metronome-step-timing { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:10px; margin-top:14px; }
+.metronome-time-input { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); gap:5px; }
+.metronome-time-input select { font-size:12px; padding:6px; }
+.metronome-first-note { font-size:11px; line-height:1.5; color:#8fa6b3; margin:10px 0 0; }
+.metronome-tone-row { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:14px; }
+.custom-training.metronome-screen .metronome-tone-row button { min-height:44px; padding:8px; font-size:12px; }
+.custom-training.metronome-screen .metronome-tone-row button[aria-pressed='true'] { color:#b9f8d5; background:#8be8b719; border-color:#8be8b770; }
+.metronome-step-tools { display:flex; gap:7px; margin-top:10px; }
+.custom-training.metronome-screen .metronome-step-tools button { min-width:44px; min-height:40px; padding:6px 10px; font-size:12px; }
+.custom-training.metronome-screen .metronome-add { width:100%; min-height:56px; margin-top:14px; border:1px dashed #8be8b775; color:#b1efcd; font-size:12px; }
+.metronome-add small { display:block; margin-top:5px; color:#8fa9b6; }
+.metronome-loop { display:grid; gap:14px; margin-top:22px; padding:16px; border:1px solid #ffffff18; border-radius:16px; }
+.metronome-loop label:first-child { display:flex; gap:10px; align-items:center; }
+.metronome-loop input[type='checkbox'] { width:22px; height:22px; accent-color:#8be8b7; }
+.metronome-loop label > div { display:flex; gap:10px; align-items:center; }
+.metronome-loop input[type='number'] { max-width:100px; }
+.metronome-save-note { font-size:11px; color:#90ac9e; line-height:1.5; }
+.metronome-start-dock { position:sticky; bottom:0; padding:12px 0 4px; background:linear-gradient(transparent,#0b151b 25%); z-index:2; }
+.custom-training.metronome-screen .metronome-primary { width:100%; min-height:56px; border-radius:16px; background:#8be8b7; border-color:#b3f6d0; color:#123728; font-size:14px; font-weight:650; }
+.custom-training.metronome-screen.is-live { display:flex; flex-direction:column; overflow:hidden; }
+.metronome-live-card { display:flex; flex:1; min-height:0; flex-direction:column; justify-content:center; align-items:center; gap:14px; text-align:center; border:1px solid #8be8b730; border-radius:24px; padding:20px 14px; background:radial-gradient(ellipse at top,#8be8b70e,transparent 70%); }
+.metronome-live-card > span { font-size:11px; color:#a1c5b2; letter-spacing:1px; }
+.metronome-live-card > small { font-size:10px; color:#87a6b5; }
+.metronome-live-card h2 { color:#e0f6e9; font-size:clamp(24px,7vw,36px); margin:0; overflow-wrap:anywhere; line-height:1.2; }
+.metronome-beat-dot { width:38px; height:38px; border-radius:50%; border:1px solid #8be8b768; background:#8be8b720; }
+.metronome-beat-dot[data-running='true'] { animation:metronome-flash .45s ease-out; }
+@keyframes metronome-flash { from {background:#c9ffe0;box-shadow:0 0 28px #8be8b788} to {background:#8be8b720;box-shadow:0 0 0 transparent} }
+.metronome-next > span { font-size:10px; color:#8aa5b4; letter-spacing:1px; }
+.metronome-next > strong { display:block; color:#a2edc1; font-size:38px; font-variant-numeric:tabular-nums; margin-top:8px; }
+.metronome-next strong small { font-size:15px; }
+.metronome-next p { margin:8px 0 0; font-size:13px; color:#93acb9; }
+.metronome-play-controls { display:grid; grid-template-columns:1fr 1fr; gap:9px; padding-top:14px; flex-shrink:0; }
+.metronome-play-controls > button:first-child { grid-column:1/-1; }
+.custom-training.metronome-screen .metronome-play-controls > button:not(:first-child) { min-height:44px; font-size:11px; padding:8px; }
+.metronome-error { padding:12px; color:#f6bcc3; background:#ef6b7a14; border-radius:12px; font-size:12px; }
+.training-metronome-launch { width:100%; display:flex; align-items:center; gap:14px; padding:15px; text-align:left; margin:12px 0 0; }
+.training-metronome-launch > span { font-size:26px; color:#a3e7bf; }
+.training-metronome-launch div { flex:1; }
+.training-metronome-launch strong { display:block; font-size:17px; color:#e3f1eb; }
+.training-metronome-launch small { display:block; margin-top:5px; color:#91acb9; font-size:11px; }
+.training-metronome-launch b { font-size:24px; color:#9dbbac; }
+@media(max-height:650px) { .metronome-live-card { gap:8px; padding:12px; } .metronome-live-card h2 { font-size:24px; } .metronome-beat-dot { width:26px; height:26px; } .metronome-next > strong { font-size:30px; margin-top:3px; } }
+@media(prefers-reduced-motion:reduce) { .metronome-beat-dot[data-running='true'] { animation:none; background:#baf4d1; } }
+.custom-training.metronome-screen.is-live > .metronome-live-card { flex:1 1 0; }
+.custom-training.metronome-screen .metronome-live-card h2 { color:#e0f6e9; font-size:clamp(28px,7vw,36px); line-height:1.2; }
+@media(max-height:650px) { .custom-training.metronome-screen .metronome-live-card h2 { font-size:25px; } }
+.custom-training.metronome-screen.is-live { display:flex !important; }
+.metronome-volume { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; margin-top:14px; }
+.metronome-volume label { position:relative; }
+.metronome-volume output { position:absolute; right:0; top:0; color:#b5efcd; font-variant-numeric:tabular-nums; }
+.custom-training.metronome-screen .metronome-volume input[type='range'] { min-height:44px; height:44px; padding:0; border:0; background:transparent; accent-color:#8be8b7; }
+.custom-training.metronome-screen .metronome-volume button { min-height:44px; padding:8px 10px; font-size:10px; }

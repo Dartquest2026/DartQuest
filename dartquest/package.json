@@ -40,7 +40,9 @@
     "test:training-stat-controls-browser": "node scripts/training-stat-controls.browser.mjs",
     "test:custom-training": "node --test scripts/custom-training.test.mjs scripts/additional-training.test.mjs scripts/favorite-training.test.mjs scripts/around-clock.test.mjs scripts/custom-training-clock.test.mjs scripts/bulls-history.test.mjs scripts/training-timeline.test.mjs scripts/training-stat-controls.test.mjs scripts/bulls-final-entry.test.mjs scripts/timed-final-entry.test.mjs scripts/training-visits.test.mjs scripts/focus-switch.test.mjs",
     "test:training-visits-browser": "node scripts/training-visits.browser.mjs",
-    "test:focus-switch-browser": "node scripts/focus-switch.browser.mjs"
+    "test:focus-switch-browser": "node scripts/focus-switch.browser.mjs",
+    "test:metronome": "node --test scripts/metronome.test.mjs",
+    "test:metronome-browser": "node scripts/metronome.browser.mjs"
   },
   "dependencies": {
     "@capacitor/cli": "^8.5.2",
