@@ -883,3 +883,15 @@
 .focus-task.is-single-round { border-color:#b3f0cd80; }
 @media(max-height:650px) { .focus-task-caption > span > strong { font-size:26px; } }
 @media(min-height:651px) { .focus-play { gap:8px; } }
+/* Both combo keypads use the available height before secondary information. */
+.custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .custom-score-layout { grid-template-rows:18px 48px minmax(0,1fr) 28px; gap:8px; }
+.custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .custom-play-footer { flex-basis:32px; }
+.custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .score-keypad .score-numbers button { font-size:clamp(24px,3.2vh,29px); }
+.custom-playing.custom-final-entry:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .custom-score-layout { grid-template-areas:'status' 'keypad' 'secondary'; grid-template-rows:18px minmax(0,1fr) 28px; }
+@media(max-height:650px) {
+ .custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .custom-play-stage { gap:4px; }
+ .custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .training-visit-actions { margin-top:0; }
+ .custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .custom-score-layout { grid-template-areas:'keypad' 'secondary'; grid-template-rows:minmax(0,1fr) 26px; gap:4px; }
+ .custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .custom-entry-status { display:none; }
+ .custom-playing:is([data-game='t20-combo'],[data-game='triple-20-19-18-combo']) .score-keypad { grid-template-rows:28px minmax(0,1fr); gap:4px; }
+}
