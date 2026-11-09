@@ -1,3 +1,5 @@
+import TrainingMetronome from './TrainingMetronome'
+import {METRONOME_TRAINING_GAMES} from './metronomeModel'
 import Metronome from './Metronome'
 import FocusSwitchPlay, {FocusOptions} from './FocusSwitch'
 import {enterFocusResult,focusVariant} from './focusSwitchRules'
@@ -242,7 +244,7 @@ export default function CustomTraining({ activeProfile, onBack, freeTraining = f
           </div>}
         </div>}
         {timedFinal && <button className="custom-bulls-finish" disabled={hasOpenEntry(run)} onClick={() => setRun(r => finishTimedFinalEntry(flushVisit(r,Date.now(),true)))}>FERTIG · ERGEBNIS SPEICHERN</button>}
-        <TrainingVisitActions run={run} now={now} onEmpty={()=>{triggerHaptic('light');setRun(r=>emptyVisit(r))}} onUndo={()=>setRun(r=>undoVisit(r))}/><footer className="custom-play-footer"><button className="custom-exit" disabled={run.phase === 'saving' && !error} onClick={() => setLeave(true)}>TRAINING VERLASSEN</button></footer>
+        <TrainingVisitActions run={run} now={now} onEmpty={()=>{triggerHaptic('light');setRun(r=>emptyVisit(r))}} onUndo={()=>setRun(r=>undoVisit(r))}/><footer className="custom-play-footer">{METRONOME_TRAINING_GAMES.includes(run.game)&&<TrainingMetronome key={`${run.id}-${run.phase}-${Boolean(run.pausedAt)}-${leave}`} userId={userId} freeTraining={freeTraining} disabled={isPaused(run)||run.phase!=='playing'||leave}/>}<button className="custom-exit" disabled={run.phase === 'saving' && !error} onClick={() => setLeave(true)}>TRAINING VERLASSEN</button></footer>
       </section>}
 
     </>}

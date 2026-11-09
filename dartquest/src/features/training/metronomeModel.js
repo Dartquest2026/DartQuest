@@ -19,11 +19,62 @@ export function metronomePosition(sequence,elapsed) {
  return {event,cycle:cycle+1,next:next??(sequence.loop?sequence.events[0]:null),remaining:next?next.at-local:Math.max(0,sequence.duration-local),done:!sequence.loop&&local>=sequence.duration}
 }
 export function dartMetronomePreset() {
- const phases=[['An die Oche stellen',2,'bell'],['Ausrichten und fokussieren',3,'click'],['Arm heben',2,'click'],['Arm zurückführen',1,'wood'],['Pfeil werfen',1,'bell'],['Nächsten Pfeil nehmen',2,'click']]
- const steps=Array.from({length:3},(_,dart)=>phases.map(([label,value,tone],i)=>({...newMetronomeStep(dart*6+i),label:`Pfeil ${dart+1} · ${label}`,value,tone}))).flat()
- steps.push(...[['Zum Board gehen',5],['Pfeile herausziehen',4],['Zurück hinter die Oche',5]].map(([label,value],i)=>({...newMetronomeStep(18+i),label,value,tone:'bell'})))
- return normalizeMetronome({name:'Drei Pfeile · Wurfroutine',steps,loop:true,loopGap:3})
+ // Technique sequence informed by Winmau's set-up analysis and Phoenix Darts' throwing guide.
+ // Timing and volume are editable practice suggestions, not a prescribed throwing speed.
+ const rows=[
+  ['Start · Hinter der Oche stehen',2,'bell',90],
+  ['Zur Oche gehen',2,'click',65],
+  ['Füße ausrichten · Stabil stehen',2,'wood',60],
+  ['Blick zum Board heben',1.5,'click',55],
+  ['Zielpunkt auswählen und fokussieren',2,'click',55],
+  ['Ruhig durchatmen · Schultern locker',2,'wood',45],
+ ]
+ for(let dart=1;dart<=3;dart++)rows.push(
+  [`Pfeil ${dart} · ${dart===1?'Ersten Pfeil greifen':'Nächsten Pfeil nehmen'}`,1.5,'click',60],
+  [`Pfeil ${dart} · Griff locker prüfen`,1,'wood',45],
+  [`Pfeil ${dart} · Zielpunkt fokussieren`,1.5,'click',55],
+  [`Pfeil ${dart} · Arm heben`,1.2,'click',65],
+  [`Pfeil ${dart} · Arm ruhig zurückziehen`,.8,'wood',55],
+  [`Pfeil ${dart} · Werfen und Arm nachführen`,.5,'bell',90],
+  [`Pfeil ${dart} · Arm entspannt senken`,.8,'wood',45],
+  [`Pfeil ${dart} · Ruhig durchatmen`,1.5,'click',45],
+ )
+ rows.push(
+  ['Drei Pfeile geworfen · Treffer ansehen',1.5,'bell',75],
+  ['Zum Board gehen',1,'click',65],
+  ['Pfeile herausziehen',4,'wood',60],
+  ['Vom Board zur Oche zurückgehen',3,'click',65],
+  ['Wieder hinter der Oche aufstellen',4,'wood',55],
+  ['Schultern und Wurfarm lockern',1.5,'wood',45],
+  ['Ruhig durchatmen',1.5,'click',45],
+  ['Fertig · Bereit für die nächste Runde',2,'bell',85],
+ )
+ const steps=rows.map(([label,value,tone,volume],index)=>({...newMetronomeStep(index),label,value,tone,volume}))
+ return normalizeMetronome({name:'Standardvorlage',steps,loop:true,loopGap:2})
 }
+
 const storageKey=(userId,free)=>`dartquest-metronome-${free?'free-board':userId??'guest'}-v1`
 export function loadMetronome(userId,free=false) {try{return normalizeMetronome(JSON.parse(localStorage.getItem(storageKey(userId,free))))}catch{return normalizeMetronome(null)}}
 export function saveMetronome(userId,free,config) {localStorage.setItem(storageKey(userId,free),JSON.stringify(normalizeMetronome(config)))}
+
+const slotsKey=(userId,free)=>`dartquest-metronome-${free?'free-board':userId??'guest'}-slots-v1`
+export function loadMetronomeSlots(userId,free=false) {
+ try {
+  const stored=localStorage.getItem(slotsKey(userId,free))
+  if(stored!==null){const slots=JSON.parse(stored);return Array.from({length:3},(_,i)=>slots?.[i]?.steps?.length?normalizeMetronome(slots[i]):null)}
+  // Offer the previously saved single rhythm in slot 1 without changing it.
+  const previous=JSON.parse(localStorage.getItem(storageKey(userId,free)))
+  const migrated=[previous?.steps?.length?normalizeMetronome(previous):null,null,null]
+  try{localStorage.setItem(slotsKey(userId,free),JSON.stringify(migrated))}catch{/* Still offer the old rhythm when storage is temporarily unavailable. */}
+  return migrated
+ } catch { return [null,null,null] }
+}
+export function saveMetronomeSlot(userId,free,index,config) {
+ if(!Number.isInteger(index)||index<0||index>2)throw new Error('Ungültiger Speicherplatz')
+ const slots=loadMetronomeSlots(userId,free)
+ slots[index]=normalizeMetronome({...config,name:String(config.name??'').trim()||`Metronom ${index+1}`})
+ localStorage.setItem(slotsKey(userId,free),JSON.stringify(slots))
+ return slots
+}
+
+export const METRONOME_TRAINING_GAMES=['bulls-warm-up','around-the-clock','focus-switch','double-route']

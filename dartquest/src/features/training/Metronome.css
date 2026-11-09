@@ -64,3 +64,23 @@
 .metronome-volume output { position:absolute; right:0; top:0; color:#b5efcd; font-variant-numeric:tabular-nums; }
 .custom-training.metronome-screen .metronome-volume input[type='range'] { min-height:44px; height:44px; padding:0; border:0; background:transparent; accent-color:#8be8b7; }
 .custom-training.metronome-screen .metronome-volume button { min-height:44px; padding:8px 10px; font-size:10px; }
+.metronome-slots { margin-top:20px; padding:14px; border:1px solid #8be8b72a; border-radius:18px; }
+.custom-training .metronome-slots > h2 { margin:0; font-size:11px; color:#a3d6bc; letter-spacing:.7px; }
+.metronome-slots > p { font-size:11px; line-height:1.6; color:#8fa9b7; }
+.metronome-slots article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; margin-top:8px; }
+.custom-training .metronome-slot-load { display:grid; gap:5px; text-align:left; padding:12px; min-width:0; }
+.metronome-slot-load small,.metronome-game-option small { color:#90bdab; font-size:9px; }
+.metronome-slot-load strong,.metronome-game-option strong { color:#d7eee1; font-size:14px; overflow-wrap:anywhere; }
+.metronome-slot-load span,.metronome-game-option span { color:#95aebd; font-size:10px; }
+.custom-training .metronome-slot-save { padding:8px; font-size:9px; color:#b0e7c8; border-color:#8be8b73a; }
+.custom-play-footer:has(.training-metronome-control) { flex-basis:48px; gap:8px; align-items:center; overflow:visible; }
+.training-metronome-control { flex:0 0 auto; }
+.custom-playing .training-metronome-toggle { display:flex; align-items:center; gap:7px; min-height:44px; padding:8px 10px; color:#a9d7c0; border:1px solid #8be8b72e; background:#15242b; border-radius:12px; font-size:9px; }
+.training-metronome-toggle > span:first-child { font-size:20px; }
+.custom-playing .training-metronome-toggle[aria-pressed='true'] { color:#c7ffe0; background:#8be8b722; border-color:#8be8b782; box-shadow:0 0 10px #8be8b710; }
+.custom-playing .custom-play-footer:has(.training-metronome-control) .custom-exit { min-height:44px; flex:1; width:auto; }
+.metronome-game-picker { max-height:80dvh; overflow:auto; }
+.metronome-game-picker p { font-size:12px; color:#9bb2c1; line-height:1.6; }
+.custom-training .metronome-game-option { display:grid; gap:7px; text-align:left; padding:14px; }
+.training-metronome-error { position:absolute; z-index:8; bottom:68px; left:16px; right:16px; padding:12px 40px 12px 12px; font-size:12px; background:#332228; color:#f4bbc5; border:1px solid #ef6b7a44; border-radius:12px; }
+.custom-playing .training-metronome-error button { position:absolute; right:0; top:0; width:36px; height:36px; min-height:36px; padding:0; }

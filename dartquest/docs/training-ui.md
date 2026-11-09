@@ -41,10 +41,23 @@ Statistikfarben: „Aufnahmen insgesamt“ ist in jedem Hauptdiagramm, Zusatzdia
 - Erster Ton bei null; jeder weitere Abstand zählt vom vorherigen Ton. BPM bedeutet 60/BPM Sekunden. Eine Schleife enthält einen einstellbaren Abstand vom letzten Ton zum nächsten Rundenbeginn.
 - Automatische Speicherung, bearbeitbare Drei-Pfeile-Vorlage mit Rückholen der Pfeile. Start, Pause/Fortsetzen, Stopp/Anfang. Bearbeiten oder Verlassen stoppt den Ton vollständig.
 - Web-Audio-Uhr mit kurzem Planungsvorlauf; Pause verwirft vorgeplante Töne, Fortsetzen erhält den verbleibenden Abstand. Nach einer Hintergrund-Unterbrechung werden überfällige Töne übersprungen, nicht als Tonserie nachgeholt.
-- Eigenständige Ablaufdaten und Wiedergabe sind für die spätere Einbindung in Trainings vorbereitet. Noch kein paralleles Abspielen innerhalb eines Trainingsspiels.
+- Ablaufdaten und Wiedergabe werden auch vom Metronom-Button innerhalb ausgewählter Trainings verwendet.
 
 ### Lautstärke je Metronom-Abschnitt
 
 - Jeder Abschnitt hat einen Regler von 0 bis 100 Prozent und eine Hörprobe mit der eingestellten Lautstärke. 0 Prozent bleibt als stiller Zeitabschnitt im Ablauf erhalten.
 - Die Lautstärke gilt für alle Töne dieses Abschnitts. Für lauter/leiser wechselnde Einzeltöne mehrere Abschnitte mit jeweils einem Ton anlegen.
 - Bestehende Abläufe übernehmen 75 Prozent; das entspricht der vorherigen Tonlautstärke. Lautstärke wird beim Speichern, Duplizieren, Sortieren und Abspielen übernommen.
+
+### Standardvorlage für eine vollständige Aufnahme
+
+Der Vorlagenbutton heißt „Standardvorlage“. 38 editierbare Abschnitte: Vorbereitung hinter der Oche, zur Linie gehen, Füße ausrichten, Blick heben, fokussieren und atmen; dann für jeden der drei Pfeile Greifen, Griff prüfen, Fokussieren, Arm heben, Rückbewegung, Abwurf mit Nachführen, Arm senken und Atmen; anschließend Treffer ansehen, zum Board gehen, Pfeile ziehen, zurückgehen, hinter der Oche aufstellen, lockern, atmen und für die nächste Runde bereitstehen.
+
+Die Bewegungsreihenfolge orientiert sich an Winmaus Analyse https://winmau.com/blogs/news/world-s-smoothest-v-world-s-most-modern und der Wurfanleitung von Phoenix Darts https://web02.phoenixdart.com/au/help/guide_view?guidecode_1=100222&guidecode_2=100233. Zeiten, Töne und Lautstärken sind eigene, frei anpassbare Vorschläge. Die Vorlage wird ausschließlich per Button geladen; bereits gespeicherte eigene Abläufe werden beim App-Update nicht ersetzt.
+
+
+### Drei Metronom-Speicherplätze und Wiedergabe im Spiel
+
+- Drei benannte Speicherplätze pro Konto/Gast bzw. freiem Board auf dem jeweiligen Gerät. Der automatisch gesicherte Editorentwurf bleibt separat. Laden und bewusstes Speichern/Überschreiben erfolgen über die drei Karten. Ein bisheriger Einzelablauf wird einmalig in Platz 1 übernommen.
+- Bulls Warm-Up, Around the Clock, Fokuswechsel und Doppelweg haben einen mindestens 44 px hohen Metronom-Button unten im Spiel. Auswahl eines gespeicherten Ablaufs startet ihn sofort; erneutes Antippen stoppt und gibt sämtliche Tonquellen frei. Im Spiel läuft der gewählte Ablauf immer als Schleife bis zum Stopp.
+- Spielpause, Verlassen-Dialog, Wechsel zur Statistik und Zeitablauf stoppen das Metronom. Nach Fortsetzen muss es bewusst erneut ausgewählt werden. Metronom verändert weder die Aufnahmezählung noch den Spieltimer.
