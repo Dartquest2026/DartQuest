@@ -111,3 +111,17 @@
 .metronome-quick-controls .metronome-primary { grid-column:1/-1; }
 @media(max-height:650px) { .metronome-quick-ready { gap:10px; } .metronome-quick-symbol { font-size:32px; } .metronome-quick-ready p { font-size:12px; line-height:1.5; } .custom-training .metronome-quick-ready h2 { font-size:21px; } .metronome-quick-status { padding:4px 0 12px; gap:5px; } .metronome-capture-tap > span { font-size:56px; } .metronome-quick-controls { padding-top:10px; } }
 .custom-training.metronome-quick .training-page-header > button { width:44px; height:44px; min-height:44px; }
+.metronome-timeline { margin-top:24px; }
+.custom-training .metronome-timeline h2 { font-size:20px; margin:0 0 14px; }
+.metronome-timeline ol { list-style:none; padding:0; margin:0; }
+.metronome-timeline li { margin:0; }
+.custom-training .metronome-timeline-point { display:grid; grid-template-columns:minmax(55px,auto) minmax(0,1fr) 18px; align-items:center; gap:10px; width:100%; min-height:58px; text-align:left; padding:10px; }
+.metronome-timeline-point strong,.metronome-timeline-point small { display:block; overflow-wrap:anywhere; }
+.metronome-timeline-point small { margin-top:4px; color:#a1bac7; font-size:11px; }
+.metronome-timeline-time { color:#b6f3d2; font-variant-numeric:tabular-nums; font-size:13px; }
+.custom-training .metronome-timeline-point[aria-expanded='true'] { border-color:#8be8b780; }
+.metronome-timeline-gap { display:flex; align-items:center; margin-left:22px; padding-left:12px; border-left:2px solid #8be8b766; color:#aec8d4; font-size:12px; font-variant-numeric:tabular-nums; }
+.metronome-timeline .metronome-step { margin-top:8px; }
+.metronome-timeline-end { margin:12px 0 0 22px; padding:12px; border-left:2px solid #8be8b766; }
+.metronome-timeline-end input { max-width:100px; }
+.metronome-timeline-end small { color:#a1bac7; }

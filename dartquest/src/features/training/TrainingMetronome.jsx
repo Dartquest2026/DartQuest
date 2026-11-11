@@ -8,7 +8,7 @@ export default function TrainingMetronome({userId,freeTraining=false,disabled=fa
  function stop(){request.current++;player.current?.dispose();player.current=null;setName('');setBusy(false)}
  function toggle(){if(player.current){stop();return}setSlots(loadMetronomeSlots(userId,freeTraining));setError('');setOpen(true)}
  async function choose(slot){stop();setOpen(false);setError('');setName(slot.name);setBusy(true);const ticket=++request.current
-  const next=createMetronomePlayer(compileMetronome({...slot,loop:true}),{onError:message=>{if(ticket===request.current){stop();setError(message)}}});player.current=next
+  const next=createMetronomePlayer(compileMetronome({...slot,loop:true}),{onDone:()=>{if(ticket===request.current)stop()},onError:message=>{if(ticket===request.current){stop();setError(message)}}});player.current=next
   const started=await next.start();if(ticket!==request.current)return
   setBusy(false);if(!started)stop()
  }

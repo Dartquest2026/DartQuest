@@ -4,13 +4,13 @@ export const newMetronomeStep = (index=0) => ({id:globalThis.crypto?.randomUUID?
 const bounded=(value,min,max,fallback)=>Number.isFinite(Number(value))?Math.min(max,Math.max(min,Number(value))):fallback
 export function normalizeMetronome(value) {
  const steps=(Array.isArray(value?.steps)&&value.steps.length?value.steps:[newMetronomeStep()]).slice(0,MAX_METRONOME_STEPS).map((step,index)=>({id:`step-${index}`,label:String(step.label??`Abschnitt ${index+1}`).slice(0,60),unit:step.unit==='bpm'?'bpm':'seconds',value:bounded(step.value,step.unit==='bpm'?1:.1,step.unit==='bpm'?300:600,3),beats:Math.round(bounded(step.beats,1,100,1)),volume:Math.round(bounded(step.volume??75,0,100,75)),tone:METRONOME_TONES.some(t=>t.id===step.tone)?step.tone:'click'}))
- return {version:1,name:String(value?.name??'Mein Wurfrhythmus').slice(0,60),loop:value?.loop!==false,loopGap:bounded(value?.loopGap,.1,600,3),steps}
+ return {version:1,name:String(value?.name??'Mein Wurfrhythmus').slice(0,60),loop:value?.loop!==false,loopGap:bounded(value?.loopGap,0,600,3),steps}
 }
 export const stepInterval = step => step.unit==='bpm'?60/step.value:step.value
 export function compileMetronome(value) {
  const config=normalizeMetronome(value),events=[];let time=0
  config.steps.forEach((step,index)=>{for(let beat=0;beat<step.beats;beat++){if(index>0||beat>0)time+=stepInterval(step);events.push({at:time,step:index,beat:beat+1,label:step.label,tone:step.tone,volume:step.volume})}})
- return {events,duration:time+config.loopGap,loop:config.loop}
+ return {events,duration:time+config.loopGap,loop:config.loop && time+config.loopGap>0, joinsAtLastTone:config.loopGap===0}
 }
 export function metronomePosition(sequence,elapsed) {
  const seconds=Math.max(0,elapsed),cycle=sequence.loop?Math.floor(seconds/sequence.duration):0,local=sequence.loop?seconds%sequence.duration:seconds

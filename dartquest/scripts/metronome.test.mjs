@@ -15,3 +15,21 @@ test('individual loudness survives storage and scales scheduled sounds and previ
 test('three named slots keep independent snapshots, migrate the old rhythm once and isolate board/account data',()=>{const data=new Map();globalThis.localStorage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};saveMetronome('old',false,{...sample(),name:'Bisheriger Ablauf'});assert.equal(loadMetronomeSlots('old')[0].name,'Bisheriger Ablauf');saveMetronome('old',false,{...sample(),name:'Neuer Entwurf'});assert.equal(loadMetronomeSlots('old')[0].name,'Bisheriger Ablauf');assert.deepEqual(loadMetronomeSlots('fresh'),[null,null,null]);saveMetronome('fresh',false,sample());assert.deepEqual(loadMetronomeSlots('fresh'),[null,null,null]);for(let i=0;i<3;i++)saveMetronomeSlot('fresh',false,i,{...sample(),name:'Rhythmus '+(i+1)});assert.deepEqual(loadMetronomeSlots('fresh').map(s=>s.name),['Rhythmus 1','Rhythmus 2','Rhythmus 3']);saveMetronomeSlot('fresh',false,1,{...sample(),name:'Neu'});assert.equal(loadMetronomeSlots('fresh')[0].name,'Rhythmus 1');assert.equal(loadMetronomeSlots('fresh')[1].name,'Neu');assert.throws(()=>saveMetronomeSlot('fresh',false,3,sample()));assert.deepEqual(loadMetronomeSlots('fresh',true),[null,null,null]);assert.deepEqual(loadMetronomeSlots('other'),[null,null,null])})
 
 test('quick capture uses first tap as zero, records exact intervals and finishing gap',()=>{const config=metronomeFromTaps([5000,8000,10000,15000],16500);assert.equal(config.name,'Schnellanalyse');assert.deepEqual(config.steps.map(s=>s.value),[1,3,2,5]);assert.deepEqual(compileMetronome(config).events.map(e=>e.at),[0,3,5,10]);assert.equal(config.loopGap,1.5);assert.equal(compileMetronome(config).duration,11.5);assert.equal(metronomeFromTaps([2500],2500).loopGap,.1);assert.equal(metronomeFromTaps([0,1234.567],2000).steps[1].value,1.235);assert.throws(()=>metronomeFromTaps([],0));assert.throws(()=>metronomeFromTaps([0,50],100));assert.throws(()=>metronomeFromTaps([0,600001],600002));assert.throws(()=>metronomeFromTaps([200],100));assert.throws(()=>metronomeFromTaps(Array.from({length:101},(_,i)=>i*1000),102000));assert.equal(metronomeFromTaps(Array.from({length:100},(_,i)=>i*1000),100000).steps.length,100)})
+
+test('zero round gap joins the boundary at one tone and a lone tone plays once', async t => {
+ t.mock.timers.enable({apis:['setInterval']})
+ const sequence = compileMetronome({...sample(),loopGap:0})
+ assert.equal(sequence.duration,10)
+ const audio = fakeAudio()
+ const player = createMetronomePlayer(sequence,{AudioContext:audio.Context})
+ await player.start()
+ for (const time of [3,5,10,13]) {
+  audio.clock.time=time
+  t.mock.timers.tick(25)
+ }
+ assert.deepEqual(audio.pulses.map(pulse=>pulse.at),[0,3,5,10,13])
+ player.dispose()
+ const single = compileMetronome({steps:[{}],loop:true,loopGap:0})
+ assert.equal(single.loop,false)
+ assert.equal(single.duration,0)
+})
